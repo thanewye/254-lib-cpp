@@ -14,5 +14,8 @@
     "**/.factorypath": true,
     "**/*~": true
   },
-  "C_Cpp.default.configurationProvider": "vscode-wpilib"
+  "C_Cpp.default.configurationProvider": "vscode-wpilib",
+  "clangd.arguments": [
+  "--compile-commands-dir=${workspaceFolder}/build/BinaryCompileCommands/compileFrcUserProgramOsxuniversalDebugExecutableFrcUserProgramCppCompileCommands"
+]
 }
