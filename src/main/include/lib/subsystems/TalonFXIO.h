@@ -1,17 +1,24 @@
 #pragma once
 
 #include <ctre/phoenix6/TalonFX.hpp>
-#include "ctre/phoenix6/StatusSignal.hpp"
-#include "ctre/phoenix6/controls/DutyCycleOut.hpp"
-#include "ctre/phoenix6/controls/MotionMagicVelocityTorqueCurrentFOC.hpp"
-#include "ctre/phoenix6/controls/MotionMagicVelocityVoltage.hpp"
-#include "ctre/phoenix6/controls/PositionVoltage.hpp"
-#include "ctre/phoenix6/controls/TorqueCurrentFOC.hpp"
-#include "ctre/phoenix6/controls/VelocityVoltage.hpp"
+#include <ctre/phoenix6/StatusSignal.hpp>
+#include <ctre/phoenix6/controls/DutyCycleOut.hpp>
+#include <ctre/phoenix6/controls/DynamicMotionMagicTorqueCurrentFOC.hpp>
+#include <ctre/phoenix6/controls/DynamicMotionMagicVoltage.hpp>
+#include <ctre/phoenix6/controls/Follower.hpp>
+#include <ctre/phoenix6/controls/MotionMagicTorqueCurrentFOC.hpp>
+#include <ctre/phoenix6/controls/MotionMagicVelocityTorqueCurrentFOC.hpp>
+#include <ctre/phoenix6/controls/MotionMagicVelocityVoltage.hpp>
+#include <ctre/phoenix6/controls/MotionMagicVoltage.hpp>
+#include <ctre/phoenix6/controls/PositionTorqueCurrentFOC.hpp>
+#include <ctre/phoenix6/controls/PositionVoltage.hpp>
+#include <ctre/phoenix6/controls/TorqueCurrentFOC.hpp>
+#include <ctre/phoenix6/controls/VelocityTorqueCurrentFOC.hpp>
+#include <ctre/phoenix6/controls/VelocityVoltage.hpp>
+#include <ctre/phoenix6/controls/VoltageOut.hpp>
 #include "lib/subsystems/MotorIO.h"
 #include "lib/subsystems/ServoMotorSubsystemConfig.h"
-
-#include <string_view>
+#include "lib/util/CTREUtil.h"
 
 class TalonFXIO : public MotorIO {
 protected:
@@ -98,29 +105,31 @@ public:
         , rawRotorPositionSignal(talon.GetRotorPosition())
         , temperatureSignal(talon.GetDeviceTemp())
         , signals{&positionSignal, &velocitySignal, &voltageSignal, &currentStatorSignal, &currentSupplySignal, &rawRotorPositionSignal, &temperatureSignal}
-        {};
+        {
+            CTREUtil::ConfigureTalonFX(talon, config.fxConfig);
+        };
 
-    void UpdateInputs(MotorInputs& inputs) override;
+    void UpdateInputs(MotorInputs& inputs) override {}
 
-    void SetOpenLoopDutyCycle(double dutyCycle) override;
-    void SetOpenLoopDutyCycleNoFOC(double dutyCycle) override;
-    void SetOpenLoopDutyCycleIgnoreLimits(double dutyCycle) override;
+    void SetOpenLoopDutyCycle(double dutyCycle) override {}
+    void SetOpenLoopDutyCycleNoFOC(double dutyCycle) override {}
+    void SetOpenLoopDutyCycleIgnoreLimits(double dutyCycle) override {}
 
-    void SetPositionSetpoint(double units) override;
-    void SetMotionMagicSetpoint(double units, int slot = 0) override;
+    void SetPositionSetpoint(double units) override {}
+    void SetMotionMagicSetpoint(double units, int slot = 0) override {}
 
-    void SetVelocitySetpoint(double unitsPerSecond, int slot = 0) override;
-    void SetVelocitySetpointNoFOC(double unitsPerSecond, int slot = 0) override;
-    void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot = 0) override;
-    void SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override;
+    void SetVelocitySetpoint(double unitsPerSecond, int slot = 0) override {}
+    void SetVelocitySetpointNoFOC(double unitsPerSecond, int slot = 0) override {}
+    void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot = 0) override {}
+    void SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override {}
 
-    void SetVoltageOutput(double voltage) override;
-    void SetCurrentPositionAsZero() override;
-    void SetCurrentPosition(double positionUnits) override;
+    void SetVoltageOutput(double voltage) override {}
+    void SetCurrentPositionAsZero() override {}
+    void SetCurrentPosition(double positionUnits) override {}
 
-    void SetEnableSoftLimits(bool forward, bool reverse) override;
-    void SetEnableHardLimits(bool forward, bool reverse) override;
+    void SetEnableSoftLimits(bool forward, bool reverse) override {}
+    void SetEnableHardLimits(bool forward, bool reverse) override {}
 
-    void SetSupplyCurrentLimit(double amps) override;
-    void SetStatorCurrentLimit(double amps) override;
+    void SetSupplyCurrentLimit(double amps) override {}
+    void SetStatorCurrentLimit(double amps) override {}
 };
