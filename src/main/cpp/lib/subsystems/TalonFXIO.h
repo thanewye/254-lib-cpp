@@ -20,6 +20,7 @@
 #include "lib/subsystems/ServoMotorSubsystemConfig.h"
 #include "lib/util/CTREUtil.h"
 #include "lib/util/CANStatusLogger.h"
+#include "lib/util/StatusSignalManager.h"
 
 class TalonFXIO : public MotorIO {
 protected:
@@ -114,7 +115,9 @@ public:
             CTREUtil::TryUntilOk(
                 [&] { return talon.OptimizeBusUtilization(); }, talon.GetDeviceID());
             CANStatusLogger::GetInstance().RegisterTalonFX(config.name, &talon, config.talonCANID);
-            // status signal manager register signals
+            for (auto* sig : signals) {
+                StatusSignalManager::GetInstance().Register(sig);
+            }
         };
 
     void UpdateInputs(MotorInputs& inputs) override {}
