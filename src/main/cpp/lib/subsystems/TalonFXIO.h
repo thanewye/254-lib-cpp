@@ -19,6 +19,7 @@
 #include "lib/subsystems/MotorIO.h"
 #include "lib/subsystems/ServoMotorSubsystemConfig.h"
 #include "lib/util/CTREUtil.h"
+#include "lib/util/CANStatusLogger.h"
 
 class TalonFXIO : public MotorIO {
 protected:
@@ -107,6 +108,13 @@ public:
         , signals{&positionSignal, &velocitySignal, &voltageSignal, &currentStatorSignal, &currentSupplySignal, &rawRotorPositionSignal, &temperatureSignal}
         {
             CTREUtil::ConfigureTalonFX(talon, config.fxConfig);
+            CTREUtil::TryUntilOk(
+                [&] { return ctre::phoenix6::BaseStatusSignal::SetUpdateFrequencyForAll(
+                    units::frequency::hertz_t{config.updateFrequencyHz}, signals); }, talon.GetDeviceID());
+            CTREUtil::TryUntilOk(
+                [&] { return talon.OptimizeBusUtilization(); }, talon.GetDeviceID());
+            CANStatusLogger::GetInstance().RegisterTalonFX(config.name, &talon, config.talonCANID);
+            // status signal manager register signals
         };
 
     void UpdateInputs(MotorInputs& inputs) override {}

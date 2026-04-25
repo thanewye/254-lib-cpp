@@ -62,7 +62,7 @@ model {
                     include '**/*.cpp', '**/*.cc'
                 }
                 exportedHeaders {
-                    srcDir 'src/main/include'
+                    srcDir 'src/main/cpp'
                 }
             }
 
