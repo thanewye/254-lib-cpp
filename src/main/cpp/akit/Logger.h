@@ -11,7 +11,7 @@ namespace akit {
 class Logger {
 public:
     static void ProcessInputs(std::string_view key, LoggableInputs& inputs);
-    static void RecordOutputs(std::string key, LogValue value);
+    static void RecordOutput(std::string key, LogValue value);
     static void SetReplayMode(bool replayMode);
     static void Clear();
     static const LogTable& GetCurrentTable() { return currentTable_; }

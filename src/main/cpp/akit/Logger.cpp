@@ -14,7 +14,7 @@ void Logger::ProcessInputs(std::string_view key, LoggableInputs& inputs) {
     }
 }
 
-void Logger::RecordOutputs(std::string key, LogValue value) {
+void Logger::RecordOutput(std::string key, LogValue value) {
     currentTable_.Put(std::move(key), std::move(value));
 }
 

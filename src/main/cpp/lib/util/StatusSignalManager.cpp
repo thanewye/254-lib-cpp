@@ -31,8 +31,8 @@ void StatusSignalManager::RefreshAll() {
             FRC_ReportWarning("StatusSignalManager: Signal refresh recovered: {}", status.GetName());
         }
     }
-    akit::Logger::RecordOutputs("StatusSignalManager/LastStatus", status.GetName());
-    akit::Logger::RecordOutputs("StatusSignalManager/latencyPeriodicSec", frc::Timer::GetFPGATimestamp().value() - timestamp);
+    akit::Logger::RecordOutput("StatusSignalManager/LastStatus", status.GetName());
+    akit::Logger::RecordOutput("StatusSignalManager/latencyPeriodicSec", frc::Timer::GetFPGATimestamp().value() - timestamp);
 }
 
 StatusSignalManager& StatusSignalManager::GetInstance() {

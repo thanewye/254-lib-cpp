@@ -87,7 +87,7 @@ public:
                 isConnected = (device.supplyVoltage.GetStatus() == ctre::phoenix::StatusCode::OK);
             }
             frc::SmartDashboard::PutBoolean(device.dashboardKey, isConnected);
-            akit::Logger::RecordOutputs(device.loggerKey, isConnected);
+            akit::Logger::RecordOutput(device.loggerKey, isConnected);
         }
     }
 
