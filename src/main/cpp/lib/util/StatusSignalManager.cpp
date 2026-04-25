@@ -5,7 +5,16 @@
 #include "frc/Timer.h"
 
 void StatusSignalManager::Register(ctre::phoenix6::BaseStatusSignal* signal) {
+    if (signal == nullptr) return;
     signals.push_back(signal);
+}
+
+void StatusSignalManager::Register(std::initializer_list<ctre::phoenix6::BaseStatusSignal*> signalList) {
+    for (auto* signal : signalList) {
+        if (signal != nullptr) {
+            signals.push_back(signal);
+        }
+    }
 }
 
 void StatusSignalManager::RefreshAll() {
@@ -23,7 +32,7 @@ void StatusSignalManager::RefreshAll() {
         }
     }
     akit::Logger::RecordOutputs("StatusSignalManager/LastStatus", status.GetName());
-    akit::Logger::RecordOutputs("StatusSignalManager/latencyPeriodSec", frc::Timer::GetFPGATimestamp().value() - timestamp);
+    akit::Logger::RecordOutputs("StatusSignalManager/latencyPeriodicSec", frc::Timer::GetFPGATimestamp().value() - timestamp);
 }
 
 StatusSignalManager& StatusSignalManager::GetInstance() {

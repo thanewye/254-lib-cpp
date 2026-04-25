@@ -2,6 +2,7 @@
 
 #include "ctre/phoenix/StatusCodes.h"
 #include <ctre/phoenix6/StatusSignal.hpp>
+#include <initializer_list>
 #include <vector>
 
 class StatusSignalManager {
@@ -9,6 +10,7 @@ public:
     static StatusSignalManager& GetInstance();
 
     void Register(ctre::phoenix6::BaseStatusSignal* signal);
+    void Register(std::initializer_list<ctre::phoenix6::BaseStatusSignal*> signalList);
     void RefreshAll();
 
 private:
