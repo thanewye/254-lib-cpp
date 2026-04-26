@@ -60,7 +60,7 @@ public:
         devices.emplace_back(name, talon, deviceID.GetDeviceNumber(), std::string(deviceID.GetBus().GetName()));
     }
     
-    void RegisterCANcoder(ctre::phoenix6::hardware::CANcoder* cancoder);
+    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, ctre::phoenix6::CANBus bus);
 
     void InitializeSignalArray() {
         if (signals.size() != devices.size()) {

@@ -1,17 +1,24 @@
 #pragma once
 
-#include "lib/subsystems/CanCoderIO.h"
+#include "ctre/phoenix6/CANcoder.hpp"
+#include "ctre/phoenix6/StatusSignal.hpp"
 #include "lib/subsystems/CanCoderConfig.h"
-
-#include <ctre/phoenix6/CANcoder.hpp>
+#include "lib/subsystems/CanCoderIO.h"
 
 class CanCoderIOHardware : public CanCoderIO {
- public:
-  explicit CanCoderIOHardware(const CanCoderConfig& config);
+protected:
+    ctre::phoenix6::hardware::CANcoder canCoder;
+    CanCoderConfig config;
+    
+private:
+    ctre::phoenix6::StatusSignal<units::turn_t> positionSignal;
+    ctre::phoenix6::StatusSignal<units::turns_per_second_t> velocitySignal;
+    ctre::phoenix6::BaseStatusSignal* signals[2];
 
-  void UpdateInputs(CanCoderInputs& inputs) override;
-  void UpdateFrequency(double hz) override;
+    double goodValues = 0.0;
 
- protected:
-  ctre::phoenix6::hardware::CANcoder m_cancoder;
+public:
+    CanCoderIOHardware(CanCoderConfig config);
+    void UpdateFrequency(double hz) override;
+    void UpdateInputs(CanCoderInputs &inputs) override;
 };

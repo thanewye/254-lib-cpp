@@ -5,6 +5,6 @@
 #include "lib/drivers/CANDeviceId.h"
 
 struct CanCoderConfig {
-  CANDeviceId CANID;
-  ctre::phoenix6::configs::CANcoderConfiguration config;
+    CANDeviceId CANID;
+    ctre::phoenix6::configs::CANcoderConfiguration config;
 };

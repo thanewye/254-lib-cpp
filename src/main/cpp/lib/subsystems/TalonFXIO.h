@@ -16,19 +16,34 @@
 #include <ctre/phoenix6/controls/VelocityTorqueCurrentFOC.hpp>
 #include <ctre/phoenix6/controls/VelocityVoltage.hpp>
 #include <ctre/phoenix6/controls/VoltageOut.hpp>
+
 #include "lib/subsystems/MotorIO.h"
 #include "lib/subsystems/ServoMotorSubsystemConfig.h"
-#include "lib/util/CTREUtil.h"
-#include "lib/util/CANStatusLogger.h"
-#include "lib/util/StatusSignalManager.h"
+#include "units/voltage.h"
 
 class TalonFXIO : public MotorIO {
 protected:
     ctre::phoenix6::hardware::TalonFX talon;
     ServoMotorSubsystemConfig config;
 
+private:
+    double RotorToUnits(double rotor) {
+        return rotor * config.unitToRotorRatio;
+    }
+
+    double UnitsToRotor(double units) {
+        return units / config.unitToRotorRatio;
+    }
+
+    double ClampPosition(double units) {
+        return UnitsToRotor(std::clamp(units, config.kMinPositionUnits, config.kMaxPositionUnits));
+    }
+
+    double lastAppliedSupplyLimitAmps = std::numeric_limits<double>::quiet_NaN();
+    double lastAppliedStatorLimitAmps = std::numeric_limits<double>::quiet_NaN();
+    
     ctre::phoenix6::controls::DutyCycleOut dutyCycleControl = 
-            ctre::phoenix6::controls::DutyCycleOut(0).WithEnableFOC(true);
+            ctre::phoenix6::controls::DutyCycleOut(0).WithEnableFOC(true);  
     ctre::phoenix6::controls::DutyCycleOut dutyCycleControlIgnoreLimits = 
             ctre::phoenix6::controls::DutyCycleOut(0).WithEnableFOC(true).WithIgnoreHardwareLimits(true);
     ctre::phoenix6::controls::DutyCycleOut dutyCycleControlNoFOC = 
@@ -44,7 +59,7 @@ protected:
             ctre::phoenix6::controls::VelocityVoltage(0_rad_per_s).WithEnableFOC(false).WithIgnoreHardwareLimits(true);
 
     ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControl = 
-            ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s);
+            ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(true);
     ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlNoFOC = 
             ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(false);
     ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlIgnoreLimits = 
@@ -56,13 +71,13 @@ protected:
             ctre::phoenix6::controls::VoltageOut(0_V);
 
     ctre::phoenix6::controls::PositionVoltage positionVoltageControl = 
-            ctre::phoenix6::controls::PositionVoltage(0_rad);
+            ctre::phoenix6::controls::PositionVoltage(0_rad).WithEnableFOC(true);
 
     ctre::phoenix6::controls::MotionMagicVoltage motionMagicPositionControl = 
-            ctre::phoenix6::controls::MotionMagicVoltage(0_rad);
+            ctre::phoenix6::controls::MotionMagicVoltage(0_rad).WithEnableFOC(true);
 
     ctre::phoenix6::controls::DynamicMotionMagicVoltage dynamicMotionMagicVoltage = 
-            ctre::phoenix6::controls::DynamicMotionMagicVoltage(0_rad, 0_rad_per_s, 0_rad_per_s_sq);
+            ctre::phoenix6::controls::DynamicMotionMagicVoltage(0_rad, 0_rad_per_s, 0_rad_per_s_sq).WithEnableFOC(true);
 
     ctre::phoenix6::controls::Follower followerControl = 
             ctre::phoenix6::controls::Follower(0, ctre::phoenix6::signals::MotorAlignmentValue::Aligned);
@@ -96,51 +111,38 @@ protected:
     ctre::phoenix6::BaseStatusSignal* signals[7];
 
 public:
-    TalonFXIO(const ServoMotorSubsystemConfig& config)
-        : talon(config.talonCANID.GetDeviceNumber(), config.talonCANID.GetBus())
-        , config(config)
-        , positionSignal(talon.GetPosition())
-        , velocitySignal(talon.GetVelocity())
-        , voltageSignal(talon.GetMotorVoltage())
-        , currentStatorSignal(talon.GetStatorCurrent())
-        , currentSupplySignal(talon.GetSupplyCurrent())
-        , rawRotorPositionSignal(talon.GetRotorPosition())
-        , temperatureSignal(talon.GetDeviceTemp())
-        , signals{&positionSignal, &velocitySignal, &voltageSignal, &currentStatorSignal, &currentSupplySignal, &rawRotorPositionSignal, &temperatureSignal}
-        {
-            CTREUtil::ConfigureTalonFX(talon, config.fxConfig);
-            CTREUtil::TryUntilOk(
-                [&] { return ctre::phoenix6::BaseStatusSignal::SetUpdateFrequencyForAll(
-                    units::frequency::hertz_t{config.updateFrequencyHz}, signals); }, talon.GetDeviceID());
-            CTREUtil::TryUntilOk(
-                [&] { return talon.OptimizeBusUtilization(); }, talon.GetDeviceID());
-            CANStatusLogger::GetInstance().RegisterTalonFX(config.name, &talon, config.talonCANID);
-            for (auto* sig : signals) {
-                StatusSignalManager::GetInstance().Register(sig);
-            }
-        };
-
-    void UpdateInputs(MotorInputs& inputs) override {}
-
-    void SetOpenLoopDutyCycle(double dutyCycle) override {}
-    void SetOpenLoopDutyCycleNoFOC(double dutyCycle) override {}
-    void SetOpenLoopDutyCycleIgnoreLimits(double dutyCycle) override {}
-
-    void SetPositionSetpoint(double units) override {}
-    void SetMotionMagicSetpoint(double units, int slot = 0) override {}
-
-    void SetVelocitySetpoint(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocitySetpointNoFOC(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override {}
-
-    void SetVoltageOutput(double voltage) override {}
-    void SetCurrentPositionAsZero() override {}
-    void SetCurrentPosition(double positionUnits) override {}
-
-    void SetEnableSoftLimits(bool forward, bool reverse) override {}
-    void SetEnableHardLimits(bool forward, bool reverse) override {}
-
-    void SetSupplyCurrentLimit(double amps) override {}
-    void SetStatorCurrentLimit(double amps) override {}
+    TalonFXIO(const ServoMotorSubsystemConfig& config);
+    void ReadInputs(MotorInputs& inputs) override;
+    void SetOpenLoopDutyCycle(double dutyCycle) override;
+    void SetOpenLoopDutyCycleNoFOC(double dutyCycle) override;
+    void SetOpenLoopDutyCycleIgnoreLimits(double dutyCycle) override;
+    void SetPositionSetpoint(double units) override;
+    void SetMotionMagicSetpoint(double units, int slot = 0) override;
+    void SetMotionMagicSetpoint(double units, double velocity, double acceleration, double jerk, int slot = 0, double feedforward = 0.0) override;
+    void SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue mode) override;
+    void SetVelocitySetpoint(double unitsPerSecond, int slot = 0) override;
+    void SetVelocitySetpointNoFOC(double unitsPerSecond, int slot = 0) override;
+    void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot = 0) override;
+    void SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot = 0) override;
+    void SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot = 0) override;
+    void SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override;
+    void SetVelocitySetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot = 0) override;
+    void SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override;
+    void SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot = 0) override;
+    void SetVoltageOutput(double voltage) override;
+    void SetCurrentPositionAsZero() override;
+    void SetCurrentPosition(double positionUnits) override;
+    void SetEnableSoftLimits(bool forward, bool reverse) override;
+    void SetEnableHardLimits(bool forward, bool reverse) override;
+    void SetEnableAutosetPositionValue(bool forward, bool reverse) override;
+    void Follow(const CANDeviceId& masterId, bool opposeMasterDirection) override;
+    void SetTorqueCurrentFOC(double current) override;
+    void SetVelocityTorqueCurrentFOC(double unitsPerSecond, double feedforward = 0.0) override;
+    void SetPositionTorqueCurrentFOC(double units, double feedforward = 0.0) override;
+    void SetMotionMagicTorqueCurrentFOC(double units, int slot = 0) override;
+    void SetMotionMagicTorqueCurrentFOC(double units, double velocity, double acceleration, double jerk, int slot = 0, double feedforward = 0.0) override;
+    void SetMotionMagicConfig(const ctre::phoenix6::configs::MotionMagicConfigs& mmConfig) override;
+    void SetVoltageConfig(const ctre::phoenix6::configs::VoltageConfigs& voltageConfig) override;
+    void SetSupplyCurrentLimit(double amps) override;
+    void SetStatorCurrentLimit(double amps) override;
 };

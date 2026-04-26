@@ -83,6 +83,13 @@ inline ctre::phoenix::StatusCode ApplyConfiguration(
 
 inline ctre::phoenix::StatusCode ApplyConfiguration(
         ctre::phoenix6::hardware::TalonFX& motor,
+        const ctre::phoenix6::configs::SoftwareLimitSwitchConfigs& config) {
+    return TryUntilOk([&] { return motor.GetConfigurator().Apply(config); },
+                                        motor.GetDeviceID());
+}
+
+inline ctre::phoenix::StatusCode ApplyConfiguration(
+        ctre::phoenix6::hardware::TalonFX& motor,
         const ctre::phoenix6::configs::MotionMagicConfigs& config) {
     return TryUntilOk([&] { return motor.GetConfigurator().Apply(config); },
                                         motor.GetDeviceID());
