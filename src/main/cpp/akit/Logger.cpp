@@ -86,8 +86,12 @@ void Logger::DumpCurrentStorage() {
     }
 }
 
-void Logger::Clear() { 
-    currentStorage_.Clear(); 
+void Logger::Clear() {
+    currentStorage_.Clear();
     currentStorage_.timestamp = 0.0;
+}
+
+const LogStorage& Logger::GetCurrentStorage() {
+    return currentStorage_;
 }
 }  // namespace akit
