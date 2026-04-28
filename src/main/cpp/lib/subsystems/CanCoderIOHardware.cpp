@@ -39,7 +39,7 @@ void CanCoderIOHardware::UpdateFrequency(double hz) {
     ctre::phoenix6::BaseStatusSignal::SetUpdateFrequencyForAll(units::hertz_t(hz), signals);
 }
 
-void CanCoderIOHardware::UpdateInputs(CanCoderInputs &inputs) {
+void CanCoderIOHardware::ReadInputs(CanCoderInputs &inputs) {
     if (std::isnan(inputs.absolutePositionRotations)) {
         ctre::phoenix6::BaseStatusSignal::WaitForAll(units::second_t(10.0), signals);
         goodValues++;

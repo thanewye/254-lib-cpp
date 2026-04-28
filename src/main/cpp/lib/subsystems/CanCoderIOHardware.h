@@ -20,5 +20,5 @@ private:
 public:
     CanCoderIOHardware(CanCoderConfig config);
     void UpdateFrequency(double hz) override;
-    void UpdateInputs(CanCoderInputs &inputs) override;
+    void ReadInputs(CanCoderInputs &inputs) override;
 };

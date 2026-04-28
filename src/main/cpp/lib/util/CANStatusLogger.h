@@ -2,8 +2,6 @@
 
 #include "akit/Logger.h"
 #include "lib/drivers/CANDeviceId.h"
-#include "ntcore_c.h"
-#include "ntcore_cpp.h"
 
 #include <cstddef>
 #include <string>
@@ -22,7 +20,8 @@ private:
         friend class CANStatusLogger;
     private:
         std::string name;
-        ctre::phoenix6::hardware::TalonFX* talon;
+        ctre::phoenix6::hardware::TalonFX* talon = nullptr;
+        ctre::phoenix6::hardware::CANcoder* cancoder = nullptr;
         int deviceID;
         std::string bus;
 
@@ -43,6 +42,20 @@ private:
             , supplyVoltage(talon->GetSupplyVoltage()) {
                 supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
             }
+
+        DeviceStatusInfo(const std::string& name,
+            ctre::phoenix6::hardware::CANcoder* cancoder,
+            int deviceID,
+            const std::string& bus)
+            : name(name)
+            , cancoder(cancoder)
+            , deviceID(deviceID)
+            , bus(bus)
+            , loggerKey("CANStatus/" + name + "ID" + std::to_string(deviceID))
+            , dashboardKey("CAN/" + bus + "/" + name + "ID" + std::to_string(deviceID))
+            , supplyVoltage(cancoder->GetSupplyVoltage()) {
+                supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
+            }
     };
     std::vector<DeviceStatusInfo> devices;
 
@@ -60,7 +73,9 @@ public:
         devices.emplace_back(name, talon, deviceID.GetDeviceNumber(), std::string(deviceID.GetBus().GetName()));
     }
     
-    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, ctre::phoenix6::CANBus bus);
+    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, ctre::phoenix6::CANBus bus) {
+        devices.emplace_back(name, cancoder, deviceID, std::string(bus.GetName()));
+    }
 
     void InitializeSignalArray() {
         if (signals.size() != devices.size()) {
@@ -83,7 +98,7 @@ public:
             DeviceStatusInfo& device = devices[i];
             bool isConnected = false;
 
-            if (device.talon != nullptr) {
+            if (device.talon != nullptr || device.cancoder != nullptr) {
                 isConnected = (device.supplyVoltage.GetStatus() == ctre::phoenix::StatusCode::OK);
             }
             frc::SmartDashboard::PutBoolean(device.dashboardKey, isConnected);

@@ -9,7 +9,7 @@ class SimCanCoderIO : public CanCoderIOHardware {
   SimCanCoderIO(const CanCoderConfig& config,
                 std::function<double()> positionSupplier);
 
-  void UpdateInputs(CanCoderInputs& inputs) override;
+  void ReadInputs(CanCoderInputs& inputs) override;
 
  private:
   std::function<double()> m_positionSupplier;

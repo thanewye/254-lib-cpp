@@ -3,46 +3,45 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <variant>
 #include <vector>
+
+#include "akit/LogStorage.h"
 
 namespace akit {
 
-using LogValue = std::variant<bool, int64_t, double, std::string, std::vector<double>>;
-
 class LogTable {
 public:
-    void Put(std::string key, LogValue value) {
-        values_[std::move(key)] = std::move(value);
-    }
 
-    double Get(std::string_view key, double defaultValue) const {
-        return GetTyped<double>(key, defaultValue);
-    }
+    LogTable(LogStorage& storage, std::string prefix = "");
 
-    bool Get(std::string_view key, bool defaultValue) const {
-        return GetTyped<bool>(key, defaultValue);
-    }
+    LogTable GetSubtable(std::string_view name) const;
 
-    int64_t Get(std::string_view key, int64_t defaultValue) const {
-        return GetTyped<int64_t>(key, defaultValue);
-    }
+    void Put(std::string key, LogValue value);
 
-    std::string Get(std::string_view key, std::string defaultValue) const {
-        return GetTyped<std::string>(key, std::move(defaultValue));
-    }
+    bool Get(std::string_view key, bool defaultValue) const;
+    int64_t Get(std::string_view key, int64_t defaultValue) const;
+    double Get(std::string_view key, double defaultValue) const;
+    std::string Get(std::string_view key, std::string defaultValue) const;
+    std::vector<double> Get(std::string_view key, std::vector<double> defaultValue) const;
 
-    std::vector<double> Get(std::string_view key, std::vector<double> defaultValue) const {
-        return GetTyped<std::vector<double>>(key, std::move(defaultValue));
-    }
+    double GetTimestamp() const;
+    void SetTimestamp(double timestamp);
+
+    const std::unordered_map<std::string, LogValue>& GetAll() const;
+    const std::string& GetPrefix() const;
+
+    void Clear();
 
 private:
+    std::string FullKey(std::string_view key) const;
+
+    LogStorage* storage_;
+    std::string prefix_;
+
     template <typename T>
     T GetTyped(std::string_view key, T defaultValue) const {
-        auto it = values_.find(std::string(key));
-        if (it == values_.end()) return defaultValue;
+        auto it = storage_->values.find(FullKey(key));
+        if (it == storage_->values.end()) return defaultValue;
 
         if (auto value = std::get_if<T>(&it->second)) {
             return *value;
@@ -50,8 +49,6 @@ private:
 
         return defaultValue;
     }
-
-    std::unordered_map<std::string, LogValue> values_;
 };
 
-}
+}    // namespace akit

@@ -8,13 +8,18 @@
 #include <frc/DriverStation.h>
 #include <frc2/command/CommandScheduler.h>
 
+#include "akit/Logger.h"
+
 Robot::Robot() {
   frc::DataLogManager::Start();
   frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
+  akit::Logger::Start();
 }
 
 void Robot::RobotPeriodic() {
+  akit::Logger::PeriodicBeforeUser();
   frc2::CommandScheduler::GetInstance().Run();
+  akit::Logger::PeriodicAfterUser();
 }
 
 void Robot::DisabledInit() {}
