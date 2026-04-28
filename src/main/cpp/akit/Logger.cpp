@@ -20,10 +20,7 @@ void Logger::End() {
 }
 
 void Logger::PeriodicBeforeUser() {
-  if (!running_) {
-    return;
-  }
-
+  if (!running_) return
   currentStorage_.Clear();
   currentStorage_.timestamp = frc::Timer::GetFPGATimestamp().value();
 
@@ -33,9 +30,7 @@ void Logger::PeriodicBeforeUser() {
 }
 
 void Logger::PeriodicAfterUser() {
-  if (!running_) {
-    return;
-  }
+  if (!running_) return;
 
   // Later:
   // - clone/finalize currentStorage_

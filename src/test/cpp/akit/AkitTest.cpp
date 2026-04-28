@@ -1,3 +1,5 @@
+// thanks claude
+
 #include "gtest/gtest.h"
 
 #include "akit/LogStorage.h"

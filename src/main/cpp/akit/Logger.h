@@ -3,8 +3,8 @@
 #include <string>
 #include <string_view>
 
-#include "LogTable.h"
 #include "LoggableInputs.h"
+#include "LogStorage.h"
 
 namespace akit {
 

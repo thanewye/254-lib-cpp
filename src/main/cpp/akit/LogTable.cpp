@@ -1,3 +1,4 @@
+#include "LogTable.h"
 #include "akit/LogTable.h"
 #include <cstdint>
 #include <utility>
