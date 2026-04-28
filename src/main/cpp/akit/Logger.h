@@ -14,7 +14,7 @@ public:
     static void End();
 
     static void ProcessInputs(std::string_view key, LoggableInputs& inputs);
-    static void RecordOutput(std::string key, LogValue value);
+    static void RecordOutput(const std::string &key, LogValue value);
 
     static void SetReplayMode(bool replayMode);
     static bool HasReplaySource();

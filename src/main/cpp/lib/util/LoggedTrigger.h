@@ -9,11 +9,11 @@ class LoggedTrigger : public frc2::Trigger {
   LoggedTrigger();
   explicit LoggedTrigger(std::function<bool()> condition);
 
-  frc2::Trigger OnTrue(frc2::CommandPtr command) &&;
-  frc2::Trigger OnFalse(frc2::CommandPtr command) &&;
-  frc2::Trigger WhileTrue(frc2::CommandPtr command) &&;
-  frc2::Trigger WhileFalse(frc2::CommandPtr command) &&;
-  LoggedTrigger operator&&(frc2::Trigger other) const;
-  LoggedTrigger operator||(frc2::Trigger other) const;
+  Trigger OnTrue(frc2::CommandPtr command) &&;
+  Trigger OnFalse(frc2::CommandPtr command) &&;
+  Trigger WhileTrue(frc2::CommandPtr command) &&;
+  Trigger WhileFalse(frc2::CommandPtr command) &&;
+  LoggedTrigger operator&&(Trigger other) const;
+  LoggedTrigger operator||(Trigger other) const;
   LoggedTrigger operator!() const;
 };

@@ -5,7 +5,7 @@
 
 #include <vector>
 
-struct ServoMotorSubsystemWithFollowersConfig : public ServoMotorSubsystemConfig {
+struct ServoMotorSubsystemWithFollowersConfig : ServoMotorSubsystemConfig {
   struct FollowerConfig {
     ServoMotorSubsystemConfig config;
     bool inverted = false;

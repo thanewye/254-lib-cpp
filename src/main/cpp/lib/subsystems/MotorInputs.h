@@ -5,7 +5,7 @@
 #include "akit/LoggableInputs.h"
 #include "akit/LogTable.h"
 
-struct MotorInputs : public akit::LoggableInputs {
+struct MotorInputs : akit::LoggableInputs {
     double velocityUnitsPerSecond = 0.0;
     double unitPosition = 0.0;
     double appliedVolts = 0.0;

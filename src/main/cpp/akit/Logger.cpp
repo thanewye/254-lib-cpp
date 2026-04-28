@@ -32,12 +32,10 @@ void Logger::PeriodicBeforeUser() {
 void Logger::PeriodicAfterUser() {
   if (!running_) return;
 
-  // Later:
-  // - clone/finalize currentStorage_
-  // - send it to data receivers like WPILOGWriter
+  cycles_++;
 }
 
-void Logger::ProcessInputs(std::string_view key, LoggableInputs& inputs) {
+void Logger::ProcessInputs(const std::string_view key, LoggableInputs& inputs) {
     if (!running_) return;
 
     LogTable currentTable = LogTable(currentStorage_).GetSubtable(key);
@@ -49,14 +47,14 @@ void Logger::ProcessInputs(std::string_view key, LoggableInputs& inputs) {
     }
 }
 
-void Logger::RecordOutput(std::string key, LogValue value) {
+void Logger::RecordOutput(const std::string& key, LogValue value) {
     if (!running_) return;
 
     LogTable outputs = LogTable(currentStorage_).GetSubtable(replayMode_ ? "ReplayOutputs" : "RealOutputs");
-    outputs.Put(std::move(key), std::move(value));
+    outputs.Put(key, std::move(value));
 }
 
-void Logger::SetReplayMode(bool replayMode) { replayMode_ = replayMode; }
+void Logger::SetReplayMode(const bool replayMode) { replayMode_ = replayMode; }
 
 bool Logger::HasReplaySource () {
     return replayMode_;
@@ -65,8 +63,8 @@ bool Logger::HasReplaySource () {
 void Logger::DumpCurrentStorage() {
     for (const auto& [key, value] : currentStorage_.values) {
         std::cout << key << " = ";
-        std::visit([](const auto& v) {
-            using T = std::decay_t<decltype(v)>;
+        std::visit([]<typename T0>(const T0& v) {
+            using T = std::decay_t<T0>;
             if constexpr (std::is_same_v<T, std::vector<double>>) {
                 std::cout << "[";
                 for (size_t i = 0; i < v.size(); ++i) {

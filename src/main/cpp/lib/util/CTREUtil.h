@@ -27,8 +27,8 @@ inline ctre::phoenix::StatusCode TryUntilOk(
 }
 
 inline ctre::phoenix::StatusCode TryUntilOk(
-        int maxAttempts,
-        std::function<ctre::phoenix::StatusCode()> function,
+        const int maxAttempts,
+        const std::function<ctre::phoenix::StatusCode()>& function,
         int deviceId) {
     ctre::phoenix::StatusCode statusCode = ctre::phoenix::StatusCode::OK;
     for (int i = 0; i < maxAttempts; ++i) {
@@ -43,7 +43,7 @@ inline ctre::phoenix::StatusCode TryUntilOk(
 }
 
 inline ctre::phoenix::StatusCode TryUntilOk(
-        std::function<ctre::phoenix::StatusCode()> function, int deviceId) {
+        const std::function<ctre::phoenix::StatusCode()>& function, const int deviceId) {
     return TryUntilOk(kMaxRetries, function, deviceId);
 }
 
@@ -119,7 +119,7 @@ inline ctre::phoenix::StatusCode ApplyConfiguration(
 inline ctre::phoenix::StatusCode ApplyConfiguration(
         ctre::phoenix6::hardware::CANcoder& cancoder,
         const ctre::phoenix6::configs::CANcoderConfiguration& config,
-        units::time::second_t timeout) {
+        const units::time::second_t timeout) {
     return TryUntilOk(
             [&] { return cancoder.GetConfigurator().Apply(config, timeout); },
             cancoder.GetDeviceID());

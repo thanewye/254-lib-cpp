@@ -2,7 +2,7 @@
 
 #include "akit/LoggableInputs.h"
 
-struct CanCoderInputs : public akit::LoggableInputs {
+struct CanCoderInputs : akit::LoggableInputs {
     double absolutePositionRotations = std::numeric_limits<double>::quiet_NaN();
     double velocityRotations = std::numeric_limits<double>::quiet_NaN();
 

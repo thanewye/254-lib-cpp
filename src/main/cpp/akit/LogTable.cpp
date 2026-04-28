@@ -1,6 +1,4 @@
 #include "LogTable.h"
-#include "akit/LogTable.h"
-#include <cstdint>
 #include <utility>
 
 namespace akit {
@@ -9,28 +7,28 @@ LogTable::LogTable(LogStorage& storage, std::string prefix)
     : storage_(&storage)
     , prefix_(std::move(prefix)) {}
 
-void LogTable::Put(std::string key, LogValue value) {
+void LogTable::Put(const std::string& key, LogValue value) const {
     storage_->values[FullKey(key)] = std::move(value);
 }
 
-bool LogTable::Get(std::string_view key, bool defaultValue) const {
+bool LogTable::Get(const std::string_view key, const bool defaultValue) const {
     return GetTyped<bool>(key, defaultValue);
 }
 
-double LogTable::Get(std::string_view key, double defaultValue) const {
+double LogTable::Get(const std::string_view key, const double defaultValue) const {
     return GetTyped<double>(key, defaultValue);
 }
 
-std::string LogTable::Get(std::string_view key, std::string defaultValue) const {
-    return GetTyped<std::string>(key, defaultValue);
+std::string LogTable::Get(const std::string_view key, std::string defaultValue) const {
+    return GetTyped<std::string>(key, std::move(defaultValue));
 }
 
-int64_t LogTable::Get(std::string_view key, int64_t defaultValue) const {
+int64_t LogTable::Get(const std::string_view key, const int64_t defaultValue) const {
     return GetTyped<int64_t>(key, defaultValue);
 }
 
 std::vector<double> LogTable::Get(std::string_view key, std::vector<double> defaultValue) const {
-    return GetTyped<std::vector<double>>(key, defaultValue);
+    return GetTyped<std::vector<double>>(key, std::move(defaultValue));
 }
 
 LogTable LogTable::GetSubtable(std::string_view key) const {
@@ -43,7 +41,7 @@ double LogTable::GetTimestamp() const {
     return storage_->timestamp;
 }
 
-void LogTable::SetTimestamp(double timestamp) {
+void LogTable::SetTimestamp(const double timestamp) const {
     storage_->timestamp = timestamp;
 }
 
@@ -55,7 +53,7 @@ const std::string& LogTable::GetPrefix() const {
     return prefix_;
 }
 
-std::string LogTable::FullKey(std::string_view key) const {
+std::string LogTable::FullKey(const std::string_view key) const {
     std::string fullKey = prefix_;
     fullKey += key;
     return fullKey;

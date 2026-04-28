@@ -12,13 +12,11 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 
 class CANStatusLogger {
-private:
     CANStatusLogger() = default;
 
     std::vector<ctre::phoenix6::BaseStatusSignal*> signals;
     class DeviceStatusInfo {
         friend class CANStatusLogger;
-    private:
         std::string name;
         ctre::phoenix6::hardware::TalonFX* talon = nullptr;
         ctre::phoenix6::hardware::CANcoder* cancoder = nullptr;
@@ -31,7 +29,7 @@ private:
         ctre::phoenix6::StatusSignal<units::voltage::volt_t> supplyVoltage;
         DeviceStatusInfo(const std::string& name,
             ctre::phoenix6::hardware::TalonFX* talon,
-            int deviceID,
+            const int deviceID,
             const std::string& bus)
             : name(name)
             , talon(talon)
@@ -45,7 +43,7 @@ private:
 
         DeviceStatusInfo(const std::string& name,
             ctre::phoenix6::hardware::CANcoder* cancoder,
-            int deviceID,
+            const int deviceID,
             const std::string& bus)
             : name(name)
             , cancoder(cancoder)
@@ -65,7 +63,7 @@ public:
         return instance;
     }
 
-    void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, int deviceID, ctre::phoenix6::CANBus bus) {
+    void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, int deviceID, const ctre::phoenix6::CANBus bus) {
         devices.emplace_back(name, talon, deviceID, std::string(bus.GetName())); 
     }
 
@@ -73,7 +71,7 @@ public:
         devices.emplace_back(name, talon, deviceID.GetDeviceNumber(), std::string(deviceID.GetBus().GetName()));
     }
     
-    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, ctre::phoenix6::CANBus bus) {
+    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, const ctre::phoenix6::CANBus bus) {
         devices.emplace_back(name, cancoder, deviceID, std::string(bus.GetName()));
     }
 
@@ -99,7 +97,7 @@ public:
             bool isConnected = false;
 
             if (device.talon != nullptr || device.cancoder != nullptr) {
-                isConnected = (device.supplyVoltage.GetStatus() == ctre::phoenix::StatusCode::OK);
+                isConnected = device.supplyVoltage.GetStatus() == ctre::phoenix::StatusCode::OK;
             }
             frc::SmartDashboard::PutBoolean(device.dashboardKey, isConnected);
             akit::Logger::RecordOutput(device.loggerKey, isConnected);

@@ -15,5 +15,5 @@ class ChezyRepeatCommand : public frc2::Command {
   bool RunsWhenDisabled() const override;
 
  private:
-  std::unique_ptr<frc2::Command> m_command;
+  std::unique_ptr<Command> m_command;
 };

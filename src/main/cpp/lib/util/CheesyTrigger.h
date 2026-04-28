@@ -7,5 +7,5 @@ class CheesyTrigger : public frc2::Trigger {
  public:
   explicit CheesyTrigger(std::function<bool()> condition);
 
-  frc2::Trigger WhileTrueAlwaysRunning(frc2::CommandPtr command);
+  Trigger WhileTrueAlwaysRunning(frc2::CommandPtr command);
 };

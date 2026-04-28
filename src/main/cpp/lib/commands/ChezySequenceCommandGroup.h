@@ -18,6 +18,6 @@ class ChezySequenceCommandGroup : public frc2::Command {
   bool RunsWhenDisabled() const override;
 
  private:
-  std::vector<std::unique_ptr<frc2::Command>> m_commands;
+  std::vector<std::unique_ptr<Command>> m_commands;
   size_t m_currentIndex = 0;
 };

@@ -14,32 +14,32 @@ public:
 
     LogTable(LogStorage& storage, std::string prefix = "");
 
-    LogTable GetSubtable(std::string_view name) const;
+    [[nodiscard]] LogTable GetSubtable(std::string_view name) const;
 
-    void Put(std::string key, LogValue value);
+    void Put(const std::string &key, LogValue value) const;
 
-    bool Get(std::string_view key, bool defaultValue) const;
-    int64_t Get(std::string_view key, int64_t defaultValue) const;
-    double Get(std::string_view key, double defaultValue) const;
-    std::string Get(std::string_view key, std::string defaultValue) const;
-    std::vector<double> Get(std::string_view key, std::vector<double> defaultValue) const;
+    [[nodiscard]] bool Get(std::string_view key, bool defaultValue) const;
+    [[nodiscard]] int64_t Get(std::string_view key, int64_t defaultValue) const;
+    [[nodiscard]] double Get(std::string_view key, double defaultValue) const;
+    [[nodiscard]] std::string Get(std::string_view key, std::string defaultValue) const;
+    [[nodiscard]] std::vector<double> Get(std::string_view key, std::vector<double> defaultValue) const;
 
-    double GetTimestamp() const;
-    void SetTimestamp(double timestamp);
+    [[nodiscard]] double GetTimestamp() const;
+    void SetTimestamp(double timestamp) const;
 
-    const std::unordered_map<std::string, LogValue>& GetAll() const;
-    const std::string& GetPrefix() const;
+    [[nodiscard]] const std::unordered_map<std::string, LogValue>& GetAll() const;
+    [[nodiscard]] const std::string& GetPrefix() const;
 
     void Clear();
 
 private:
-    std::string FullKey(std::string_view key) const;
+    [[nodiscard]] std::string FullKey(std::string_view key) const;
 
     LogStorage* storage_;
     std::string prefix_;
 
     template <typename T>
-    T GetTyped(std::string_view key, T defaultValue) const {
+    T GetTyped(const std::string_view key, T defaultValue) const {
         auto it = storage_->values.find(FullKey(key));
         if (it == storage_->values.end()) return defaultValue;
 

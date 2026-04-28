@@ -3,7 +3,7 @@
 #include "lib/subsystems/ServoMotorSubsystemConfig.h"
 #include "lib/subsystems/CanCoderConfig.h"
 
-struct ServoMotorSubsystemWithCanCoderConfig : public ServoMotorSubsystemConfig {
+struct ServoMotorSubsystemWithCanCoderConfig : ServoMotorSubsystemConfig {
   CanCoderConfig canCoderConfig;
   double unitsToCancoderRatio = 1.0;
   double canCodergearing = 1.0;
