@@ -11,7 +11,10 @@ file(GLOB_RECURSE ROBOT_SOURCES
         src/test/cpp/*.h
 )
 
-add_executable(frc_2026_cpp ${ROBOT_SOURCES})
+add_executable(frc_2026_cpp ${ROBOT_SOURCES}
+        src/main/cpp/akit/LogDataReceiver.h
+        src/main/cpp/akit/NT4Publisher.h
+        src/main/cpp/akit/NT4Publisher.cpp)
 
 target_include_directories(frc_2026_cpp PRIVATE
         ${CMAKE_SOURCE_DIR}/src/main/cpp
