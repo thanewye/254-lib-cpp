@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 
+#include "LogDataReceiver.h"
 #include "LoggableInputs.h"
 #include "LogStorage.h"
 
@@ -26,6 +27,9 @@ public:
     static const LogStorage& GetCurrentStorage();
     static void DumpCurrentStorage();
 
+    static void AddDataReceiver(LogDataReceiver* receiver);
+
+    static std::vector<LogDataReceiver*> receivers_;
 private:
     static LogStorage currentStorage_;
     static bool replayMode_;

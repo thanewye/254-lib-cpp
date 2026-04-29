@@ -24,8 +24,8 @@ public:
     [[nodiscard]] std::string Get(std::string_view key, std::string defaultValue) const;
     [[nodiscard]] std::vector<double> Get(std::string_view key, std::vector<double> defaultValue) const;
 
-    [[nodiscard]] double GetTimestamp() const;
-    void SetTimestamp(double timestamp) const;
+    [[nodiscard]] int64_t GetTimestamp() const;
+    void SetTimestamp(int64_t timestamp) const;
 
     [[nodiscard]] const std::unordered_map<std::string, LogValue>& GetAll() const;
     [[nodiscard]] const std::string& GetPrefix() const;

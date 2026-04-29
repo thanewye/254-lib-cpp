@@ -13,7 +13,7 @@ using LogValue = std::variant<bool, int64_t, double, std::string, std::vector<do
 /* base storage for all table values for LogTable to search into */
 struct LogStorage {
     std::unordered_map<std::string, LogValue> values;
-    double timestamp = 0.0;
+    int64_t timestamp = 0;
     void Clear() { values.clear(); }
 };
 

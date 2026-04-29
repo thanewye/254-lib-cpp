@@ -37,11 +37,11 @@ LogTable LogTable::GetSubtable(std::string_view key) const {
     return LogTable(*storage_, std::move(nextPrefix));
 }
 
-double LogTable::GetTimestamp() const {
+int64_t LogTable::GetTimestamp() const {
     return storage_->timestamp;
 }
 
-void LogTable::SetTimestamp(const double timestamp) const {
+void LogTable::SetTimestamp(const int64_t timestamp) const {
     storage_->timestamp = timestamp;
 }
 

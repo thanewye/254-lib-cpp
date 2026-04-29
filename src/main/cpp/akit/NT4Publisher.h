@@ -1,0 +1,25 @@
+#pragma once
+#include <memory>
+#include <string>
+#include <unordered_map>
+
+#include <networktables/GenericEntry.h>
+#include <networktables/NetworkTable.h>
+#include <networktables/IntegerTopic.h>
+
+
+#include "akit/LogDataReceiver.h"
+namespace akit::networktables {
+    class NT4Publisher : public LogDataReceiver {
+        LogStorage lastStorage_;
+        std::shared_ptr<nt::NetworkTable> akitTable_;
+        nt::IntegerPublisher timestampPublisher_;
+        std::unordered_map<std::string, nt::GenericPublisher> publishers_;
+        std::string GetNT4Type(const LogValue& val) const;
+        nt::GenericPublisher& GetOrCreatePublisher(const std::string& key,
+                                                     const LogValue& value);
+    public:
+        NT4Publisher();
+        void PutTable(const LogStorage& storage) override;
+    };
+}

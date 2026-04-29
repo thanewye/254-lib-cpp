@@ -9,15 +9,25 @@
 #include <frc2/command/CommandScheduler.h>
 
 #include "akit/Logger.h"
+#include "akit/NT4Publisher.h"
+
+namespace {
+akit::networktables::NT4Publisher& GetNT4Publisher() {
+  static akit::networktables::NT4Publisher publisher;
+  return publisher;
+}
+}  // namespace
 
 Robot::Robot() {
   frc::DataLogManager::Start();
   frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
+  akit::Logger::AddDataReceiver(&GetNT4Publisher());
   akit::Logger::Start();
 }
 
 void Robot::RobotPeriodic() {
   akit::Logger::PeriodicBeforeUser();
+    akit::Logger::RecordOutput("stuff", std::rand() % 10 + 1);
   frc2::CommandScheduler::GetInstance().Run();
   akit::Logger::PeriodicAfterUser();
 }
