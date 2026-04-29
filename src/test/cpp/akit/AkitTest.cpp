@@ -20,7 +20,7 @@ namespace {
 TEST(LogStorageTest, DefaultState) {
     LogStorage s;
     EXPECT_TRUE(s.values.empty());
-    EXPECT_DOUBLE_EQ(s.timestamp, 0.0);
+    EXPECT_EQ(s.timestamp, int64_t{0});
 }
 
 TEST(LogStorageTest, ClearRemovesValues) {
@@ -34,11 +34,11 @@ TEST(LogStorageTest, ClearRemovesValues) {
 TEST(LogStorageTest, ClearPreservesTimestamp) {
     // Clear() only empties the values map; it does not reset the timestamp.
     LogStorage s;
-    s.timestamp = 3.14;
+    s.timestamp = int64_t{3140000};
     s.values["k"] = int64_t{1};
     s.Clear();
     EXPECT_TRUE(s.values.empty());
-    EXPECT_DOUBLE_EQ(s.timestamp, 3.14);
+    EXPECT_EQ(s.timestamp, int64_t{3140000});
 }
 
 TEST(LogStorageTest, SupportsAllLogValueTypes) {
@@ -53,8 +53,8 @@ TEST(LogStorageTest, SupportsAllLogValueTypes) {
 
 TEST(LogStorageTest, TimestampCanBeSet) {
     LogStorage s;
-    s.timestamp = 99.9;
-    EXPECT_DOUBLE_EQ(s.timestamp, 99.9);
+    s.timestamp = int64_t{99900000};
+    EXPECT_EQ(s.timestamp, int64_t{99900000});
 }
 
 // ─── LogTable ────────────────────────────────────────────────────────────────
@@ -235,27 +235,27 @@ TEST_F(LogTableTest, NestedSubtablePutVisibleFromRoot) {
 
 TEST_F(LogTableTest, SetGetTimestampRoundtrip) {
     LogTable t(storage_);
-    t.SetTimestamp(123.456);
-    EXPECT_DOUBLE_EQ(t.GetTimestamp(), 123.456);
+    t.SetTimestamp(int64_t{123456000});
+    EXPECT_EQ(t.GetTimestamp(), int64_t{123456000});
 }
 
 TEST_F(LogTableTest, TimestampSharedBetweenTablesOnSameStorage) {
     LogTable a(storage_);
     LogTable b(storage_);
-    a.SetTimestamp(7.0);
-    EXPECT_DOUBLE_EQ(b.GetTimestamp(), 7.0);
+    a.SetTimestamp(int64_t{7000000});
+    EXPECT_EQ(b.GetTimestamp(), int64_t{7000000});
 }
 
 TEST_F(LogTableTest, SubtableSharesTimestampWithParent) {
     LogTable root(storage_);
-    root.SetTimestamp(3.0);
-    EXPECT_DOUBLE_EQ(root.GetSubtable("x").GetTimestamp(), 3.0);
+    root.SetTimestamp(int64_t{3000000});
+    EXPECT_EQ(root.GetSubtable("x").GetTimestamp(), int64_t{3000000});
 }
 
 TEST_F(LogTableTest, SubtableCanSetTimestamp) {
     LogTable root(storage_);
-    root.GetSubtable("x").SetTimestamp(8.0);
-    EXPECT_DOUBLE_EQ(root.GetTimestamp(), 8.0);
+    root.GetSubtable("x").SetTimestamp(int64_t{8000000});
+    EXPECT_EQ(root.GetTimestamp(), int64_t{8000000});
 }
 
 // ── GetAll ──
@@ -313,18 +313,18 @@ TEST_F(LogTableTest, ClearSubtableLeavesOtherSubtables) {
 TEST_F(LogTableTest, ClearSubtableDoesNotAffectTimestamp) {
     LogTable root(storage_);
     root.GetSubtable("x").Put("v", double{1.0});
-    root.SetTimestamp(42.0);
+    root.SetTimestamp(int64_t{42000000});
     root.GetSubtable("x").Clear();
-    EXPECT_DOUBLE_EQ(root.GetTimestamp(), 42.0);
+    EXPECT_EQ(root.GetTimestamp(), int64_t{42000000});
 }
 
 TEST_F(LogTableTest, ClearRootDoesNotResetTimestamp) {
     LogTable t(storage_);
-    t.SetTimestamp(5.0);
+    t.SetTimestamp(int64_t{5000000});
     t.Put("k", double{1.0});
     t.Clear();
     // Clear() on LogTable does not touch the timestamp (only clears values).
-    EXPECT_DOUBLE_EQ(t.GetTimestamp(), 5.0);
+    EXPECT_EQ(t.GetTimestamp(), int64_t{5000000});
 }
 
 // ─── LoggableInputs ──────────────────────────────────────────────────────────
@@ -462,7 +462,7 @@ TEST_F(LoggerTest, StartClearsStorageValues) {
 
 TEST_F(LoggerTest, StartResetsTimestampToZero) {
     Logger::Start();
-    EXPECT_DOUBLE_EQ(SnapStorage().timestamp, 0.0);
+    EXPECT_EQ(SnapStorage().timestamp, int64_t{0});
 }
 
 TEST_F(LoggerTest, EndDisablesProcessInputs) {
@@ -657,7 +657,7 @@ TEST_F(LoggerTest, ClearResetsTimestampToZero) {
     Logger::Start();
     Logger::PeriodicBeforeUser();
     Logger::Clear();
-    EXPECT_DOUBLE_EQ(Logger::GetCurrentStorage().timestamp, 0.0);
+    EXPECT_EQ(Logger::GetCurrentStorage().timestamp, int64_t{0});
 }
 
 // ── PeriodicBeforeUser ──
@@ -677,7 +677,7 @@ TEST_F(LoggerTest, PeriodicBeforeUserClearsPreviousValues) {
 
 TEST_F(LoggerTest, PeriodicBeforeUserSetsTimestamp) {
     Logger::Start();
-    Logger::Clear();  // force timestamp to 0.0
+    Logger::Clear();  // force timestamp to 0
     Logger::PeriodicBeforeUser();
     // In simulation the FPGA clock starts at 0; just verify it was set (>= 0)
     EXPECT_GE(Logger::GetCurrentStorage().timestamp, 0.0);
