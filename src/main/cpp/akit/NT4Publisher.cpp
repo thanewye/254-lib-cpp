@@ -9,10 +9,13 @@ namespace akit::networktables {
         });
     }
 
-    void NT4Publisher::PutTable(const LogStorage &storage) {
-        timestampPublisher_.Set(storage.timestamp, storage.timestamp);
+    void NT4Publisher::PutTable(const LogTable& table) {
+        const int64_t timestamp = table.GetTimestamp();
+        const auto& values = table.GetAll();
 
-        for (const auto& [key, value] : storage.values) {
+        timestampPublisher_.Set(timestamp, timestamp);
+
+        for (const auto& [key, value] : values) {
             auto oldValue = lastStorage_.values.find(key);
             if (oldValue != lastStorage_.values.end() && value == oldValue->second) continue;
 
@@ -22,20 +25,21 @@ namespace akit::networktables {
                 [&]<typename T_>(const T_& typedValue) {
                     using T = std::decay_t<T_>;
                     if constexpr (std::is_same_v<T, bool>) {
-                        publisher.SetBoolean(typedValue, storage.timestamp);
+                        publisher.SetBoolean(typedValue, timestamp);
                     } else if constexpr (std::is_same_v<T, int64_t>) {
-                        publisher.SetInteger(typedValue, storage.timestamp);
+                        publisher.SetInteger(typedValue, timestamp);
                     } else if constexpr (std::is_same_v<T, double>) {
-                        publisher.SetDouble(typedValue, storage.timestamp);
+                        publisher.SetDouble(typedValue, timestamp);
                     } else if constexpr (std::is_same_v<T, std::string>) {
-                        publisher.SetString(typedValue, storage.timestamp);
+                        publisher.SetString(typedValue, timestamp);
                     } else if constexpr (std::is_same_v<T, std::vector<double>>) {
-                        publisher.SetDoubleArray(typedValue, storage.timestamp);
+                        publisher.SetDoubleArray(typedValue, timestamp);
                     }
                 }, value
             );
         }
-        lastStorage_ = storage;
+        lastStorage_.values = values;
+        lastStorage_.timestamp = timestamp;
     }
     std::string NT4Publisher::GetNT4Type(const LogValue& val) const {
         return std::visit([]<typename T>(const T&) -> std::string {

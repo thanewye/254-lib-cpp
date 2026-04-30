@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "LogStorage.h"
+#include "LogTable.h"
 
 namespace akit {
     class LogDataReceiver {
@@ -12,7 +12,7 @@ namespace akit {
         virtual void Start() {}
         virtual void End() {}
         virtual ~LogDataReceiver() = default;
-        virtual void PutTable(const LogStorage& storage) = 0;
+        virtual void PutTable(const LogTable& table) = 0;
     };
 
 }

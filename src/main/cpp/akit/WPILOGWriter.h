@@ -1,0 +1,61 @@
+#pragma once
+#include <ctime>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+
+#include <wpi/DataLogWriter.h>
+
+#include "LogDataReceiver.h"
+#include "LoggableType.h"
+#include "lib/util/CANStatusLogger.h"
+
+namespace akit::wpilog {
+    class WPILOGWriter : public LogDataReceiver {
+    public:
+        enum AdvantageScopeOpenBehavior {
+            ALWAYS,
+            AUTO,
+            NEVER
+        };
+
+    private:
+        const double timestampUpdateDelay_ = 5.0;
+        static constexpr const char* defaultPathRio_ = "/U/logs";
+        static constexpr const char* defaultPathSim_ = "logs";
+        const char* ascopeFileName_ = "ascope-log-path.txt";
+
+        std::string folder_;
+        std::string fileName_;
+        std::string randomIdentifier_;
+        std::optional<double> dsAttachedTime_;
+        static constexpr auto kTimeFormat = "%y-%m-%d_%H-%M-%S";
+
+        bool autoRename_;
+        std::optional<std::tm> logDate_;
+        std::optional<std::string> logMatchText_;
+
+        std::unique_ptr<wpi::log::DataLogWriter> log_;
+        bool isOpen_ = false;
+        AdvantageScopeOpenBehavior openBehavior_;
+
+        LogStorage lastStorage_;
+        int64_t timestampID_;
+
+        std::unordered_map<std::string, int64_t> entryIDs;
+        std::unordered_map<std::string, LoggableType> entryTypes;
+
+        [[nodiscard]] LoggableType GetType(const LogValue& value) const;
+        void AppendValue(int64_t entryID, const LogValue& value, int64_t timestamp);
+    public:
+        WPILOGWriter(const std::string& path, AdvantageScopeOpenBehavior openBehavior);
+        WPILOGWriter(const std::string& path);
+        WPILOGWriter(AdvantageScopeOpenBehavior openBehavior);
+        WPILOGWriter();
+
+        void Start() override;
+        void End() override;
+        void PutTable(const LogTable& table) override;
+    };
+}

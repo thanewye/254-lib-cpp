@@ -20,6 +20,6 @@ namespace akit::networktables {
                                                      const LogValue& value);
     public:
         NT4Publisher();
-        void PutTable(const LogStorage& storage) override;
+        void PutTable(const LogTable& table) override;
     };
 }

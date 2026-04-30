@@ -40,8 +40,9 @@ namespace akit {
 
     void Logger::PeriodicAfterUser() {
         if (!running_) return;
+        LogTable currentTable(currentStorage_);
         for (auto* receiver : receivers_) {
-            receiver->PutTable(currentStorage_);
+            receiver->PutTable(currentTable);
         }
         cycles_++;
     }

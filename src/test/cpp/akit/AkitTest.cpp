@@ -6,14 +6,136 @@
 #include "akit/LogTable.h"
 #include "akit/LoggableInputs.h"
 #include "akit/Logger.h"
+#include "akit/WPILOGWriter.h"
 
 #include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <map>
+#include <optional>
+#include <unordered_map>
+#include <string_view>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
+#include <wpi/DataLogReader.h>
+#include <wpi/MemoryBuffer.h>
 
 namespace akit {
 namespace {
+
+struct ParsedLog {
+    std::map<std::string, int> entryIDs;
+    std::map<std::string, std::string> entryTypes;
+    struct Record {
+        int entry;
+        int64_t timestamp;
+        std::variant<std::monostate, bool, int64_t, double, std::string, std::vector<double>> value;
+    };
+    std::vector<Record> records;
+};
+
+ParsedLog ReadLog(const std::filesystem::path& path) {
+    auto bufferResult = wpi::MemoryBuffer::GetFile(path.string());
+    EXPECT_TRUE(static_cast<bool>(bufferResult));
+    if (!bufferResult) return {};
+
+    wpi::log::DataLogReader reader(std::move(bufferResult).value());
+    EXPECT_TRUE(reader.IsValid());
+
+    ParsedLog parsed;
+    std::unordered_map<int, std::string> entryNames;
+    for (const auto& record : reader) {
+        if (record.IsStart()) {
+            wpi::log::StartRecordData startData;
+            EXPECT_TRUE(record.GetStartData(&startData));
+            parsed.entryIDs.emplace(std::string(startData.name), startData.entry);
+            parsed.entryTypes.emplace(std::string(startData.name), std::string(startData.type));
+            entryNames.emplace(startData.entry, std::string(startData.name));
+            continue;
+        }
+        if (record.IsControl()) continue;
+
+        ParsedLog::Record decoded{
+            .entry = record.GetEntry(),
+            .timestamp = record.GetTimestamp(),
+            .value = std::monostate{}
+        };
+
+        const auto name = entryNames.find(record.GetEntry());
+        EXPECT_NE(name, entryNames.end());
+        const auto& type = parsed.entryTypes.at(name->second);
+        if (type == "boolean") {
+            bool value = false;
+            EXPECT_TRUE(record.GetBoolean(&value));
+            decoded.value = value;
+        } else if (type == "int64") {
+            int64_t value = 0;
+            EXPECT_TRUE(record.GetInteger(&value));
+            decoded.value = value;
+        } else if (type == "double") {
+            double value = 0.0;
+            EXPECT_TRUE(record.GetDouble(&value));
+            decoded.value = value;
+        } else if (type == "string") {
+            std::string_view value;
+            EXPECT_TRUE(record.GetString(&value));
+            decoded.value = std::string(value);
+        } else if (type == "double[]") {
+            std::vector<double> value;
+            EXPECT_TRUE(record.GetDoubleArray(&value));
+            decoded.value = value;
+        }
+
+        parsed.records.push_back(std::move(decoded));
+    }
+
+    return parsed;
+}
+
+int CountEntryRecords(const ParsedLog& log, const std::string& entryName) {
+    const auto entry = log.entryIDs.find(entryName);
+    if (entry == log.entryIDs.end()) return 0;
+
+    int count = 0;
+    for (const auto& record : log.records) {
+        if (record.entry == entry->second) {
+            count++;
+        }
+    }
+    return count;
+}
+
+class WPILOGWriterTest : public ::testing::Test {
+protected:
+    std::filesystem::path tempDir_ =
+        std::filesystem::temp_directory_path() /
+        ("akit-wpilog-test-" + std::to_string(std::rand()));
+
+    void SetUp() override {
+        std::filesystem::remove_all(tempDir_);
+        std::filesystem::create_directories(tempDir_);
+    }
+
+    void TearDown() override {
+        std::filesystem::remove_all(tempDir_);
+    }
+
+    [[nodiscard]] std::filesystem::path LogPath(std::string_view name = "test.wpilog") const {
+        return tempDir_ / name;
+    }
+
+    [[nodiscard]] std::optional<std::filesystem::path> FindSingleLog() const {
+        std::optional<std::filesystem::path> result;
+        for (const auto& entry : std::filesystem::directory_iterator(tempDir_)) {
+            if (entry.path().extension() != ".wpilog") continue;
+            if (result.has_value()) return std::nullopt;
+            result = entry.path();
+        }
+        return result;
+    }
+};
 
 // ─── LogStorage ──────────────────────────────────────────────────────────────
 
@@ -758,6 +880,129 @@ TEST_F(LoggerTest, DumpCurrentStorageOutputsStringValue) {
     Logger::DumpCurrentStorage();
     std::string out = testing::internal::GetCapturedStdout();
     EXPECT_NE(out.find("hello"), std::string::npos);
+}
+
+TEST_F(WPILOGWriterTest, StartCreatesLogFile) {
+    wpilog::WPILOGWriter writer(LogPath().string(), wpilog::WPILOGWriter::NEVER);
+
+    writer.Start();
+
+    EXPECT_TRUE(std::filesystem::exists(LogPath()));
+}
+
+TEST_F(WPILOGWriterTest, PutTableDoesNothingWhenWriterNotStarted) {
+    wpilog::WPILOGWriter writer(LogPath().string(), wpilog::WPILOGWriter::NEVER);
+    LogStorage storage;
+    LogTable table(storage);
+    table.SetTimestamp(100);
+    table.Put("value", double{3.14});
+
+    writer.PutTable(table);
+
+    EXPECT_FALSE(std::filesystem::exists(LogPath()));
+}
+
+TEST_F(WPILOGWriterTest, WritesTimestampAndSupportedValueTypes) {
+    wpilog::WPILOGWriter writer(LogPath().string(), wpilog::WPILOGWriter::NEVER);
+    LogStorage storage;
+    LogTable table(storage);
+
+    table.SetTimestamp(12345);
+    table.Put("flag", bool{true});
+    table.Put("count", int64_t{7});
+    table.Put("value", double{3.14});
+    table.Put("label", std::string{"hello"});
+    table.Put("samples", std::vector<double>{1.0, 2.0});
+
+    writer.Start();
+    writer.PutTable(table);
+    writer.End();
+
+    const auto parsed = ReadLog(LogPath());
+    EXPECT_EQ(parsed.entryTypes.at("/Timestamp"), "int64");
+    EXPECT_EQ(parsed.entryTypes.at("flag"), "boolean");
+    EXPECT_EQ(parsed.entryTypes.at("count"), "int64");
+    EXPECT_EQ(parsed.entryTypes.at("value"), "double");
+    EXPECT_EQ(parsed.entryTypes.at("label"), "string");
+    EXPECT_EQ(parsed.entryTypes.at("samples"), "double[]");
+
+    bool flag = false;
+    int64_t count = 0;
+    int64_t timestamp = 0;
+    double value = 0.0;
+    std::string label;
+    std::vector<double> samples;
+
+    for (const auto& record : parsed.records) {
+        if (record.entry == parsed.entryIDs.at("/Timestamp")) {
+            timestamp = std::get<int64_t>(record.value);
+        } else if (record.entry == parsed.entryIDs.at("flag")) {
+            flag = std::get<bool>(record.value);
+        } else if (record.entry == parsed.entryIDs.at("count")) {
+            count = std::get<int64_t>(record.value);
+        } else if (record.entry == parsed.entryIDs.at("value")) {
+            value = std::get<double>(record.value);
+        } else if (record.entry == parsed.entryIDs.at("label")) {
+            label = std::get<std::string>(record.value);
+        } else if (record.entry == parsed.entryIDs.at("samples")) {
+            samples = std::get<std::vector<double>>(record.value);
+        }
+    }
+
+    EXPECT_EQ(timestamp, 12345);
+    EXPECT_TRUE(flag);
+    EXPECT_EQ(count, int64_t{7});
+    EXPECT_DOUBLE_EQ(value, 3.14);
+    EXPECT_EQ(label, "hello");
+    ASSERT_EQ(samples.size(), 2u);
+    EXPECT_DOUBLE_EQ(samples[0], 1.0);
+    EXPECT_DOUBLE_EQ(samples[1], 2.0);
+}
+
+TEST_F(WPILOGWriterTest, UnchangedValuesDoNotAppendDuplicateRecords) {
+    wpilog::WPILOGWriter writer(LogPath().string(), wpilog::WPILOGWriter::NEVER);
+    LogStorage storage;
+    LogTable table(storage);
+
+    writer.Start();
+
+    table.SetTimestamp(100);
+    table.Put("value", double{1.0});
+    writer.PutTable(table);
+
+    table.SetTimestamp(200);
+    writer.PutTable(table);
+
+    table.SetTimestamp(300);
+    table.Put("value", double{2.0});
+    writer.PutTable(table);
+    writer.End();
+
+    const auto parsed = ReadLog(LogPath());
+    EXPECT_EQ(CountEntryRecords(parsed, "/Timestamp"), 3);
+    EXPECT_EQ(CountEntryRecords(parsed, "value"), 2);
+}
+
+TEST_F(WPILOGWriterTest, AutoRenameUsesEventAndMatchData) {
+    wpilog::WPILOGWriter writer(tempDir_.string(), wpilog::WPILOGWriter::NEVER);
+    LogStorage storage;
+    LogTable table(storage);
+
+    table.SetTimestamp(100);
+    table.Put("DriverStation/DSAttached", true);
+    table.Put("SystemStats/SystemTimeValid", true);
+    table.Put("DriverStation/MatchType", int64_t{2});
+    table.Put("DriverStation/MatchNumber", int64_t{7});
+    table.Put("DriverStation/EventName", std::string{"TestEvent"});
+
+    writer.Start();
+    writer.PutTable(table);
+    writer.End();
+
+    const auto logPath = FindSingleLog();
+    ASSERT_TRUE(logPath.has_value());
+    EXPECT_NE(logPath->filename().string().find("testevent"), std::string::npos);
+    EXPECT_NE(logPath->filename().string().find("q7"), std::string::npos);
 }
 
 } // namespace
