@@ -1,10 +1,11 @@
 #pragma once
 
-#include <frc/geometry/Pose2d.h>
-#include <frc/geometry/Pose3d.h>
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
+
+#include <frc/geometry/Pose2d.h>
+#include <frc/geometry/Pose3d.h>
 
 namespace LogUtil {
   inline constexpr bool kShouldLog = true;

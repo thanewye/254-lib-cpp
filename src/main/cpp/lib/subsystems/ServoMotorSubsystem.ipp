@@ -1,12 +1,12 @@
 #pragma once
 
+#include <memory>
+#include <utility>
+
 #include "akit/Logger.h"
 #include "frc/Timer.h"
 #include "frc2/command/Commands.h"
 #include "lib/util/Util.h"
-
-#include <memory>
-#include <utility>
 
 template<IsMotorInputs T, IsMotorIO U>
 ServoMotorSubsystem<T, U>::ServoMotorSubsystem(const ServoMotorSubsystemConfig &config, T inputs, U *io)

@@ -6,10 +6,10 @@
 
 #include <memory>
 
-#include "lib/subsystems/MotorIO.h"
-
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
+
+#include "lib/subsystems/MotorIO.h"
 
 class RobotContainer {
 public:

@@ -1,8 +1,8 @@
-#include "lib/util/StatusSignalManager.h"
 #include "akit/Logger.h"
 #include "ctre/phoenix6/StatusSignal.hpp"
 #include "frc/Errors.h"
 #include "frc/Timer.h"
+#include "lib/util/StatusSignalManager.h"
 
 void StatusSignalManager::Register(ctre::phoenix6::BaseStatusSignal* signal) {
     if (signal == nullptr) return;

@@ -1,10 +1,11 @@
 #pragma once
 
-#include "lib/subsystems/TalonFXIO.h"
+#include <vector>
 
 #include <frc/system/plant/DCMotor.h>
 #include <units/moment_of_inertia.h>
-#include <vector>
+
+#include "lib/subsystems/TalonFXIO.h"
 
 class SimElevator {
  public:

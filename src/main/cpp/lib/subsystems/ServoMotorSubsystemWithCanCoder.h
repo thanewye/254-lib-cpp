@@ -1,9 +1,9 @@
 #pragma once
 
-#include "lib/subsystems/ServoMotorSubsystem.h"
-#include "lib/subsystems/ServoMotorSubsystemWithCanCoderConfig.h"
 #include "lib/subsystems/CanCoderIO.h"
 #include "lib/subsystems/CanCoderInputs.h"
+#include "lib/subsystems/ServoMotorSubsystem.h"
+#include "lib/subsystems/ServoMotorSubsystemWithCanCoderConfig.h"
 
 template<typename T>
 concept IsCanCoderInputs = std::derived_from<T, CanCoderInputs>;

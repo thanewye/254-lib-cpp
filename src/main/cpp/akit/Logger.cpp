@@ -1,9 +1,11 @@
-#include "akit/Logger.h"
 #include <algorithm>
-#include <frc/Timer.h>
-#include <utility>
-#include <iostream>
 #include <cstdint>
+#include <iostream>
+#include <utility>
+
+#include <frc/Timer.h>
+
+#include "akit/Logger.h"
 
 namespace akit {
     int Logger::cycles_ = 0;

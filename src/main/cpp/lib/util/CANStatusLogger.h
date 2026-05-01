@@ -1,15 +1,17 @@
 #pragma once
 
-#include "akit/Logger.h"
-#include "lib/drivers/CANDeviceId.h"
-
 #include <cstddef>
 #include <string>
 #include <vector>
+
+#include <frc/smartdashboard/SmartDashboard.h>
+
 #include <ctre/phoenix6/CANBus.hpp>
 #include <ctre/phoenix6/CANcoder.hpp>
 #include <ctre/phoenix6/TalonFX.hpp>
-#include <frc/smartdashboard/SmartDashboard.h>
+
+#include "akit/Logger.h"
+#include "lib/drivers/CANDeviceId.h"
 
 class CANStatusLogger {
     CANStatusLogger() = default;

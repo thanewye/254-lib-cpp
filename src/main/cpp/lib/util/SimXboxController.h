@@ -1,7 +1,8 @@
 #pragma once
 
-#include "lib/util/ControllerMapping.h"
 #include <frc/XboxController.h>
+
+#include "lib/util/ControllerMapping.h"
 
 class SimXboxController : public frc::XboxController {
  public:

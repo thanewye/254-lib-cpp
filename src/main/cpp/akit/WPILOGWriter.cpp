@@ -1,5 +1,3 @@
-#include "WPILOGWriter.h"
-
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -10,12 +8,14 @@
 #include <random>
 #include <sstream>
 #include <utility>
-#include <frc/RobotBase.h>
+
 #include <frc/Errors.h>
+#include <frc/RobotBase.h>
 #include <frc/RobotController.h>
 
 #include "Logger.h"
 #include "WPILOGConstants.h"
+#include "WPILOGWriter.h"
 
 namespace akit::wpilog {
     LoggableType WPILOGWriter::GetType(const LogValue& value) const {

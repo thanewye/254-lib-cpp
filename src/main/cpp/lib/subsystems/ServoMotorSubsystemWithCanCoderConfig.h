@@ -1,7 +1,7 @@
 #pragma once
 
-#include "lib/subsystems/ServoMotorSubsystemConfig.h"
 #include "lib/subsystems/CanCoderConfig.h"
+#include "lib/subsystems/ServoMotorSubsystemConfig.h"
 
 struct ServoMotorSubsystemWithCanCoderConfig : ServoMotorSubsystemConfig {
     CanCoderConfig canCoderConfig;

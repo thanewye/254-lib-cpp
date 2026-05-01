@@ -1,19 +1,20 @@
 #pragma once
 
-#include "lib/subsystems/MotorInputs.h"
-#include "lib/subsystems/MotorIO.h"
-#include "lib/subsystems/ServoMotorSubsystemConfig.h"
-
-#include <ctre/phoenix6/configs/MotionMagicConfigs.hpp>
-#include <ctre/phoenix6/signals/SpnEnums.hpp>
-#include <frc2/command/CommandPtr.h>
-#include <frc2/command/SubsystemBase.h>
-
 #include <concepts>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/SubsystemBase.h>
+
+#include <ctre/phoenix6/configs/MotionMagicConfigs.hpp>
+#include <ctre/phoenix6/signals/SpnEnums.hpp>
+
+#include "lib/subsystems/MotorIO.h"
+#include "lib/subsystems/MotorInputs.h"
+#include "lib/subsystems/ServoMotorSubsystemConfig.h"
 
 template<typename T>
 concept IsMotorInputs = std::derived_from<T, MotorInputs>;

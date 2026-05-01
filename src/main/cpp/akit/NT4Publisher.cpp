@@ -1,5 +1,6 @@
-#include "NT4Publisher.h"
 #include <networktables/NetworkTableInstance.h>
+
+#include "NT4Publisher.h"
 
 namespace akit::networktables {
     NT4Publisher::NT4Publisher() {

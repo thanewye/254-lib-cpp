@@ -1,12 +1,14 @@
 #pragma once
 
-#include <fmt/format.h>
-#include <frc/Errors.h>
 #include <functional>
-#include <ctre/phoenix6/TalonFX.hpp>
+
+#include <frc/Errors.h>
+
 #include <ctre/phoenix6/CANcoder.hpp>
 #include <ctre/phoenix6/CANdi.hpp>
 #include <ctre/phoenix6/CANrange.hpp>
+#include <ctre/phoenix6/TalonFX.hpp>
+#include <fmt/format.h>
 
 namespace CTREUtil {
 

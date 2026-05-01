@@ -1,9 +1,9 @@
 #pragma once
 
-#include "akit/Logger.h"
-
 #include <cmath>
 #include <utility>
+
+#include "akit/Logger.h"
 
 template<IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
 ServoMotorSubsystemWithCanCoder<T, U, V, W>::ServoMotorSubsystemWithCanCoder(

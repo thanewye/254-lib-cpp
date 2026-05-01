@@ -2,12 +2,11 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-#include "frc2026/RobotContainer.h"
+#include <frc2/command/Commands.h>
 
+#include "frc2026/RobotContainer.h"
 #include "lib/subsystems/MotorIO.h"
 #include "lib/subsystems/ServoMotorSubsystem.h"
-
-#include <frc2/command/Commands.h>
 
 namespace {
     struct RobotContainerTestMotorInputs : MotorInputs {};

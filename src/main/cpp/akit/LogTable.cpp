@@ -1,5 +1,6 @@
-#include "LogTable.h"
 #include <utility>
+
+#include "LogTable.h"
 
 namespace akit {
 

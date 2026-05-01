@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ctre/phoenix6/TalonFX.hpp>
 #include <ctre/phoenix6/StatusSignal.hpp>
+#include <ctre/phoenix6/TalonFX.hpp>
 #include <ctre/phoenix6/controls/DutyCycleOut.hpp>
 #include <ctre/phoenix6/controls/DynamicMotionMagicTorqueCurrentFOC.hpp>
 #include <ctre/phoenix6/controls/DynamicMotionMagicVoltage.hpp>

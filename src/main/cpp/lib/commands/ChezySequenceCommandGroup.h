@@ -1,9 +1,10 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #include <frc2/command/Command.h>
 #include <frc2/command/CommandPtr.h>
-#include <vector>
-#include <memory>
 
 class ChezySequenceCommandGroup : public frc2::Command {
  public:

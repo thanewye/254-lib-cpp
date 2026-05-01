@@ -1,9 +1,11 @@
 #pragma once
 
-#include "ctre/phoenix/StatusCodes.h"
-#include <ctre/phoenix6/StatusSignal.hpp>
 #include <initializer_list>
 #include <vector>
+
+#include <ctre/phoenix6/StatusSignal.hpp>
+
+#include "ctre/phoenix/StatusCodes.h"
 
 class StatusSignalManager {
 public:

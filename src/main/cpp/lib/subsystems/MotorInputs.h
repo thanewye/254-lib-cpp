@@ -2,8 +2,8 @@
 
 #include <string_view>
 
-#include "akit/LoggableInputs.h"
 #include "akit/LogTable.h"
+#include "akit/LoggableInputs.h"
 
 struct MotorInputs : akit::LoggableInputs {
     double velocityUnitsPerSecond = 0.0;

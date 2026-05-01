@@ -1,6 +1,6 @@
 #include "lib/subsystems/TalonFXIO.h"
-#include "lib/util/CTREUtil.h"
 #include "lib/util/CANStatusLogger.h"
+#include "lib/util/CTREUtil.h"
 #include "lib/util/StatusSignalManager.h"
 
 TalonFXIO::TalonFXIO(const ServoMotorSubsystemConfig& config)

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <frc2/command/button/Trigger.h>
 #include <functional>
 #include <string>
+
+#include <frc2/command/button/Trigger.h>
 
 class LoggedTrigger : public frc2::Trigger {
  public:

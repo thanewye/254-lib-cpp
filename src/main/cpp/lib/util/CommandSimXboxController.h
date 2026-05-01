@@ -1,8 +1,8 @@
 #pragma once
 
-#include "lib/util/ControllerMapping.h"
-
 #include <frc2/command/button/CommandXboxController.h>
+
+#include "lib/util/ControllerMapping.h"
 
 class CommandSimXboxController : public frc2::CommandXboxController {
  public:

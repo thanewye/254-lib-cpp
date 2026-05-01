@@ -1,8 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include <frc2/command/Command.h>
 #include <frc2/command/CommandPtr.h>
-#include <memory>
 
 class ChezyProxyCommand : public frc2::Command {
  public:

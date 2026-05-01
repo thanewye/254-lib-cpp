@@ -1,10 +1,10 @@
-#include "lib/subsystems/CanCoderIOHardware.h"
+#include <cmath>
+#include <iostream>
 
+#include "lib/subsystems/CanCoderIOHardware.h"
 #include "lib/util/CANStatusLogger.h"
 #include "lib/util/CTREUtil.h"
 #include "lib/util/StatusSignalManager.h"
-#include <iostream>
-#include <cmath>
 
 CanCoderIOHardware::CanCoderIOHardware(CanCoderConfig config)
     : canCoder(config.CANID.GetDeviceNumber(), config.CANID.GetBus())

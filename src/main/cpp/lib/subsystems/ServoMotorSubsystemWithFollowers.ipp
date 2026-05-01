@@ -5,9 +5,8 @@
 
 #include <frc2/command/Commands.h>
 
-#include "akit/Logger.h"
 #include "ServoMotorSubsystemWithFollowers.h"
-
+#include "akit/Logger.h"
 
 template<IsMotorInputs T, IsMotorIO U>
 ServoMotorSubsystemWithFollowers<T, U>::ServoMotorSubsystemWithFollowers(

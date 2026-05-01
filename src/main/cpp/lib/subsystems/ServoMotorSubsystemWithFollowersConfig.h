@@ -1,9 +1,9 @@
 #pragma once
 
-#include "lib/subsystems/ServoMotorSubsystemConfig.h"
-#include "lib/drivers/CANDeviceId.h"
-
 #include <vector>
+
+#include "lib/drivers/CANDeviceId.h"
+#include "lib/subsystems/ServoMotorSubsystemConfig.h"
 
 struct ServoMotorSubsystemWithFollowersConfig : ServoMotorSubsystemConfig {
     struct FollowerConfig {

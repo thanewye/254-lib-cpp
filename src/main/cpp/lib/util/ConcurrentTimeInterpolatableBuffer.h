@@ -1,9 +1,9 @@
 #pragma once
 
-#include <map>
-#include <optional>
 #include <functional>
+#include <map>
 #include <mutex>
+#include <optional>
 
 template <typename T>
 class ConcurrentTimeInterpolatableBuffer {

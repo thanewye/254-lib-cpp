@@ -1,7 +1,8 @@
 #pragma once
 
-#include <ctre/phoenix6/CANBus.hpp>
 #include <string_view>
+
+#include <ctre/phoenix6/CANBus.hpp>
 
 struct CANDeviceId {
     CANDeviceId(int deviceNumber, std::string_view bus = "")

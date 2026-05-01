@@ -1,12 +1,12 @@
 #pragma once
 
-#include "lib/util/FieldConstants.h"
-
-#include <frc/geometry/Pose2d.h>
-
 #include <algorithm>
 #include <cmath>
 #include <functional>
+
+#include <frc/geometry/Pose2d.h>
+
+#include "lib/util/FieldConstants.h"
 
 namespace Util {
     inline constexpr double kEpsilon = 1e-12;

@@ -1,26 +1,26 @@
 // thanks claude
 
-#include "gtest/gtest.h"
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <map>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include <wpi/DataLogReader.h>
+#include <wpi/MemoryBuffer.h>
 
 #include "akit/LogStorage.h"
 #include "akit/LogTable.h"
 #include "akit/LoggableInputs.h"
 #include "akit/Logger.h"
 #include "akit/WPILOGWriter.h"
-
-#include <cstdint>
-#include <cstdlib>
-#include <filesystem>
-#include <map>
-#include <optional>
-#include <unordered_map>
-#include <string_view>
-#include <string>
-#include <utility>
-#include <variant>
-#include <vector>
-#include <wpi/DataLogReader.h>
-#include <wpi/MemoryBuffer.h>
+#include "gtest/gtest.h"
 
 namespace akit {
 namespace {

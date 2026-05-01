@@ -1,8 +1,9 @@
 #pragma once
 
-#include <frc/geometry/Pose2d.h>
-#include <vector>
 #include <functional>
+#include <vector>
+
+#include <frc/geometry/Pose2d.h>
 
 class FuelSim {
  public:

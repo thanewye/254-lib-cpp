@@ -4,11 +4,11 @@
 #include <unordered_map>
 
 #include <networktables/GenericEntry.h>
-#include <networktables/NetworkTable.h>
 #include <networktables/IntegerTopic.h>
-
+#include <networktables/NetworkTable.h>
 
 #include "akit/LogDataReceiver.h"
+
 namespace akit::networktables {
     class NT4Publisher : public LogDataReceiver {
         LogStorage lastStorage_;

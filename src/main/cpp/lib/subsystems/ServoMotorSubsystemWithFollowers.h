@@ -1,9 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "lib/subsystems/ServoMotorSubsystem.h"
 #include "lib/subsystems/ServoMotorSubsystemWithFollowersConfig.h"
-
-#include <vector>
 
 template<IsMotorInputs T, IsMotorIO U>
 class ServoMotorSubsystemWithFollowers : public ServoMotorSubsystem<T, U> {

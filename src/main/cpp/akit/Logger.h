@@ -4,8 +4,8 @@
 #include <string_view>
 
 #include "LogDataReceiver.h"
-#include "LoggableInputs.h"
 #include "LogStorage.h"
+#include "LoggableInputs.h"
 
 namespace akit {
 

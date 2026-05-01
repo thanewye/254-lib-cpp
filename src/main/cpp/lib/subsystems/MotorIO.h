@@ -1,10 +1,11 @@
 #pragma once
 
-#include "lib/subsystems/MotorInputs.h"
-#include "lib/drivers/CANDeviceId.h"
-#include <ctre/phoenix6/signals/SpnEnums.hpp>
 #include <ctre/phoenix6/configs/MotionMagicConfigs.hpp>
 #include <ctre/phoenix6/configs/VoltageConfigs.hpp>
+#include <ctre/phoenix6/signals/SpnEnums.hpp>
+
+#include "lib/drivers/CANDeviceId.h"
+#include "lib/subsystems/MotorInputs.h"
 
 class MotorIO {
 public:

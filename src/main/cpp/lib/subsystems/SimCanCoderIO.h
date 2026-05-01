@@ -1,8 +1,8 @@
 #pragma once
 
-#include "lib/subsystems/CanCoderIOHardware.h"
-
 #include <functional>
+
+#include "lib/subsystems/CanCoderIOHardware.h"
 
 class SimCanCoderIO : public CanCoderIOHardware {
  public:

@@ -1,10 +1,11 @@
 #pragma once
 
-#include "lib/drivers/CANDeviceId.h"
-
-#include <string>
 #include <functional>
+#include <string>
+
 #include <ctre/phoenix6/TalonFX.hpp>
+
+#include "lib/drivers/CANDeviceId.h"
 
 struct ServoMotorSubsystemConfig {
     enum class Motor { KrakenX60, KrakenX44, UNSPECIFIED };
