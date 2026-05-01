@@ -4,13 +4,18 @@
 #include <string_view>
 
 struct CANDeviceId {
-  CANDeviceId(int deviceNumber, std::string_view bus = "");
+    CANDeviceId(int deviceNumber, std::string_view bus = "")
+        : m_deviceNumber(deviceNumber), m_bus(bus) {}
 
-  int GetDeviceNumber() const { return m_deviceNumber; }
-  const ctre::phoenix6::CANBus& GetBus() const { return m_bus; }
-  bool operator==(const CANDeviceId& other) const;
+    int GetDeviceNumber() const { return m_deviceNumber; }
+    const ctre::phoenix6::CANBus &GetBus() const { return m_bus; }
 
- private:
-  int m_deviceNumber;
-  ctre::phoenix6::CANBus m_bus;
+    bool operator==(const CANDeviceId &other) const {
+        return m_deviceNumber == other.m_deviceNumber &&
+               m_bus.GetName() == other.m_bus.GetName();
+    }
+
+private:
+    int m_deviceNumber;
+    ctre::phoenix6::CANBus m_bus;
 };

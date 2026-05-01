@@ -18,7 +18,10 @@ add_executable(frc_2026_cpp ${ROBOT_SOURCES}
         src/main/cpp/akit/WPILOGWriter.h
         src/main/cpp/akit/LoggableType.h
         src/main/cpp/akit/WPILOGWriter.cpp
-        src/main/cpp/akit/WPILOGConstants.h)
+        src/main/cpp/akit/WPILOGConstants.h
+        src/main/cpp/lib/subsystems/ServoMotorSubsystem.ipp
+        src/main/cpp/lib/subsystems/ServoMotorSubsystemWithFollowers.ipp
+        src/main/cpp/lib/subsystems/ServoMotorSubsystemWithCanCoder.ipp)
 
 target_include_directories(frc_2026_cpp PRIVATE
         ${CMAKE_SOURCE_DIR}/src/main/cpp

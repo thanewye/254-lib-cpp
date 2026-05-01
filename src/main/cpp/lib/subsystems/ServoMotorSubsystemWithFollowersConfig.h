@@ -6,10 +6,10 @@
 #include <vector>
 
 struct ServoMotorSubsystemWithFollowersConfig : ServoMotorSubsystemConfig {
-  struct FollowerConfig {
-    ServoMotorSubsystemConfig config;
-    bool inverted = false;
-  };
+    struct FollowerConfig {
+        ServoMotorSubsystemConfig config;
+        bool inverted = false;
+    };
 
-  std::vector<FollowerConfig> followers;
+    std::vector<FollowerConfig> followers;
 };

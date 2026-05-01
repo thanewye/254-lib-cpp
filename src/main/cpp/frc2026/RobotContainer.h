@@ -4,14 +4,22 @@
 
 #pragma once
 
+#include <memory>
+
+#include "lib/subsystems/MotorIO.h"
+
 #include <frc2/command/CommandPtr.h>
+#include <frc2/command/SubsystemBase.h>
 
 class RobotContainer {
- public:
-  RobotContainer();
+public:
+    RobotContainer();
 
-  frc2::CommandPtr GetAutonomousCommand();
+    frc2::CommandPtr GetAutonomousCommand();
 
- private:
-  void ConfigureBindings();
+private:
+    void ConfigureBindings();
+
+    std::unique_ptr<MotorIO> m_compileProofServoIO;
+    std::unique_ptr<frc2::SubsystemBase> m_compileProofServoSubsystem;
 };

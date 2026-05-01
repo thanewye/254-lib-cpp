@@ -1,0 +1,156 @@
+#pragma once
+
+#include <cassert>
+#include <utility>
+
+#include <frc2/command/Commands.h>
+
+#include "akit/Logger.h"
+#include "ServoMotorSubsystemWithFollowers.h"
+
+
+template<IsMotorInputs T, IsMotorIO U>
+ServoMotorSubsystemWithFollowers<T, U>::ServoMotorSubsystemWithFollowers(
+    ServoMotorSubsystemWithFollowersConfig &config, T leaderInputs, U *leaderIO,
+    std::vector<T> followerInputs, std::vector<U *> followerIOs)
+    : ServoMotorSubsystem<T, U>(config, std::move(leaderInputs), leaderIO)
+      , leaderConfig(config)
+      , followerConfigs(leaderConfig.followers)
+      , followerInputs(std::move(followerInputs))
+      , followerIOs(std::move(followerIOs)) {
+    assert(this->followerInputs.size() == this->followerIOs.size());
+    assert(this->followerInputs.size() == this->followerConfigs.size());
+    followerLogKeys.reserve(this->followerInputs.size());
+    for (size_t i = 0; i < this->followerIOs.size(); i++) {
+        MotorIO *follower = this->followerIOs[i];
+        follower->Follow(leaderConfig.talonCANID, followerConfigs[i].inverted);
+        followerLogKeys.push_back(this->LogKey("/follower" + std::to_string(i)));
+    }
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystemWithFollowers<T, U>::Periodic() {
+    ServoMotorSubsystem<T, U>::Periodic();
+    for (size_t i = 0; i < followerConfigs.size(); i++) {
+        followerIOs[i]->ReadInputs(followerInputs[i]);
+        akit::Logger::ProcessInputs(followerLogKeys[i], followerInputs[i]);
+    }
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystemWithFollowers<T, U>::SetCurrentPosition(double positionUnits) {
+    ServoMotorSubsystem<T, U>::SetCurrentPosition(positionUnits);
+    for (auto *follower: followerIOs) {
+        follower->SetCurrentPosition(positionUnits);
+    }
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystemWithFollowers<T, U>::SetCurrentPositionAsZero() {
+    ServoMotorSubsystem<T, U>::SetCurrentPositionAsZero();
+    for (auto *follower: followerIOs) {
+        follower->SetCurrentPositionAsZero();
+    }
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<T, U>::GetCurrentPosition() const {
+    double averagePosition = this->inputs.unitPosition;
+    for (const auto &follower: followerInputs) {
+        averagePosition += follower.unitPosition;
+    }
+    return averagePosition / (followerIOs.size() + 1);
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<T, U>::GetCurrentVelocity() const {
+    double averageVelocity = this->inputs.velocityUnitsPerSecond;
+    for (const auto &follower: followerInputs) {
+        averageVelocity += follower.velocityUnitsPerSecond;
+    }
+    return averageVelocity / (followerIOs.size() + 1);
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<T, U>::GetAverageStatorCurrentAmps() const {
+    return GetStatorCurrentAmps() / (followerIOs.size() + 1);
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<T, U>::GetAverageSupplyCurrentAmps() const {
+    return GetSupplyCurrentAmps() / (followerIOs.size() + 1);
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<T, U>::GetStatorCurrentAmps() const {
+    double totalCurrent = this->inputs.currentStatorAmps;
+    for (const auto &follower: followerInputs) {
+        totalCurrent += follower.currentStatorAmps;
+    }
+    return totalCurrent;
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<T, U>::GetSupplyCurrentAmps() const {
+    double totalCurrent = this->inputs.currentSupplyAmps;
+    for (const auto &follower: followerInputs) {
+        totalCurrent += follower.currentSupplyAmps;
+    }
+    return totalCurrent;
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystemWithFollowers<T, U>::SystemTestCommand(
+    std::string_view testName, double dutyCycle, units::second_t duration) {
+    std::vector<frc2::CommandPtr> allTests;
+
+    allTests.push_back(frc2::cmd::Sequence(
+        frc2::cmd::RunOnce([this] {
+            this->SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue::Coast);
+            for (auto *followerIo: followerIOs) {
+                followerIo->SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue::Coast);
+                followerIo->SetOpenLoopDutyCycle(0.0);
+            }
+        }),
+        frc2::cmd::Run([this, dutyCycle, name = std::string{testName}] {
+            this->SetOpenLoopDutyCycleImpl(dutyCycle);
+            akit::Logger::RecordOutput("SystemTest/" + name + "/Leader/StatorCurrent", this->inputs.currentStatorAmps);
+            akit::Logger::RecordOutput("SystemTest/" + name + "/Leader/SupplyCurrent", this->inputs.currentSupplyAmps);
+            akit::Logger::RecordOutput("SystemTest/" + name + "/Leader/Velocity", this->inputs.velocityUnitsPerSecond);
+        }, {this}).WithTimeout(duration)
+    ));
+
+    for (size_t i = 0; i < followerIOs.size(); i++) {
+        allTests.push_back(frc2::cmd::Sequence(
+            frc2::cmd::RunOnce([this, i] {
+                this->SetOpenLoopDutyCycleImpl(0.0);
+                for (size_t j = 0; j < followerIOs.size(); j++) {
+                    if (j != i) {
+                        followerIOs[j]->SetOpenLoopDutyCycle(0.0);
+                    }
+                }
+            }),
+            frc2::cmd::Run([this, i, dutyCycle, name = std::string{testName}] {
+                followerIOs[i]->SetOpenLoopDutyCycle(dutyCycle);
+                akit::Logger::RecordOutput("SystemTest/" + name + "/Follower" + std::to_string(i) + "/StatorCurrent",
+                                           followerInputs[i].currentStatorAmps);
+                akit::Logger::RecordOutput("SystemTest/" + name + "/Follower" + std::to_string(i) + "/SupplyCurrent",
+                                           followerInputs[i].currentSupplyAmps);
+                akit::Logger::RecordOutput("SystemTest/" + name + "/Follower" + std::to_string(i) + "/Velocity",
+                                           followerInputs[i].velocityUnitsPerSecond);
+            }, {this}).WithTimeout(duration)
+        ));
+    }
+
+    return frc2::cmd::Sequence(std::move(allTests))
+            .FinallyDo([this](bool interrupted) {
+                this->SetOpenLoopDutyCycleImpl(0.0);
+                this->SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue::Brake);
+                for (size_t i = 0; i < followerIOs.size(); i++) {
+                    followerIOs[i]->SetOpenLoopDutyCycle(0.0);
+                    followerIOs[i]->SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue::Brake);
+                    followerIOs[i]->Follow(leaderConfig.talonCANID, followerConfigs[i].inverted);
+                }
+            })
+            .WithName("Test " + std::string{testName});
+}

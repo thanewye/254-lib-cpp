@@ -5,17 +5,27 @@
 #include "lib/subsystems/CanCoderIO.h"
 #include "lib/subsystems/CanCoderInputs.h"
 
-class ServoMotorSubsystemWithCanCoder : public ServoMotorSubsystem {
- public:
-  ServoMotorSubsystemWithCanCoder(const ServoMotorSubsystemWithCanCoderConfig& config,
-                                   MotorIO* leadIO, CanCoderIO* canCoderIO);
+template<typename T>
+concept IsCanCoderInputs = std::derived_from<T, CanCoderInputs>;
 
-  void Periodic() override;
-  void ResetOffset();
+template<typename T>
+concept IsCanCoderIO = std::derived_from<T, CanCoderIO>;
 
- protected:
-  CanCoderInputs m_canCoderInputs;
+template<IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
+class ServoMotorSubsystemWithCanCoder : public ServoMotorSubsystem<T, U> {
+public:
+    ServoMotorSubsystemWithCanCoder(const ServoMotorSubsystemWithCanCoderConfig &config,
+                                    T inputs, U *io, V cancoderInputs, W *cancoderIO);
 
- private:
-  CanCoderIO* m_canCoderIO;
+    void Periodic() override;
+
+    void ResetOffset();
+
+protected:
+    ServoMotorSubsystemWithCanCoderConfig canCoderConf;
+    bool hasSetOffset = false;
+    V cancoderInputs;
+    W *cancoderIO;
 };
+
+#include "lib/subsystems/ServoMotorSubsystemWithCanCoder.ipp"

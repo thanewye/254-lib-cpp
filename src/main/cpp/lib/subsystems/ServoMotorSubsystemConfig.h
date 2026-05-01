@@ -7,18 +7,17 @@
 #include <ctre/phoenix6/TalonFX.hpp>
 
 struct ServoMotorSubsystemConfig {
-    enum class Motor { KrakenX60, KrakenX44 };
+    enum class Motor { KrakenX60, KrakenX44, UNSPECIFIED };
 
-    std::string name;
+    std::string name = "UNNAMED";
     CANDeviceId talonCANID;
-    ctre::phoenix6::configs::TalonFXConfiguration fxConfig;
-    double updateFrequencyHz = 250.0;
-    bool loadSheddingEnabled = false;
-    std::function<bool()> loadSheddingCondition;
+    ctre::phoenix6::configs::TalonFXConfiguration fxConfig = ctre::phoenix6::configs::TalonFXConfiguration();
+    double updateFrequencyHz = 50.0;
+
     double unitToRotorRatio = 1.0;
-    double kMinPositionUnits = -1e9;
-    double kMaxPositionUnits = 1e9;
-    double momentOfInertia = 0.001;
+    double kMinPositionUnits = -std::numeric_limits<double>::infinity();
+    double kMaxPositionUnits = std::numeric_limits<double>::infinity();
+    double momentOfInertia = 0.5;
     double gearing = 1.0;
-    Motor motor = Motor::KrakenX60;
+    Motor simMotorModel = Motor::UNSPECIFIED;
 };
