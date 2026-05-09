@@ -77,9 +77,14 @@ public:
     void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, CANDeviceId deviceID) {
         devices.emplace_back(name, talon, deviceID.GetDeviceNumber(), std::string(deviceID.GetBus().GetName()));
     }
-    
-    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, const ctre::phoenix6::CANBus bus) {
-        devices.emplace_back(name, cancoder, deviceID, std::string(bus.GetName()));
+
+    // no-op because we don't need to track cancoders
+    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID,
+                          const ctre::phoenix6::CANBus bus) {
+        (void) name;
+        (void) cancoder;
+        (void) deviceID;
+        (void) bus;
     }
 
     void InitializeSignalArray() {
@@ -104,7 +109,7 @@ public:
             DeviceStatusInfo& device = devices[i];
             bool isConnected = false;
 
-            if (device.talon != nullptr || device.cancoder != nullptr) {
+            if (device.talon != nullptr) {
                 isConnected = device.supplyVoltage.GetStatus() == ctre::phoenix::StatusCode::OK;
             }
             frc::SmartDashboard::PutBoolean(device.dashboardKey, isConnected);
