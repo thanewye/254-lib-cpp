@@ -14,28 +14,28 @@ public:
     void SetOpenLoopDutyCycleIgnoreLimits(double dutyCycle) override {}
 
     void SetPositionSetpoint(double units) override {}
-    void SetMotionMagicSetpoint(double units, int slot = 0) override {}
+    void SetMotionMagicSetpoint(double units, int slot) override {}
 
     void SetMotionMagicSetpoint(
         double units,
         double velocity,
         double acceleration,
         double jerk,
-        int slot = 0,
-        double feedforward = 0.0) override {}
+        int slot,
+        double feedforward) override {}
 
     void SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue mode) override {}
 
-    void SetVelocitySetpoint(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocitySetpointNoFOC(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot = 0) override {}
+    void SetVelocitySetpoint(double unitsPerSecond, int slot) override {}
+    void SetVelocitySetpointNoFOC(double unitsPerSecond, int slot) override {}
+    void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot) override {}
     void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) override {}
-    void SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocitySetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override {}
-    void SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot = 0) override {}
+    void SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot) override {}
+    void SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot) override {}
+    void SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot) override {}
+    void SetVelocitySetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot) override {}
+    void SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond, int slot) override {}
+    void SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot) override {}
 
     void SetVoltageOutput(double voltage) override {}
 
@@ -49,17 +49,17 @@ public:
     void Follow(const CANDeviceId& masterId, bool opposeMasterDirection) override {}
 
     void SetTorqueCurrentFOC(double current) override {}
-    void SetVelocityTorqueCurrentFOC(double unitsPerSecond, double feedforward = 0.0) override {}
-    void SetPositionTorqueCurrentFOC(double units, double feedforward = 0.0) override {}
-    void SetMotionMagicTorqueCurrentFOC(double units, int slot = 0) override {}
+    void SetVelocityTorqueCurrentFOC(double unitsPerSecond, double feedforward) override {}
+    void SetPositionTorqueCurrentFOC(double units, double feedforward) override {}
+    void SetMotionMagicTorqueCurrentFOC(double units, int slot) override {}
 
     void SetMotionMagicTorqueCurrentFOC(
         double units,
         double velocity,
         double acceleration,
         double jerk,
-        int slot = 0,
-        double feedforward = 0.0) override {}
+        int slot,
+        double feedforward) override {}
 
     void SetMotionMagicConfig(const ctre::phoenix6::configs::MotionMagicConfigs& config) override {}
     void SetVoltageConfig(const ctre::phoenix6::configs::VoltageConfigs& config) override {}
