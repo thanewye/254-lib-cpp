@@ -13,7 +13,8 @@ ServoMotorSubsystem<T, U>::ServoMotorSubsystem(const ServoMotorSubsystemConfig &
     : frc2::SubsystemBase(config.name)
       , io(io)
       , inputs(std::move(inputs))
-      , conf(config) {
+      , conf(config)
+      , defaultSupplyCurrentLimit(config.fxConfig.CurrentLimits.SupplyCurrentLimit) {
     SetDefaultCommand(DutyCycleCommand([] { return 0.0; })
         .WithName(LogKey(" Default Command Neutral"))
         .IgnoringDisable(true));
@@ -23,6 +24,14 @@ template<IsMotorInputs T, IsMotorIO U>
 void ServoMotorSubsystem<T, U>::Periodic() {
     double timestamp = static_cast<double>(frc::Timer::GetFPGATimestamp());
     io->ReadInputs(inputs);
+
+    const bool globalLoadShedding = conf.loadSheddingEnabled && conf.loadSheddingCondition();
+    if (globalLoadShedding != isLoadSheddingActive) {
+        isLoadSheddingActive = globalLoadShedding;
+        SetSupplyCurrentLimitImpl(
+            isLoadSheddingActive ? conf.loadSheddingSupplyCurrentLimitAmps
+                                 : defaultSupplyCurrentLimit);
+    }
 
     akit::Logger::ProcessInputs(GetName(), inputs);
     akit::Logger::RecordOutput(
@@ -210,6 +219,15 @@ template<IsMotorInputs T, IsMotorIO U>
 void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocityMotionMagicSetpoint(unitsPerSecond, slot);
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointImpl(
+    double unitsPerSecond, int slot, double feedforward) {
+    akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointImpl/UnitsPerS"), unitsPerSecond);
+    akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointImpl/UnitsPerS/feedforward"),
+                               feedforward);
+    io->SetVelocityMotionMagicSetpoint(unitsPerSecond, slot, feedforward);
 }
 
 template<IsMotorInputs T, IsMotorIO U>
@@ -622,6 +640,20 @@ frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointCommand(
 }
 
 template<IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointCommand(
+    std::function<double()> velocitySupplier,
+    std::function<double()> feedforwardSupplier,
+    int slot) {
+    return RunEnd(
+                [this, velocitySupplier, feedforwardSupplier, slot] {
+                    SetVelocityMotionMagicSetpointImpl(
+                        velocitySupplier(), slot, feedforwardSupplier());
+                },
+                [] {})
+            .WithName(LogKey(" VelocityMotionMagicControl"));
+}
+
+template<IsMotorInputs T, IsMotorIO U>
 frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoEndCommand(
     std::function<double()> velocitySupplier) {
     return VelocityMotionMagicSetpointNoEndCommand(velocitySupplier, 0);
@@ -632,6 +664,18 @@ frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoEndComm
     std::function<double()> velocitySupplier, int slot) {
     return RunEnd(
                 [this, velocitySupplier, slot] { SetVelocityMotionMagicSetpointImpl(velocitySupplier(), slot); },
+                [] {})
+            .WithName(LogKey(" VelocityMotionMagicControl"));
+}
+
+template<IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoEndCommand(
+    std::function<double()> velocitySupplier, int slot, std::function<double()> feedforwardSupplier) {
+    return RunEnd(
+                [this, velocitySupplier, feedforwardSupplier, slot] {
+                    SetVelocityMotionMagicSetpointImpl(
+                        velocitySupplier(), slot, feedforwardSupplier());
+                },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicControl"));
 }

@@ -21,4 +21,8 @@ struct ServoMotorSubsystemConfig {
     double momentOfInertia = 0.5;
     double gearing = 1.0;
     Motor simMotorModel = Motor::UNSPECIFIED;
+
+    bool loadSheddingEnabled = false;
+    std::function<bool()> loadSheddingCondition = [] { return false; };
+    double loadSheddingSupplyCurrentLimitAmps = 0.0;
 };

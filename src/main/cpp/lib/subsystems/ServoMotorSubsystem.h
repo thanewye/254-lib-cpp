@@ -92,7 +92,9 @@ protected:
     U *io;
     T inputs;
     double positionSetpointUnits = 0.0;
+    bool isLoadSheddingActive = false;
     ServoMotorSubsystemConfig conf;
+    double defaultSupplyCurrentLimit;
 
 public:
     frc2::CommandPtr DutyCycleCommand(std::function<double()> dutyCycleSupplier);
