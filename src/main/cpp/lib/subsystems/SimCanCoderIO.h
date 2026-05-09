@@ -2,15 +2,24 @@
 
 #include <functional>
 
+#include <ctre/phoenix6/sim/CANcoderSimState.hpp>
+
 #include "lib/subsystems/CanCoderIOHardware.h"
 
 class SimCanCoderIO : public CanCoderIOHardware {
- public:
-  SimCanCoderIO(const CanCoderConfig& config,
-                std::function<double()> positionSupplier);
+public:
+    struct SimCanCoderState {
+        double positionRotations = std::numeric_limits<double>::quiet_NaN();
+        double velocityRotations = std::numeric_limits<double>::quiet_NaN();
+    };
 
-  void ReadInputs(CanCoderInputs& inputs) override;
+    SimCanCoderIO(
+        const CanCoderConfig &config,
+        std::function<SimCanCoderState()> stateSupplier);
 
- private:
-  std::function<double()> m_positionSupplier;
+    void ReadInputs(CanCoderInputs &inputs) override;
+
+private:
+    ctre::phoenix6::sim::CANcoderSimState &m_simState;
+    std::function<SimCanCoderState()> m_stateSupplier;
 };
