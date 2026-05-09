@@ -93,6 +93,7 @@ void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot) 
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
         .WithSlot(slot)
+        .WithFeedForward(0_V));
 }
 
 void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) {
@@ -108,6 +109,7 @@ void TalonFXIO::SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int s
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
         .WithSlot(slot)
+        .WithFeedForward(0_V));
 }
 
 void TalonFXIO::SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot) {
@@ -115,6 +117,7 @@ void TalonFXIO::SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, in
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
         .WithSlot(slot)
+        .WithFeedForward(0_A));
 }
 
 void TalonFXIO::SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot) {
@@ -136,6 +139,7 @@ void TalonFXIO::SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
         .WithSlot(slot)
+        .WithFeedForward(0_V));
 }
 
 void TalonFXIO::SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot) {
@@ -143,6 +147,7 @@ void TalonFXIO::SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerS
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
         .WithSlot(slot)
+        .WithFeedForward(0_V));
 }
 
 void TalonFXIO::SetVoltageOutput(double voltage) {
