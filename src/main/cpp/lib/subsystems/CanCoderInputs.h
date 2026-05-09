@@ -4,7 +4,7 @@
 
 struct CanCoderInputs : akit::LoggableInputs {
     double absolutePositionRotations = std::numeric_limits<double>::quiet_NaN();
-    double velocityRotations = std::numeric_limits<double>::quiet_NaN();
+    double velocityRotations = 0.0;
 
     void ToLog(akit::LogTable &table) const override {
         table.Put("absolutePositionRotations", absolutePositionRotations);
