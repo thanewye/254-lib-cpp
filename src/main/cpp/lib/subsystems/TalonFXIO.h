@@ -27,15 +27,15 @@ protected:
     ServoMotorSubsystemConfig config;
 
 private:
-    double RotorToUnits(double rotor) {
+    double RotorToUnits(double rotor) const {
         return rotor * config.unitToRotorRatio;
     }
 
-    double UnitsToRotor(double units) {
+    double UnitsToRotor(double units) const {
         return units / config.unitToRotorRatio;
     }
 
-    double ClampPosition(double units) {
+    double ClampPosition(double units) const {
         return UnitsToRotor(std::clamp(units, config.kMinPositionUnits, config.kMaxPositionUnits));
     }
 
