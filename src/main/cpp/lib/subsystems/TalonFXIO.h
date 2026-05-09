@@ -131,6 +131,7 @@ public:
     void SetVelocitySetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot = 0) override;
     void SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond, int slot = 0) override;
     void SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot = 0) override;
+    void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) override;
     void SetVoltageOutput(double voltage) override;
     void SetCurrentPositionAsZero() override;
     void SetCurrentPosition(double positionUnits) override;

@@ -95,6 +95,14 @@ void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot) 
         .WithSlot(slot)
 }
 
+void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) {
+    talon.SetControl(motionMagicVelocityVoltageControl
+        .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
+        .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
+        .WithSlot(slot)
+        .WithFeedForward(units::voltage::volt_t{feedforward}));
+}
+
 void TalonFXIO::SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot) {
     talon.SetControl(motionMagicVelocityVoltageControlNoFOC
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})

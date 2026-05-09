@@ -76,6 +76,8 @@ protected:
     void SetVelocitySetpointIgnoreLimitsImpl(double unitsPerSecond, int slot);
     void SetVelocitySetpointNoFOCIgnoreLimitsImpl(double unitsPerSecond, int slot);
     void SetVelocityMotionMagicSetpointImpl(double unitsPerSecond, int slot);
+    void SetVelocityMotionMagicSetpointImpl(
+        double unitsPerSecond, int slot, double feedforward);
     void SetVelocityMotionMagicSetpointNoFOCImpl(double unitsPerSecond, int slot);
     void SetVelocityMotionMagicTorqueCurrentFOCImpl(double unitsPerSecond, int slot);
     void SetVelocityMotionMagicSetpointIgnoreLimitsImpl(double unitsPerSecond, int slot);
@@ -194,10 +196,18 @@ public:
         std::function<double()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointCommand(
         std::function<double()> velocitySupplier, int slot);
+    frc2::CommandPtr VelocityMotionMagicSetpointCommand(
+        std::function<double()> velocitySupplier,
+        std::function<double()> feedforwardSupplier,
+        int slot);
     frc2::CommandPtr VelocityMotionMagicSetpointNoEndCommand(
         std::function<double()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointNoEndCommand(
         std::function<double()> velocitySupplier, int slot);
+    frc2::CommandPtr VelocityMotionMagicSetpointNoEndCommand(
+        std::function<double()> velocitySupplier,
+        int slot,
+        std::function<double()> feedforwardSupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointNoFOCNoEndCommand(
         std::function<double()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointNoFOCNoEndCommand(

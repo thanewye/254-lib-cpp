@@ -44,6 +44,8 @@ namespace {
 
         void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot) override {}
 
+        void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) override {}
+
         void SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot) override {}
 
         void SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot) override {}

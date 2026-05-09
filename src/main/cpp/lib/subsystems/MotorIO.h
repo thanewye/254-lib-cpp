@@ -33,6 +33,7 @@ public:
     virtual void SetVelocitySetpointNoFOC(double unitsPerSecond, int slot = 0) = 0;
 
     virtual void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot = 0) = 0;
+    virtual void SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) = 0;
     virtual void SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot = 0) = 0;
 
     virtual void SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot = 0) = 0;
