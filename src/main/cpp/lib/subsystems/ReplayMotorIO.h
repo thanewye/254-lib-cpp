@@ -15,6 +15,7 @@ public:
 
     void SetPositionSetpoint(double units) override {}
     void SetMotionMagicSetpoint(double units, int slot = 0) override {}
+
     void SetMotionMagicSetpoint(
         double units,
         double velocity,
@@ -51,6 +52,7 @@ public:
     void SetVelocityTorqueCurrentFOC(double unitsPerSecond, double feedforward = 0.0) override {}
     void SetPositionTorqueCurrentFOC(double units, double feedforward = 0.0) override {}
     void SetMotionMagicTorqueCurrentFOC(double units, int slot = 0) override {}
+
     void SetMotionMagicTorqueCurrentFOC(
         double units,
         double velocity,

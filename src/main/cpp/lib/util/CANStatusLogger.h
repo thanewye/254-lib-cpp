@@ -17,6 +17,7 @@ class CANStatusLogger {
     CANStatusLogger() = default;
 
     std::vector<ctre::phoenix6::BaseStatusSignal*> signals;
+
     class DeviceStatusInfo {
         friend class CANStatusLogger;
         std::string name;
@@ -27,36 +28,39 @@ class CANStatusLogger {
 
         std::string loggerKey;
         std::string dashboardKey;
+
     public:
         ctre::phoenix6::StatusSignal<units::voltage::volt_t> supplyVoltage;
-        DeviceStatusInfo(const std::string& name,
-            ctre::phoenix6::hardware::TalonFX* talon,
-            const int deviceID,
-            const std::string& bus)
-            : name(name)
-            , talon(talon)
-            , deviceID(deviceID)
-            , bus(bus)
-            , loggerKey("CANStatus/" + name + "ID" + std::to_string(deviceID))
-            , dashboardKey("CAN/" + bus + "/" + name + "ID" + std::to_string(deviceID))
-            , supplyVoltage(talon->GetSupplyVoltage()) {
-                supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
-            }
 
         DeviceStatusInfo(const std::string& name,
-            ctre::phoenix6::hardware::CANcoder* cancoder,
-            const int deviceID,
-            const std::string& bus)
+                         ctre::phoenix6::hardware::TalonFX* talon,
+                         const int deviceID,
+                         const std::string& bus)
             : name(name)
-            , cancoder(cancoder)
-            , deviceID(deviceID)
-            , bus(bus)
-            , loggerKey("CANStatus/" + name + "ID" + std::to_string(deviceID))
-            , dashboardKey("CAN/" + bus + "/" + name + "ID" + std::to_string(deviceID))
-            , supplyVoltage(cancoder->GetSupplyVoltage()) {
-                supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
-            }
+              , talon(talon)
+              , deviceID(deviceID)
+              , bus(bus)
+              , loggerKey("CANstatus/" + name + "ID" + std::to_string(deviceID))
+              , dashboardKey("CAN/" + bus + "/" + name + "ID" + std::to_string(deviceID))
+              , supplyVoltage(talon->GetSupplyVoltage()) {
+            supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
+        }
+
+        DeviceStatusInfo(const std::string& name,
+                         ctre::phoenix6::hardware::CANcoder* cancoder,
+                         const int deviceID,
+                         const std::string& bus)
+            : name(name)
+              , cancoder(cancoder)
+              , deviceID(deviceID)
+              , bus(bus)
+              , loggerKey("CANstatus/" + name + "ID" + std::to_string(deviceID))
+              , dashboardKey("CAN/" + bus + "/" + name + "ID" + std::to_string(deviceID))
+              , supplyVoltage(cancoder->GetSupplyVoltage()) {
+            supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
+        }
     };
+
     std::vector<DeviceStatusInfo> devices;
 
 public:
@@ -65,8 +69,9 @@ public:
         return instance;
     }
 
-    void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, int deviceID, const ctre::phoenix6::CANBus bus) {
-        devices.emplace_back(name, talon, deviceID, std::string(bus.GetName())); 
+    void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, int deviceID,
+                         const ctre::phoenix6::CANBus bus) {
+        devices.emplace_back(name, talon, deviceID, std::string(bus.GetName()));
     }
 
     void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, CANDeviceId deviceID) {
@@ -86,6 +91,7 @@ public:
             }
         }
     }
+
     void UpdateCanStatus() {
         if (signals.empty()) {
             InitializeSignalArray();
@@ -105,5 +111,4 @@ public:
             akit::Logger::RecordOutput(device.loggerKey, isConnected);
         }
     }
-
 };

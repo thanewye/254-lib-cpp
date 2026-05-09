@@ -41,63 +41,65 @@ private:
 
     double lastAppliedSupplyLimitAmps = std::numeric_limits<double>::quiet_NaN();
     double lastAppliedStatorLimitAmps = std::numeric_limits<double>::quiet_NaN();
-    
-    ctre::phoenix6::controls::DutyCycleOut dutyCycleControl = 
-            ctre::phoenix6::controls::DutyCycleOut(0).WithEnableFOC(true);  
-    ctre::phoenix6::controls::DutyCycleOut dutyCycleControlIgnoreLimits = 
+
+    ctre::phoenix6::controls::DutyCycleOut dutyCycleControl =
+            ctre::phoenix6::controls::DutyCycleOut(0).WithEnableFOC(true);
+    ctre::phoenix6::controls::DutyCycleOut dutyCycleControlIgnoreLimits =
             ctre::phoenix6::controls::DutyCycleOut(0).WithEnableFOC(true).WithIgnoreHardwareLimits(true);
-    ctre::phoenix6::controls::DutyCycleOut dutyCycleControlNoFOC = 
+    ctre::phoenix6::controls::DutyCycleOut dutyCycleControlNoFOC =
             ctre::phoenix6::controls::DutyCycleOut(0).WithEnableFOC(false);
 
-    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControl = 
+    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControl =
             ctre::phoenix6::controls::VelocityVoltage(0_rad_per_s).WithEnableFOC(true);
-    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControlNoFOC = 
+    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControlNoFOC =
             ctre::phoenix6::controls::VelocityVoltage(0_rad_per_s).WithEnableFOC(false);
-    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControlIgnoreLimits = 
+    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControlIgnoreLimits =
             ctre::phoenix6::controls::VelocityVoltage(0_rad_per_s).WithEnableFOC(true).WithIgnoreHardwareLimits(true);
-    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControlNoFOCIgnoreLimits = 
+    ctre::phoenix6::controls::VelocityVoltage velocityVoltageControlNoFOCIgnoreLimits =
             ctre::phoenix6::controls::VelocityVoltage(0_rad_per_s).WithEnableFOC(false).WithIgnoreHardwareLimits(true);
 
-    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControl = 
+    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControl =
             ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(true);
-    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlNoFOC = 
+    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlNoFOC =
             ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(false);
-    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlIgnoreLimits = 
-            ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(true).WithIgnoreHardwareLimits(true);
-    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlNoFOCIgnoreLimits = 
-            ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(false).WithIgnoreHardwareLimits(true);
+    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlIgnoreLimits =
+            ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(true).
+            WithIgnoreHardwareLimits(true);
+    ctre::phoenix6::controls::MotionMagicVelocityVoltage motionMagicVelocityVoltageControlNoFOCIgnoreLimits =
+            ctre::phoenix6::controls::MotionMagicVelocityVoltage(0_rad_per_s).WithEnableFOC(false).
+            WithIgnoreHardwareLimits(true);
 
-    ctre::phoenix6::controls::VoltageOut voltageControl = 
+    ctre::phoenix6::controls::VoltageOut voltageControl =
             ctre::phoenix6::controls::VoltageOut(0_V);
 
-    ctre::phoenix6::controls::PositionVoltage positionVoltageControl = 
+    ctre::phoenix6::controls::PositionVoltage positionVoltageControl =
             ctre::phoenix6::controls::PositionVoltage(0_rad).WithEnableFOC(true);
 
-    ctre::phoenix6::controls::MotionMagicVoltage motionMagicPositionControl = 
+    ctre::phoenix6::controls::MotionMagicVoltage motionMagicPositionControl =
             ctre::phoenix6::controls::MotionMagicVoltage(0_rad).WithEnableFOC(true);
 
-    ctre::phoenix6::controls::DynamicMotionMagicVoltage dynamicMotionMagicVoltage = 
+    ctre::phoenix6::controls::DynamicMotionMagicVoltage dynamicMotionMagicVoltage =
             ctre::phoenix6::controls::DynamicMotionMagicVoltage(0_rad, 0_rad_per_s, 0_rad_per_s_sq).WithEnableFOC(true);
 
-    ctre::phoenix6::controls::Follower followerControl = 
+    ctre::phoenix6::controls::Follower followerControl =
             ctre::phoenix6::controls::Follower(0, ctre::phoenix6::signals::MotorAlignmentValue::Aligned);
 
-    ctre::phoenix6::controls::TorqueCurrentFOC torqueCurrentFOC = 
+    ctre::phoenix6::controls::TorqueCurrentFOC torqueCurrentFOC =
             ctre::phoenix6::controls::TorqueCurrentFOC(0_A);
 
-    ctre::phoenix6::controls::VelocityTorqueCurrentFOC velocityTorqueCurrentFOC = 
+    ctre::phoenix6::controls::VelocityTorqueCurrentFOC velocityTorqueCurrentFOC =
             ctre::phoenix6::controls::VelocityTorqueCurrentFOC(0_rad_per_s);
 
-    ctre::phoenix6::controls::PositionTorqueCurrentFOC positionTorqueCurrentFOC = 
+    ctre::phoenix6::controls::PositionTorqueCurrentFOC positionTorqueCurrentFOC =
             ctre::phoenix6::controls::PositionTorqueCurrentFOC(0_rad);
 
-    ctre::phoenix6::controls::MotionMagicTorqueCurrentFOC motionMagicTorqueCurrentFOC = 
+    ctre::phoenix6::controls::MotionMagicTorqueCurrentFOC motionMagicTorqueCurrentFOC =
             ctre::phoenix6::controls::MotionMagicTorqueCurrentFOC(0_rad);
 
-    ctre::phoenix6::controls::DynamicMotionMagicTorqueCurrentFOC dynamicMotionMagicTorqueCurrentFOC = 
+    ctre::phoenix6::controls::DynamicMotionMagicTorqueCurrentFOC dynamicMotionMagicTorqueCurrentFOC =
             ctre::phoenix6::controls::DynamicMotionMagicTorqueCurrentFOC(0_rad, 0_rad_per_s, 0_rad_per_s_sq);
 
-    ctre::phoenix6::controls::MotionMagicVelocityTorqueCurrentFOC motionMagicVelocityTorqueCurrentFOC = 
+    ctre::phoenix6::controls::MotionMagicVelocityTorqueCurrentFOC motionMagicVelocityTorqueCurrentFOC =
             ctre::phoenix6::controls::MotionMagicVelocityTorqueCurrentFOC(0_rad_per_s);
 
     ctre::phoenix6::StatusSignal<units::turn_t> positionSignal;

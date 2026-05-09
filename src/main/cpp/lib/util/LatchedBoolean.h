@@ -4,6 +4,6 @@ class LatchedBoolean {
  public:
   bool Update(bool value);
 
- private:
-  bool m_last = false;
+private:
+    bool m_last = false;
 };
