@@ -9,5 +9,7 @@ struct ServoMotorSubsystemWithCanCoderConfig : ServoMotorSubsystemConfig {
     double canCodergearing = 1.0;
     bool isFusedCancoder = false;
 
-    double GetCanCoderToRotorRatio() const;
+    double GetCanCoderToRotorRatio() const {
+        return gearing / canCodergearing;
+    }
 };

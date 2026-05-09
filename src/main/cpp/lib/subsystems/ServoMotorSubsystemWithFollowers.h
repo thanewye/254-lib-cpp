@@ -20,6 +20,8 @@ public:
 
     double GetCurrentPosition() const override;
 
+    double GetLeaderVelocity() const { return this->inputs.velocityUnitsPerSecond; }
+    
     double GetCurrentVelocity() const override;
 
     double GetStatorCurrentAmps() const override;
