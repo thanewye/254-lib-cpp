@@ -99,3 +99,18 @@ model {
         }
     }
 }
+
+afterEvaluate {
+    tasks.named('build') {
+        setDependsOn([
+            'frcUserProgramOsxuniversalDebugExecutable',
+            'frcUserProgramLinuxathenaReleaseExecutable',
+        ])
+    }
+}
+
+tasks.register('sim') {
+    group = 'build'
+    description = 'Alias for simulateNative.'
+    dependsOn tasks.named('simulateNative')
+}
