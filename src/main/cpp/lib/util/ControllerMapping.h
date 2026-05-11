@@ -4,14 +4,20 @@
 #include <unordered_map>
 
 class ControllerMapping {
- public:
-  ControllerMapping(std::unordered_map<std::string, int> buttons,
-                    std::unordered_map<std::string, int> axes);
+private:
+    std::unordered_map<std::string, int> buttonMap;
+    std::unordered_map<std::string, int> axesMap;
 
-  int GetButton(const std::string& name) const;
-  int GetAxis(const std::string& name) const;
+public:
+    ControllerMapping(std::unordered_map<std::string, int> buttons,
+                      std::unordered_map<std::string, int> axes);
 
- private:
-  std::unordered_map<std::string, int> m_buttons;
-  std::unordered_map<std::string, int> m_axes;
+    [[nodiscard]] int GetButton(const std::string& name) const {
+        return buttonMap.at(name);
+    }
+
+    [[nodiscard]] int GetAxis(const std::string& name) const {
+        return axesMap.at(name);
+    }
+
 };
