@@ -12,13 +12,6 @@ file(GLOB_RECURSE ROBOT_SOURCES
 )
 
 add_executable(frc_2026_cpp ${ROBOT_SOURCES}
-        src/main/cpp/akit/LogDataReceiver.h
-        src/main/cpp/akit/NT4Publisher.h
-        src/main/cpp/akit/NT4Publisher.cpp
-        src/main/cpp/akit/WPILOGWriter.h
-        src/main/cpp/akit/LoggableType.h
-        src/main/cpp/akit/WPILOGWriter.cpp
-        src/main/cpp/akit/WPILOGConstants.h
         src/main/cpp/lib/subsystems/ServoMotorSubsystem.ipp
         src/main/cpp/lib/subsystems/ServoMotorSubsystemWithFollowers.ipp
         src/main/cpp/lib/subsystems/ServoMotorSubsystemWithCanCoder.ipp)
