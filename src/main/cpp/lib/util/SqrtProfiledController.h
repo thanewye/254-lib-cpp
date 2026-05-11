@@ -1,23 +1,36 @@
 #pragma once
 
-#include <units/angular_acceleration.h>
-#include <units/angular_velocity.h>
-#include <units/angle.h>
-#include <units/math.h>
+#include <algorithm>
+#include <cmath>
 
+#include <frc/MathUtil.h>
+#include <units/math.h>
+#include <units/time.h>
+
+#include "lib/util/MathHelpers.h"
+
+template<typename PositionUnit>
 class SqrtProfiledController {
 public:
-    SqrtProfiledController(units::radians_per_second_squared_t maxAcceleration,
-                           units::radians_per_second_t maxVelocity,
-                           units::radian_t linearThreshold);
+    using position_t = units::unit_t<PositionUnit>;
+    using velocity_t = units::unit_t<units::compound_unit<PositionUnit, units::inverse<units::second>>>;
+    using acceleration_t = units::unit_t<units::compound_unit<PositionUnit, units::inverse<units::squared<
+        units::second>>>>;
 
-    void SetConstraints(units::radians_per_second_squared_t maxAcceleration, units::radians_per_second_t maxVelocity) {
+    SqrtProfiledController(acceleration_t maxAcceleration, velocity_t maxVelocity, position_t linearThreshold)
+        : maxAcceleration(units::math::abs(maxAcceleration))
+          , maxVelocity(units::math::abs(maxVelocity))
+          , linearThreshold(units::math::abs(linearThreshold)) {
+        CalculateKp();
+    }
+
+    void SetConstraints(acceleration_t maxAcceleration, velocity_t maxVelocity) {
         this->maxAcceleration = units::math::abs(maxAcceleration);
         this->maxVelocity = units::math::abs(maxVelocity);
         CalculateKp();
     }
 
-    void EnableContinuousInput(units::radian_t minimumInput, units::radian_t maximumInput) {
+    void EnableContinuousInput(position_t minimumInput, position_t maximumInput) {
         this->continuous = true;
         this->minimumInput = minimumInput;
         this->maximumInput = maximumInput;
@@ -27,40 +40,66 @@ public:
         this->continuous = false;
     }
 
-    void SetTolerance(units::radian_t positionTolerance) {
+    void SetTolerance(position_t positionTolerance) {
         this->positionTolerance = units::math::abs(positionTolerance);
     }
 
-    void SetSetpoint(units::radian_t setpoint) {
+    void SetSetpoint(position_t setpoint) {
         this->setpoint = setpoint;
     }
 
-    units::radian_t GetSetpoint() {
+    [[nodiscard]] position_t GetSetpoint() const {
         return this->setpoint;
     }
 
-    [[nodiscard]] bool AtSetpoint(units::radian_t measurement) const {
+    [[nodiscard]] bool AtSetpoint(position_t measurement) const {
         auto error = GetContinuousError(setpoint - measurement);
         return units::math::abs(error) <= positionTolerance;
     }
 
-    units::radians_per_second_t Calculate(units::radian_t measurement, units::radian_t setpoint) {
+    [[nodiscard]] velocity_t Calculate(position_t measurement, position_t setpoint) {
         SetSetpoint(setpoint);
         return Calculate(measurement);
     }
 
-    units::radians_per_second_t Calculate(units::radian_t measurement);
+    [[nodiscard]] velocity_t Calculate(position_t measurement) {
+        auto error = GetContinuousError(setpoint - measurement);
+        auto absError = units::math::abs(error);
+        double output;
+
+        if (absError > linearThreshold) {
+            output = MathHelpers::Signum(error.value()) * std::sqrt(2.0 * maxAcceleration.value() * absError.value());
+        } else {
+            output = kP * error.value();
+        }
+
+        return velocity_t{std::clamp(output, -maxVelocity.value(), maxVelocity.value())};
+    }
 
 private:
-    units::radians_per_second_squared_t maxAcceleration;
-    units::radians_per_second_t maxVelocity;
-    units::radian_t linearThreshold;
+    acceleration_t maxAcceleration;
+    velocity_t maxVelocity;
+    position_t linearThreshold;
     double kP = 0.0;
-    units::radian_t setpoint{0_rad};
-    units::radian_t positionTolerance{0.05_rad};
+    position_t setpoint{0};
+    position_t positionTolerance{0.05};
     bool continuous = false;
-    units::radian_t minimumInput = 0_rad, maximumInput = 0_rad;
+    position_t minimumInput{0}, maximumInput{0};
 
-    void CalculateKp();
-    [[nodiscard]] units::radian_t GetContinuousError(units::radian_t error) const;
+    void CalculateKp() {
+        if (linearThreshold.value() > 0) {
+            kP = std::sqrt(2.0 * maxAcceleration.value() * linearThreshold.value()) / linearThreshold.value();
+        } else {
+            kP = 0;
+        }
+    }
+
+    [[nodiscard]] position_t GetContinuousError(position_t error) const {
+        if (continuous) {
+            return frc::InputModulus(error, minimumInput, maximumInput);
+        }
+        return error;
+    }
 };
+
+using AngularSqrtProfiledController = SqrtProfiledController<units::radian>;
