@@ -1,27 +1,25 @@
 #pragma once
+#include <optional>
 
 class ExponentialMovingAverage {
 public:
-    explicit ExponentialMovingAverage(double alpha) : m_alpha(alpha) {}
+    explicit ExponentialMovingAverage(double alpha) : alpha(alpha) {}
 
     double Calculate(double value) {
-        if (!m_initialized) {
-            m_average = value;
-            m_initialized = true;
+        if (!oldValue.has_value()) {
+            oldValue = value;
             return value;
         }
-
-        m_average += m_alpha * (value - m_average);
-        return m_average;
+        double newValue = oldValue.value() + alpha * (value - oldValue.value());
+        oldValue = newValue;
+        return newValue;
     }
 
     void Reset() {
-        m_average = 0.0;
-        m_initialized = false;
+        oldValue = std::nullopt;
     }
 
 private:
-    double m_alpha;
-    double m_average = 0.0;
-    bool m_initialized = false;
+    double alpha;
+    std::optional<double> oldValue;
 };

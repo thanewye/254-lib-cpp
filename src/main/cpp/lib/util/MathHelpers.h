@@ -1,8 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <cmath>
-#include <numbers>
 
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Rotation2d.h>
@@ -10,14 +8,12 @@
 #include <frc/geometry/Translation2d.h>
 #include <units/angle.h>
 
-#include "lib/util/FieldConstants.h"
-
 namespace MathHelpers {
-    inline const frc::Pose2d kPose2dZero{};
-    inline const frc::Rotation2d kRotation2dZero{};
-    inline const frc::Rotation2d kRotation2dPi = frc::Rotation2d{180_deg};
-    inline const frc::Translation2d kTranslation2dZero{};
-    inline const frc::Transform2d kTransform2dZero{};
+    inline constexpr frc::Pose2d kPose2dZero{};
+    inline constexpr frc::Rotation2d kRotation2dZero{};
+    inline constexpr frc::Rotation2d kRotation2dPi = frc::Rotation2d{180_deg};
+    inline constexpr frc::Translation2d kTranslation2dZero{};
+    inline constexpr frc::Transform2d kTransform2dZero{};
 
     inline frc::Pose2d Pose2dFromRotation(const frc::Rotation2d &rotation) {
         return frc::Pose2d{kTranslation2dZero, rotation};
@@ -35,32 +31,14 @@ namespace MathHelpers {
         return frc::Transform2d{translation, kRotation2dZero};
     }
 
-    inline frc::Pose2d FlipForAlliance(const frc::Pose2d &pose) {
-        return frc::Pose2d{FieldConstants::kFieldLength - pose.X(), pose.Y(), pose.Rotation()};
+    template<typename T>
+    inline T Signum(T value) {
+        if (value > T{0}) return T{1};
+        if (value < T{0}) return T{-1};
+        return T{0};
     }
 
-    inline frc::Translation2d FlipForAlliance(const frc::Translation2d &translation) {
-        return frc::Translation2d{FieldConstants::kFieldLength - translation.X(), translation.Y()};
-    }
-
-    inline units::radian_t WrapAngle(units::radian_t angle) {
-        return units::radian_t{std::remainder(angle.value(), 2.0 * std::numbers::pi)};
-    }
-
-    inline double Deadband(double value, double deadband) {
-        deadband = std::abs(deadband);
-        if (deadband >= 1.0) {
-            return 0.0;
-        }
-
-        if (std::abs(value) <= deadband) {
-            return 0.0;
-        }
-
-        return (value + (value < 0.0 ? deadband : -deadband)) / (1.0 - deadband);
-    }
-
-    inline bool translationWithin(
+    inline bool TranslationWithin(
         const frc::Translation2d &query,
         const frc::Translation2d &cornerA,
         const frc::Translation2d &cornerB) {
@@ -72,14 +50,14 @@ namespace MathHelpers {
                query.Y().value() >= minY && query.Y().value() <= maxY;
     }
 
-    inline bool poseWithin(
+    inline bool PoseWithin(
         const frc::Pose2d &query,
         const frc::Pose2d &cornerA,
         const frc::Pose2d &cornerB) {
-        return translationWithin(query.Translation(), cornerA.Translation(), cornerB.Translation());
+        return TranslationWithin(query.Translation(), cornerA.Translation(), cornerB.Translation());
     }
 
-    inline double reverseInterpolate(
+    inline double ReverseInterpolate(
         const frc::Translation2d &query,
         const frc::Translation2d &start,
         const frc::Translation2d &end) {
@@ -97,11 +75,11 @@ namespace MathHelpers {
                segmentLengthSqr;
     }
 
-    inline double distanceToLineSegment(
+    inline double DistanceToLineSegment(
         const frc::Translation2d &query,
         const frc::Translation2d &start,
         const frc::Translation2d &end) {
-        const double t = reverseInterpolate(query, start, end);
+        const double t = ReverseInterpolate(query, start, end);
         if (t < 0.0) {
             return query.Distance(start).value();
         }
@@ -114,11 +92,11 @@ namespace MathHelpers {
         return query.Distance(closestPoint).value();
     }
 
-    inline double perpendicularDistanceToLine(
+    inline double PerpendicularDistanceToLine(
         const frc::Translation2d &query,
         const frc::Translation2d &start,
         const frc::Translation2d &end) {
-        const double t = reverseInterpolate(query, start, end);
+        const double t = ReverseInterpolate(query, start, end);
         const frc::Translation2d segment = end - start;
         const frc::Translation2d closestPoint = start + segment * t;
         return query.Distance(closestPoint).value();
