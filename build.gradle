@@ -63,6 +63,7 @@ model {
                 }
                 exportedHeaders {
                     srcDir 'src/main/cpp'
+                    srcDir 'third_party/pfr/include'
                 }
             }
 
