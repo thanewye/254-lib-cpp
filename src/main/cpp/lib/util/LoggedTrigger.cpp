@@ -41,32 +41,32 @@ frc2::CommandPtr LoggedTrigger::WrapCommand(frc2::CommandPtr&& command, const st
     cmds.push_back(std::move(command));
 
     return frc2::CommandPtr(std::make_unique<ChezySequenceCommandGroup>(std::move(cmds)))
-        .WithName(cmdName)
-        .WithInterruptBehavior(interruptBehavior);
+            .WithName(cmdName)
+            .WithInterruptBehavior(interruptBehavior);
 }
 
-frc2::Trigger LoggedTrigger::OnTrue(frc2::CommandPtr&& command, std::source_location loc) {
-    return frc2::Trigger::OnTrue(WrapCommand(std::move(command), loc));
+LoggedTrigger LoggedTrigger::OnTrue(frc2::CommandPtr&& command, std::source_location loc) {
+    return Wrap(frc2::Trigger::OnTrue(WrapCommand(std::move(command), loc)));
 }
 
-frc2::Trigger LoggedTrigger::OnFalse(frc2::CommandPtr&& command, std::source_location loc) {
-    return frc2::Trigger::OnFalse(WrapCommand(std::move(command), loc));
+LoggedTrigger LoggedTrigger::OnFalse(frc2::CommandPtr&& command, std::source_location loc) {
+    return Wrap(frc2::Trigger::OnFalse(WrapCommand(std::move(command), loc)));
 }
 
-frc2::Trigger LoggedTrigger::WhileTrue(frc2::CommandPtr&& command, std::source_location loc) {
-    return frc2::Trigger::WhileTrue(WrapCommand(std::move(command), loc));
+LoggedTrigger LoggedTrigger::WhileTrue(frc2::CommandPtr&& command, std::source_location loc) {
+    return Wrap(frc2::Trigger::WhileTrue(WrapCommand(std::move(command), loc)));
 }
 
-frc2::Trigger LoggedTrigger::WhileFalse(frc2::CommandPtr&& command, std::source_location loc) {
-    return frc2::Trigger::WhileFalse(WrapCommand(std::move(command), loc));
+LoggedTrigger LoggedTrigger::WhileFalse(frc2::CommandPtr&& command, std::source_location loc) {
+    return Wrap(frc2::Trigger::WhileFalse(WrapCommand(std::move(command), loc)));
 }
 
-frc2::Trigger LoggedTrigger::ToggleOnTrue(frc2::CommandPtr&& command, std::source_location loc) {
-    return frc2::Trigger::ToggleOnTrue(WrapCommand(std::move(command), loc));
+LoggedTrigger LoggedTrigger::ToggleOnTrue(frc2::CommandPtr&& command, std::source_location loc) {
+    return Wrap(frc2::Trigger::ToggleOnTrue(WrapCommand(std::move(command), loc)));
 }
 
-frc2::Trigger LoggedTrigger::ToggleOnFalse(frc2::CommandPtr&& command, std::source_location loc) {
-    return frc2::Trigger::ToggleOnFalse(WrapCommand(std::move(command), loc));
+LoggedTrigger LoggedTrigger::ToggleOnFalse(frc2::CommandPtr&& command, std::source_location loc) {
+    return Wrap(frc2::Trigger::ToggleOnFalse(WrapCommand(std::move(command), loc)));
 }
 
 LoggedTrigger LoggedTrigger::operator&&(frc2::Trigger rhs) const {

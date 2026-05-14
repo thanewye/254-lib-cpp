@@ -21,12 +21,12 @@ public:
     using Interpolator = std::function<T(const T&, const T&, double)>;
 
     /** Creates a buffer with a custom interpolation function. */
-    static ConcurrentTimeInterpolatableBuffer Create(Interpolator interp, units::second_t historySize) {
+    [[nodiscard]] static ConcurrentTimeInterpolatableBuffer Create(Interpolator interp, units::second_t historySize) {
         return ConcurrentTimeInterpolatableBuffer(std::move(interp), historySize);
     }
 
     /** Creates a buffer using wpi::Lerp as the interpolation function. */
-    static ConcurrentTimeInterpolatableBuffer Create(units::second_t historySize) {
+    [[nodiscard]] static ConcurrentTimeInterpolatableBuffer Create(units::second_t historySize) {
         return ConcurrentTimeInterpolatableBuffer(
             [](const T& a, const T& b, double t) { return wpi::Lerp(a, b, t); },
             historySize);
@@ -50,7 +50,7 @@ public:
      * buffer is empty. Clamps to the nearest edge sample if timestamp is outside
      * the recorded range.
      */
-    std::optional<T> GetSample(double timestamp) const {
+    [[nodiscard]] std::optional<T> GetSample(double timestamp) const {
         std::lock_guard lock(mutex);
         if (buffer.empty()) {
             return std::nullopt;
@@ -78,7 +78,7 @@ public:
     }
 
     /** Returns the most recent {timestamp, value} pair, or nullopt if empty. */
-    std::optional<std::pair<double, T>> GetLatest() const {
+    [[nodiscard]] std::optional<std::pair<double, T>> GetLatest() const {
         std::lock_guard lock(mutex);
         if (buffer.empty()) {
             return std::nullopt;
@@ -88,7 +88,7 @@ public:
     }
 
     /** Returns a snapshot copy of the internal buffer. Used for replaying odometry inputs. */
-    std::map<double, T> GetInternalBuffer() const {
+    [[nodiscard]] std::map<double, T> GetInternalBuffer() const {
         std::lock_guard lock(mutex);
         return buffer;
     }
