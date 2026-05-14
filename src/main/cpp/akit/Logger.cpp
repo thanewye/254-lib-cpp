@@ -49,18 +49,6 @@ namespace akit {
         cycles_++;
     }
 
-    void Logger::ProcessInputs(const std::string_view key, LoggableInputs& inputs) {
-        if (!running_) return;
-
-        LogTable currentTable = LogTable(currentStorage_).GetSubtable(key);
-
-        if (replayMode_) {
-            inputs.FromLog(currentTable);
-        } else {
-            inputs.ToLog(currentTable);
-        }
-    }
-
     void Logger::RecordOutput(const std::string& key, LogValue value) {
         if (!running_) return;
 
