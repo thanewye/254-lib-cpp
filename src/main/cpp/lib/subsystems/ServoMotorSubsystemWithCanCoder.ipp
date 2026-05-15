@@ -5,18 +5,18 @@
 
 #include "akit/Logger.h"
 
-template<IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
-ServoMotorSubsystemWithCanCoder<T, U, V, W>::ServoMotorSubsystemWithCanCoder(
-    const ServoMotorSubsystemWithCanCoderConfig &config,
-    T inputs, U *io, V cancoderInputs, W *cancoderIO)
-    : ServoMotorSubsystem<T, U>(config, std::move(inputs), io)
+template<typename pos_t, IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
+ServoMotorSubsystemWithCanCoder<pos_t, T, U, V, W>::ServoMotorSubsystemWithCanCoder(
+    const ServoMotorSubsystemWithCanCoderConfig<pos_t>& config,
+    T inputs, U* io, V cancoderInputs, W* cancoderIO)
+    : ServoMotorSubsystem<pos_t, T, U>(config, std::move(inputs), io)
       , canCoderConf(config)
       , cancoderInputs(std::move(cancoderInputs))
       , cancoderIO(cancoderIO) {}
 
-template<IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
-void ServoMotorSubsystemWithCanCoder<T, U, V, W>::Periodic() {
-    ServoMotorSubsystem<T, U>::Periodic();
+template<typename pos_t, IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
+void ServoMotorSubsystemWithCanCoder<pos_t, T, U, V, W>::Periodic() {
+    ServoMotorSubsystem<pos_t, T, U>::Periodic();
     cancoderIO->ReadInputs(cancoderInputs);
     akit::Logger::ProcessInputs(this->GetName() + "/CanCoder", cancoderInputs);
 
@@ -28,8 +28,8 @@ void ServoMotorSubsystemWithCanCoder<T, U, V, W>::Periodic() {
     }
 }
 
-template<IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
-void ServoMotorSubsystemWithCanCoder<T, U, V, W>::ResetOffset() {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
+void ServoMotorSubsystemWithCanCoder<pos_t, T, U, V, W>::ResetOffset() {
     this->io->SetCurrentPosition(
         cancoderInputs.absolutePositionRotations * canCoderConf.unitsToCancoderRatio);
 }

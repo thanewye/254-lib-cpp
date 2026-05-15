@@ -5,24 +5,26 @@
 #include "lib/subsystems/ServoMotorSubsystem.h"
 #include "lib/subsystems/ServoMotorSubsystemWithFollowersConfig.h"
 
-template<IsMotorInputs T, IsMotorIO U>
-class ServoMotorSubsystemWithFollowers : public ServoMotorSubsystem<T, U> {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+class ServoMotorSubsystemWithFollowers : public ServoMotorSubsystem<pos_t, T, U> {
 public:
-    ServoMotorSubsystemWithFollowers(ServoMotorSubsystemWithFollowersConfig &config,
-                                     T leaderInputs, U *leaderIO,
-                                     std::vector<T> followerInputs, std::vector<U *> followerIOs);
+    using vel_t = typename ServoMotorSubsystem<pos_t, T, U>::vel_t;
+
+    ServoMotorSubsystemWithFollowers(ServoMotorSubsystemWithFollowersConfig<pos_t>& config,
+                                     T leaderInputs, U* leaderIO,
+                                     std::vector<T> followerInputs, std::vector<U*> followerIOs);
 
     void Periodic() override;
 
     void SetCurrentPositionAsZero() override;
 
-    void SetCurrentPosition(double positionUnits) override;
+    void SetCurrentPosition(pos_t position) override;
 
-    double GetCurrentPosition() const override;
+    pos_t GetCurrentPosition() const override;
 
-    double GetLeaderVelocity() const { return this->inputs.velocityUnitsPerSecond; }
-    
-    double GetCurrentVelocity() const override;
+    vel_t GetLeaderVelocity() const { return vel_t{this->inputs.velocityUnitsPerSecond}; }
+
+    vel_t GetCurrentVelocity() const override;
 
     double GetStatorCurrentAmps() const override;
 
@@ -35,10 +37,10 @@ public:
     frc2::CommandPtr SystemTestCommand(std::string_view testName, double dutyCycle, units::second_t duration);
 
 protected:
-    ServoMotorSubsystemWithFollowersConfig leaderConfig;
-    std::vector<ServoMotorSubsystemWithFollowersConfig::FollowerConfig> followerConfigs;
+    ServoMotorSubsystemWithFollowersConfig<pos_t> leaderConfig;
+    std::vector<typename ServoMotorSubsystemWithFollowersConfig<pos_t>::FollowerConfig> followerConfigs;
     std::vector<T> followerInputs;
-    std::vector<U *> followerIOs;
+    std::vector<U*> followerIOs;
     std::vector<std::string> followerLogKeys;
 };
 

@@ -12,21 +12,22 @@
 #include "lib/subsystems/TalonFXIO.h"
 #include "lib/subsystems/ServoMotorSubsystemWithCanCoderConfig.h"
 
-class SimTalonFXIO : public TalonFXIO {
+template<typename pos_t>
+class SimTalonFXIO : public TalonFXIO<pos_t> {
 public:
-    explicit SimTalonFXIO(const ServoMotorSubsystemConfig &config);
-    SimTalonFXIO(const ServoMotorSubsystemConfig &config,
+    explicit SimTalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config);
+    SimTalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config,
                  frc::sim::DCMotorSim sim);
     ~SimTalonFXIO() override = default;
 
-    void ReadInputs(MotorInputs &inputs) override;
+    void ReadInputs(MotorInputs& inputs) override;
     void SetPositionRad(double radians);
     void OverrideRPS(std::optional<double> rps);
     void OverridePosition(std::optional<double> radians);
     void SetInvertVoltage(bool invertVoltage);
     double GetIntendedRPS() const;
     std::function<SimCanCoderIO::SimCanCoderState()> GetSupplierForCancoder(
-        const ServoMotorSubsystemWithCanCoderConfig &config);
+        const ServoMotorSubsystemWithCanCoderConfig<pos_t>& config);
 
 protected:
     double GetSimRatio() const;
@@ -34,8 +35,7 @@ protected:
     double AddFriction(double motorVoltage, double frictionVoltage) const;
 
 private:
-    static frc::DCMotor GetMotorModel(
-        ServoMotorSubsystemConfig::Motor motorModel);
+    static frc::DCMotor GetMotorModel(ServoMotorModel motorModel);
 
     frc::sim::DCMotorSim sim;
     std::unique_ptr<frc::Notifier> simNotifier;
@@ -53,3 +53,5 @@ private:
     const std::string kSimVelocityRadSKey;
     const std::string kSetPositionRadKey;
 };
+
+#include "lib/subsystems/SimTalonFXIO.ipp"

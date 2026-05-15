@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include <ctre/phoenix6/StatusSignal.hpp>
 #include <ctre/phoenix6/TalonFX.hpp>
 #include <ctre/phoenix6/controls/DutyCycleOut.hpp>
@@ -21,9 +23,10 @@
 #include "lib/subsystems/ServoMotorSubsystemConfig.h"
 #include "units/voltage.h"
 
+template<typename pos_t>
 class TalonFXIO : public MotorIO {
 public:
-    TalonFXIO(const ServoMotorSubsystemConfig& config);
+    TalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config);
     void ReadInputs(MotorInputs& inputs) override;
     void SetOpenLoopDutyCycle(double dutyCycle) override;
     void SetOpenLoopDutyCycleNoFOC(double dutyCycle) override;
@@ -63,19 +66,23 @@ public:
 
 protected:
     ctre::phoenix6::hardware::TalonFX talon;
-    ServoMotorSubsystemConfig config;
+    ServoMotorSubsystemConfig<pos_t> config;
 
 private:
     double RotorToUnits(double rotor) const {
-        return rotor * config.unitToRotorRatio;
+        return rotor * std::isnan(config.effectiveRotorDiameter)
+                   ? config.unitToRotorRatio
+                   : config.unitToRotorRatio * M_PI * config.effectiveRotorDiameter;
     }
 
     double UnitsToRotor(double units) const {
-        return units / config.unitToRotorRatio;
+        return units / std::isnan(config.effectiveRotorDiameter)
+                   ? config.unitToRotorRatio
+                   : config.unitToRotorRatio * M_PI * config.effectiveRotorDiameter;
     }
 
     double ClampPosition(double units) const {
-        return UnitsToRotor(std::clamp(units, config.kMinPositionUnits, config.kMaxPositionUnits));
+        return UnitsToRotor(std::clamp(units, config.kMinPosition.value(), config.kMaxPosition.value()));
     }
 
     double lastAppliedSupplyLimitAmps = std::numeric_limits<double>::quiet_NaN();
@@ -151,3 +158,5 @@ private:
 
     ctre::phoenix6::BaseStatusSignal* signals[7];
 };
+
+#include "lib/subsystems/TalonFXIO.ipp"

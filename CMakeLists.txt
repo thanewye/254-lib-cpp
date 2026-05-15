@@ -14,7 +14,10 @@ file(GLOB_RECURSE ROBOT_SOURCES
 add_executable(frc_2026_cpp ${ROBOT_SOURCES}
         src/main/cpp/lib/subsystems/ServoMotorSubsystem.ipp
         src/main/cpp/lib/subsystems/ServoMotorSubsystemWithFollowers.ipp
-        src/main/cpp/lib/subsystems/ServoMotorSubsystemWithCanCoder.ipp)
+        src/main/cpp/lib/subsystems/ServoMotorSubsystemWithCanCoder.ipp
+        src/main/cpp/lib/subsystems/TalonFXIO.ipp
+        src/main/cpp/lib/subsystems/SimTalonFXIO.ipp
+        src/main/cpp/lib/subsystems/SimElevator.ipp)
 
 target_include_directories(frc_2026_cpp PRIVATE
         ${CMAKE_SOURCE_DIR}/src/main/cpp

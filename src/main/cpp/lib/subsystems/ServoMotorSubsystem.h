@@ -8,6 +8,7 @@
 
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
+#include <units/time.h>
 
 #include <ctre/phoenix6/configs/MotionMagicConfigs.hpp>
 #include <ctre/phoenix6/signals/SpnEnums.hpp>
@@ -22,23 +23,28 @@ concept IsMotorInputs = std::derived_from<T, MotorInputs>;
 template<typename T>
 concept IsMotorIO = std::derived_from<T, MotorIO>;
 
-template<IsMotorInputs T, IsMotorIO U>
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
 class ServoMotorSubsystem : public frc2::SubsystemBase {
 public:
-    ServoMotorSubsystem(const ServoMotorSubsystemConfig& config, T inputs, U* io);
+    using vel_unit = units::compound_unit<
+        typename pos_t::unit_type,
+        units::inverse<units::seconds>>;
+    using vel_t = units::unit_t<vel_unit, typename pos_t::underlying_type>;
+
+    ServoMotorSubsystem(const ServoMotorSubsystemConfig<pos_t>& config, T inputs, U* io);
 
     void Periodic() override;
 
-    [[nodiscard]] virtual double GetCurrentPosition() const { return inputs.unitPosition; }
-    [[nodiscard]] virtual double GetCurrentVelocity() const { return inputs.velocityUnitsPerSecond; }
+    [[nodiscard]] virtual pos_t GetCurrentPosition() const { return pos_t{inputs.unitPosition}; }
+    [[nodiscard]] virtual vel_t GetCurrentVelocity() const { return vel_t{inputs.velocityUnitsPerSecond}; }
     [[nodiscard]] virtual double GetSupplyCurrentAmps() const { return inputs.currentSupplyAmps; }
     [[nodiscard]] virtual double GetStatorCurrentAmps() const { return inputs.currentStatorAmps; }
     [[nodiscard]] double GetAppliedVolts() const { return inputs.appliedVolts; }
     [[nodiscard]] virtual double GetAverageStatorCurrentAmps() const { return GetStatorCurrentAmps(); }
     [[nodiscard]] virtual double GetAverageSupplyCurrentAmps() const { return GetSupplyCurrentAmps(); }
-    [[nodiscard]] double GetPositionSetpointUnits() const { return positionSetpointUnits; }
+    [[nodiscard]] pos_t GetPositionSetpoint() const { return positionSetpoint; }
 
-    virtual void SetCurrentPosition(double positionUnits);
+    virtual void SetCurrentPosition(pos_t position);
     virtual void SetCurrentPositionAsZero();
 
     frc2::CommandPtr DutyCycleCommand(std::function<double()> dutyCycleSupplier);
@@ -50,134 +56,134 @@ public:
     frc2::CommandPtr VoltageCommand(std::function<double()> voltageSupplier);
 
     frc2::CommandPtr SetTorqueCurrentFOCCommand(std::function<double()> currentSupplier);
-    frc2::CommandPtr VelocityTorqueCurrentCommand(std::function<double()> velocitySupplier);
+    frc2::CommandPtr VelocityTorqueCurrentCommand(std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityTorqueCurrentCommand(
-        std::function<double()> velocitySupplier,
+        std::function<vel_t()> velocitySupplier,
         std::function<double()> feedforwardSupplier);
 
-    frc2::CommandPtr PositionSetpointCommand(std::function<double()> unitSupplier);
+    frc2::CommandPtr PositionSetpointCommand(std::function<pos_t()> unitSupplier);
     frc2::CommandPtr PositionSetpointUntilOnTargetCommand(
-        std::function<double()> unitSupplier, std::function<double()> epsilonSupplier);
-    frc2::CommandPtr PositionTorqueCurrentFOCCommand(std::function<double()> unitSupplier);
+        std::function<pos_t()> unitSupplier, std::function<pos_t()> epsilonSupplier);
+    frc2::CommandPtr PositionTorqueCurrentFOCCommand(std::function<pos_t()> unitSupplier);
 
-    frc2::CommandPtr MotionMagicSetpointCommand(std::function<double()> unitSupplier);
-    frc2::CommandPtr MotionMagicSetpointCommand(std::function<double()> unitSupplier, int slot);
+    frc2::CommandPtr MotionMagicSetpointCommand(std::function<pos_t()> unitSupplier);
+    frc2::CommandPtr MotionMagicSetpointCommand(std::function<pos_t()> unitSupplier, int slot);
     frc2::CommandPtr MotionMagicSetpointCommand(
-        std::function<double()> unitSupplier,
+        std::function<pos_t()> unitSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier);
     frc2::CommandPtr MotionMagicSetpointCommand(
-        std::function<double()> unitSupplier,
+        std::function<pos_t()> unitSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
         int slot);
     frc2::CommandPtr MotionMagicSetpointCommand(
-        std::function<double()> unitSupplier,
+        std::function<pos_t()> unitSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
         std::function<double()> feedforwardSupplier,
         int slot);
     frc2::CommandPtr MotionMagicSetpointCommandBlocking(
-        std::function<double()> setpointSupplier, double tolerance);
+        std::function<pos_t()> setpointSupplier, pos_t tolerance);
     frc2::CommandPtr MotionMagicSetpointCommandBlocking(
-        std::function<double()> setpointSupplier, double tolerance, int slot);
+        std::function<pos_t()> setpointSupplier, pos_t tolerance, int slot);
     frc2::CommandPtr MotionMagicSetpointCommandBlocking(
-        std::function<double()> setpointSupplier,
+        std::function<pos_t()> setpointSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-        double tolerance);
+        pos_t tolerance);
     frc2::CommandPtr MotionMagicSetpointCommandBlocking(
-        std::function<double()> setpointSupplier,
+        std::function<pos_t()> setpointSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-        double tolerance,
+        pos_t tolerance,
         int slot);
     frc2::CommandPtr MotionMagicSetpointCommandBlocking(
-        std::function<double()> setpointSupplier,
+        std::function<pos_t()> setpointSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
         std::function<double()> feedforwardSupplier,
-        double tolerance,
+        pos_t tolerance,
         int slot);
 
-    frc2::CommandPtr MotionMagicTorqueCurrentFOCCommand(std::function<double()> unitSupplier);
+    frc2::CommandPtr MotionMagicTorqueCurrentFOCCommand(std::function<pos_t()> unitSupplier);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommand(
-        std::function<double()> unitSupplier, int slot);
+        std::function<pos_t()> unitSupplier, int slot);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommand(
-        std::function<double()> unitSupplier,
+        std::function<pos_t()> unitSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommand(
-        std::function<double()> unitSupplier,
+        std::function<pos_t()> unitSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
         int slot);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommand(
-        std::function<double()> unitSupplier,
+        std::function<pos_t()> unitSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
         std::function<double()> feedforwardSupplier,
         int slot);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommandBlocking(
-        std::function<double()> setpointSupplier, double tolerance);
+        std::function<pos_t()> setpointSupplier, pos_t tolerance);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommandBlocking(
-        std::function<double()> setpointSupplier, double tolerance, int slot);
+        std::function<pos_t()> setpointSupplier, pos_t tolerance, int slot);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommandBlocking(
-        std::function<double()> setpointSupplier,
+        std::function<pos_t()> setpointSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-        double tolerance);
+        pos_t tolerance);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommandBlocking(
-        std::function<double()> setpointSupplier,
+        std::function<pos_t()> setpointSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-        double tolerance,
+        pos_t tolerance,
         int slot);
     frc2::CommandPtr MotionMagicTorqueCurrentFOCCommandBlocking(
-        std::function<double()> setpointSupplier,
+        std::function<pos_t()> setpointSupplier,
         std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
         std::function<double()> feedforwardSupplier,
-        double tolerance,
+        pos_t tolerance,
         int slot);
 
-    frc2::CommandPtr VelocitySetpointCommand(std::function<double()> velocitySupplier);
-    frc2::CommandPtr VelocitySetpointCommand(std::function<double()> velocitySupplier, int slot);
-    frc2::CommandPtr VelocitySetpointNoFOCCommand(std::function<double()> velocitySupplier);
+    frc2::CommandPtr VelocitySetpointCommand(std::function<vel_t()> velocitySupplier);
+    frc2::CommandPtr VelocitySetpointCommand(std::function<vel_t()> velocitySupplier, int slot);
+    frc2::CommandPtr VelocitySetpointNoFOCCommand(std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocitySetpointNoFOCCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocityMotionMagicSetpointCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocityMotionMagicSetpointCommand(
-        std::function<double()> velocitySupplier,
+        std::function<vel_t()> velocitySupplier,
         std::function<double()> feedforwardSupplier,
         int slot);
     frc2::CommandPtr VelocityMotionMagicSetpointNoEndCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointNoEndCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocityMotionMagicSetpointNoEndCommand(
-        std::function<double()> velocitySupplier,
+        std::function<vel_t()> velocitySupplier,
         int slot,
         std::function<double()> feedforwardSupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointNoFOCNoEndCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointNoFOCNoEndCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocityMotionMagicTorqueCurrentFOCCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicTorqueCurrentFOCCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocityMotionMagicTorqueCurrentFOCNoEndCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicTorqueCurrentFOCNoEndCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocitySetpointIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocitySetpointIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocitySetpointNoFOCIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocitySetpointNoFOCIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocityMotionMagicSetpointIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
     frc2::CommandPtr VelocityMotionMagicSetpointNoFOCIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier);
+        std::function<vel_t()> velocitySupplier);
     frc2::CommandPtr VelocityMotionMagicSetpointNoFOCIgnoreLimitsCommand(
-        std::function<double()> velocitySupplier, int slot);
+        std::function<vel_t()> velocitySupplier, int slot);
 
     frc2::CommandPtr SetCoastCommand();
     frc2::CommandPtr SetMotionMagicConfigCommand(
@@ -246,9 +252,9 @@ protected:
 
     U* io;
     T inputs;
-    double positionSetpointUnits = 0.0;
+    pos_t positionSetpoint{};
     bool isLoadSheddingActive = false;
-    ServoMotorSubsystemConfig conf;
+    ServoMotorSubsystemConfig<pos_t> conf;
     double defaultSupplyCurrentLimit;
 
 private:

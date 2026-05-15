@@ -12,6 +12,7 @@
 #include "lib/subsystems/TalonFXIO.h"
 #include "lib/subsystems/ServoMotorSubsystemWithFollowersConfig.h"
 
+template<typename pos_t>
 class SimElevator {
 public:
     struct SimElevatorConfig {
@@ -23,30 +24,30 @@ public:
         double startingHeightMeters = 0.0;
     };
 
-    SimElevator(const ServoMotorSubsystemConfig &config,
-                const SimElevatorConfig &simConfig);
-    SimElevator(const ServoMotorSubsystemWithFollowersConfig &config,
-                const SimElevatorConfig &simConfig);
+    SimElevator(const ServoMotorSubsystemConfig<pos_t>& config,
+                const SimElevatorConfig& simConfig);
+    SimElevator(const ServoMotorSubsystemWithFollowersConfig<pos_t>& config,
+                const SimElevatorConfig& simConfig);
 
-    TalonFXIO *GetLeadIO();
-    std::vector<TalonFXIO *> GetFollowerIO() const;
+    TalonFXIO<pos_t>* GetLeadIO();
+    std::vector<TalonFXIO<pos_t>*> GetFollowerIO() const;
 
     void UpdateSimState();
 
 private:
-    class SimElevatorTalonFX : public TalonFXIO {
+    class SimElevatorTalonFX : public TalonFXIO<pos_t> {
     public:
-        explicit SimElevatorTalonFX(const ServoMotorSubsystemConfig &config);
+        explicit SimElevatorTalonFX(const ServoMotorSubsystemConfig<pos_t>& config);
 
-        ctre::phoenix6::sim::TalonFXSimState &simState;
+        ctre::phoenix6::sim::TalonFXSimState& simState;
     };
 
     static double AddFriction(double motorVoltage, double frictionVoltage);
 
-    ServoMotorSubsystemConfig config;
+    ServoMotorSubsystemConfig<pos_t> config;
     SimElevatorConfig simConfig;
     SimElevatorTalonFX leadIO;
-    std::vector<std::unique_ptr<SimElevatorTalonFX> > followerIOs;
+    std::vector<std::unique_ptr<SimElevatorTalonFX>> followerIOs;
     std::vector<bool> followerInverted;
     frc::sim::ElevatorSim sim;
     std::unique_ptr<frc::Notifier> simNotifier;
@@ -54,3 +55,5 @@ private:
 
     void StartNotifier();
 };
+
+#include "lib/subsystems/SimElevator.ipp"

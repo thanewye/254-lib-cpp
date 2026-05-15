@@ -8,8 +8,9 @@
 #include "frc2/command/Commands.h"
 #include "lib/util/Util.h"
 
-template<IsMotorInputs T, IsMotorIO U>
-ServoMotorSubsystem<T, U>::ServoMotorSubsystem(const ServoMotorSubsystemConfig &config, T inputs, U *io)
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+ServoMotorSubsystem<pos_t, T, U>::ServoMotorSubsystem(
+    const ServoMotorSubsystemConfig<pos_t>& config, T inputs, U* io)
     : frc2::SubsystemBase(config.name)
       , io(io)
       , inputs(std::move(inputs))
@@ -20,8 +21,8 @@ ServoMotorSubsystem<T, U>::ServoMotorSubsystem(const ServoMotorSubsystemConfig &
         .IgnoringDisable(true));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::Periodic() {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::Periodic() {
     double timestamp = static_cast<double>(frc::Timer::GetFPGATimestamp());
     io->ReadInputs(inputs);
 
@@ -29,8 +30,9 @@ void ServoMotorSubsystem<T, U>::Periodic() {
     if (globalLoadShedding != isLoadSheddingActive) {
         isLoadSheddingActive = globalLoadShedding;
         SetSupplyCurrentLimitImpl(
-            isLoadSheddingActive ? conf.loadSheddingSupplyCurrentLimitAmps
-                                 : defaultSupplyCurrentLimit);
+            isLoadSheddingActive
+                ? conf.loadSheddingSupplyCurrentLimitAmps
+                : defaultSupplyCurrentLimit);
     }
 
     akit::Logger::ProcessInputs(GetName(), inputs);
@@ -42,49 +44,49 @@ void ServoMotorSubsystem<T, U>::Periodic() {
         GetCurrentCommand() == nullptr ? "Default" : GetCurrentCommand()->GetName());
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetCurrentPosition(double positionUnits) {
-    io->SetCurrentPosition(positionUnits);
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetCurrentPosition(pos_t position) {
+    io->SetCurrentPosition(position.value());
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetCurrentPositionAsZero() {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetCurrentPositionAsZero() {
     io->SetCurrentPositionAsZero();
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-std::string ServoMotorSubsystem<T, U>::LogKey(std::string_view suffix) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+std::string ServoMotorSubsystem<pos_t, T, U>::LogKey(std::string_view suffix) {
     auto [it, inserted] = logKeyCache.try_emplace(
         std::string{suffix}, GetName() + std::string{suffix});
     return it->second;
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetOpenLoopDutyCycleImpl(double dutyCycle) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetOpenLoopDutyCycleImpl(double dutyCycle) {
     akit::Logger::RecordOutput(LogKey("/API/setOpenLoopDutyCycle/dutyCycle"), dutyCycle);
     io->SetOpenLoopDutyCycle(dutyCycle);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetOpenLoopDutyCycleNoFOCImpl(double dutyCycle) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetOpenLoopDutyCycleNoFOCImpl(double dutyCycle) {
     akit::Logger::RecordOutput(LogKey("/API/setOpenLoopDutyCycleNoFOC/dutyCycle"), dutyCycle);
     io->SetOpenLoopDutyCycleNoFOC(dutyCycle);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetOpenLoopDutyCycleIgnoreLimitsImpl(double dutyCycle) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetOpenLoopDutyCycleIgnoreLimitsImpl(double dutyCycle) {
     akit::Logger::RecordOutput(LogKey("/API/setOpenLoopDutyCycleIgnoreLimits/dutyCycle"), dutyCycle);
     io->SetOpenLoopDutyCycleIgnoreLimits(dutyCycle);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVoltageImpl(double voltage) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVoltageImpl(double voltage) {
     akit::Logger::RecordOutput(LogKey("/API/setVoltageImpl/voltage"), voltage);
     io->SetVoltageOutput(voltage);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue mode) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue mode) {
     std::string modeName = "Unknown";
     if (mode == ctre::phoenix6::signals::NeutralModeValue::Coast) {
         modeName = "Coast";
@@ -95,32 +97,32 @@ void ServoMotorSubsystem<T, U>::SetNeutralModeImpl(ctre::phoenix6::signals::Neut
     io->SetNeutralMode(mode);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetPositionSetpointImpl(double units) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetPositionSetpointImpl(double units) {
+    positionSetpoint = pos_t{units};
     akit::Logger::RecordOutput(LogKey("/API/setPositionSetpointImp/Units"), units);
     io->SetPositionSetpoint(units);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetPositionTorqueCurrentFOCImpl(double units) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetPositionTorqueCurrentFOCImpl(double units) {
+    positionSetpoint = pos_t{units};
     akit::Logger::RecordOutput(LogKey("/API/setPositionTorqueCurrentFOCImp/Units"), units);
     io->SetPositionTorqueCurrentFOC(units);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetMotionMagicSetpointImpl(double units, int slot) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicSetpointImpl(double units, int slot) {
+    positionSetpoint = pos_t{units};
     akit::Logger::RecordOutput(LogKey("/API/setMotionMagicSetpointImp/Units"), units);
     akit::Logger::RecordOutput(LogKey("/API/setMotionMagicSetpointImp/Slot"), slot);
     io->SetMotionMagicSetpoint(units, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetMotionMagicSetpointImpl(
-    double units, const ctre::phoenix6::configs::MotionMagicConfigs &config, int slot) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicSetpointImpl(
+    double units, const ctre::phoenix6::configs::MotionMagicConfigs& config, int slot) {
+    positionSetpoint = pos_t{units};
     double velocity = config.MotionMagicCruiseVelocity.value();
     double acceleration = config.MotionMagicAcceleration.value();
     double jerk = config.MotionMagicJerk.value();
@@ -133,10 +135,10 @@ void ServoMotorSubsystem<T, U>::SetMotionMagicSetpointImpl(
     io->SetMotionMagicSetpoint(units, velocity, acceleration, jerk, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetMotionMagicSetpointImpl(
-    double units, const ctre::phoenix6::configs::MotionMagicConfigs &config, double feedforward, int slot) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicSetpointImpl(
+    double units, const ctre::phoenix6::configs::MotionMagicConfigs& config, double feedforward, int slot) {
+    positionSetpoint = pos_t{units};
     double velocity = config.MotionMagicCruiseVelocity.value();
     double acceleration = config.MotionMagicAcceleration.value();
     double jerk = config.MotionMagicJerk.value();
@@ -150,18 +152,18 @@ void ServoMotorSubsystem<T, U>::SetMotionMagicSetpointImpl(
     io->SetMotionMagicSetpoint(units, velocity, acceleration, jerk, slot, feedforward);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetMotionMagicTorqueCurrentFOCImpl(double units, int slot) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicTorqueCurrentFOCImpl(double units, int slot) {
+    positionSetpoint = pos_t{units};
     akit::Logger::RecordOutput(LogKey("/API/setMotionMagicTorqueCurrentFOCImp/Units"), units);
     akit::Logger::RecordOutput(LogKey("/API/setMotionMagicTorqueCurrentFOCImp/Slot"), slot);
     io->SetMotionMagicTorqueCurrentFOC(units, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetMotionMagicTorqueCurrentFOCImpl(
-    double units, const ctre::phoenix6::configs::MotionMagicConfigs &config, int slot) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicTorqueCurrentFOCImpl(
+    double units, const ctre::phoenix6::configs::MotionMagicConfigs& config, int slot) {
+    positionSetpoint = pos_t{units};
     double velocity = config.MotionMagicCruiseVelocity.value();
     double acceleration = config.MotionMagicAcceleration.value();
     double jerk = config.MotionMagicJerk.value();
@@ -174,10 +176,10 @@ void ServoMotorSubsystem<T, U>::SetMotionMagicTorqueCurrentFOCImpl(
     io->SetMotionMagicTorqueCurrentFOC(units, velocity, acceleration, jerk, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetMotionMagicTorqueCurrentFOCImpl(
-    double units, const ctre::phoenix6::configs::MotionMagicConfigs &config, double feedforward, int slot) {
-    positionSetpointUnits = units;
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicTorqueCurrentFOCImpl(
+    double units, const ctre::phoenix6::configs::MotionMagicConfigs& config, double feedforward, int slot) {
+    positionSetpoint = pos_t{units};
     double velocity = config.MotionMagicCruiseVelocity.value();
     double acceleration = config.MotionMagicAcceleration.value();
     double jerk = config.MotionMagicJerk.value();
@@ -191,38 +193,38 @@ void ServoMotorSubsystem<T, U>::SetMotionMagicTorqueCurrentFOCImpl(
     io->SetMotionMagicTorqueCurrentFOC(units, velocity, acceleration, jerk, slot, feedforward);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocitySetpointImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocitySetpointImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocitySetpointImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocitySetpoint(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocitySetpointNoFOCImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocitySetpointNoFOCImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocitySetpointNoFOCImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocitySetpointNoFOC(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocitySetpointIgnoreLimitsImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocitySetpointIgnoreLimitsImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocitySetpointIgnoreLimitsImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocitySetpointIgnoreLimits(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocitySetpointNoFOCIgnoreLimitsImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocitySetpointNoFOCIgnoreLimitsImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocitySetpointNoFOCIgnoreLimitsImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocitySetpointNoFOCIgnoreLimits(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocityMotionMagicSetpointImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocityMotionMagicSetpoint(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointImpl(
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocityMotionMagicSetpointImpl(
     double unitsPerSecond, int slot, double feedforward) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointImpl/UnitsPerS"), unitsPerSecond);
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointImpl/UnitsPerS/feedforward"),
@@ -230,64 +232,65 @@ void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointImpl(
     io->SetVelocityMotionMagicSetpoint(unitsPerSecond, slot, feedforward);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointNoFOCImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocityMotionMagicSetpointNoFOCImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointNoFOCImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocityMotionMagicSetpointNoFOC(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicTorqueCurrentFOCImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocityMotionMagicTorqueCurrentFOCImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicTorqueCurrentFOCImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocityMotionMagicTorqueCurrentFOC(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointIgnoreLimitsImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocityMotionMagicSetpointIgnoreLimitsImpl(double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointIgnoreLimitsImpl/UnitsPerS"), unitsPerSecond);
     io->SetVelocityMotionMagicSetpointIgnoreLimits(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocityMotionMagicSetpointNoFOCIgnoreLimitsImpl(double unitsPerSecond, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocityMotionMagicSetpointNoFOCIgnoreLimitsImpl(
+    double unitsPerSecond, int slot) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityMotionMagicSetpointNoFOCIgnoreLimitsImpl/UnitsPerS"),
                                unitsPerSecond);
     io->SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(unitsPerSecond, slot);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetTorqueCurrentFOCImpl(double current) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetTorqueCurrentFOCImpl(double current) {
     akit::Logger::RecordOutput(LogKey("/API/setTorqueCurrentFoC/Current"), current);
     io->SetTorqueCurrentFOC(current);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetVelocityTorqueCurrentFOCImpl(double velocity, double feedforward) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetVelocityTorqueCurrentFOCImpl(double velocity, double feedforward) {
     akit::Logger::RecordOutput(LogKey("/API/setVelocityTorqueCurrentFOC/Velocity"), velocity);
     akit::Logger::RecordOutput(LogKey("/API/setVelocityTorqueCurrentFOC/Feedforward"), feedforward);
     io->SetVelocityTorqueCurrentFOC(velocity, feedforward);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetSupplyCurrentLimitImpl(double amps) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetSupplyCurrentLimitImpl(double amps) {
     akit::Logger::RecordOutput(LogKey("/API/setSupplyCurrentLimit/Amps"), amps);
     io->SetSupplyCurrentLimit(amps);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetStatorCurrentLimitImpl(double amps) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetStatorCurrentLimitImpl(double amps) {
     akit::Logger::RecordOutput(LogKey("/API/setStatorCurrentLimit/Amps"), amps);
     io->SetStatorCurrentLimit(amps);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetMotionMagicConfig(
-    const ctre::phoenix6::configs::MotionMagicConfigs &config) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicConfig(
+    const ctre::phoenix6::configs::MotionMagicConfigs& config) {
     io->SetMotionMagicConfig(config);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::WithoutLimitsTemporarily() {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::WithoutLimitsTemporarily() {
     struct PreviousLimits {
         bool forward = false;
         bool reverse = false;
@@ -305,496 +308,521 @@ frc2::CommandPtr ServoMotorSubsystem<T, U>::WithoutLimitsTemporarily() {
         });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::DutyCycleCommand(std::function<double()> dutyCycleSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::DutyCycleCommand(std::function<double()> dutyCycleSupplier) {
     return RunEnd(
                 [this, dutyCycleSupplier] { SetOpenLoopDutyCycleImpl(dutyCycleSupplier()); },
                 [this] { SetOpenLoopDutyCycleImpl(0.0); })
             .WithName(LogKey(" DutyCycleControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::DutyCycleCommandNoEnd(std::function<double()> dutyCycleSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::DutyCycleCommandNoEnd(std::function<double()> dutyCycleSupplier) {
     return RunEnd(
                 [this, dutyCycleSupplier] { SetOpenLoopDutyCycleImpl(dutyCycleSupplier()); },
                 [] {})
             .WithName(LogKey(" DutyCycleControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::DutyCycleIgnoreLimitsCommand(std::function<double()> dutyCycleSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::DutyCycleIgnoreLimitsCommand(
+    std::function<double()> dutyCycleSupplier) {
     return RunEnd(
                 [this, dutyCycleSupplier] { SetOpenLoopDutyCycleIgnoreLimitsImpl(dutyCycleSupplier()); },
                 [this] { SetOpenLoopDutyCycleIgnoreLimitsImpl(0.0); })
             .WithName(LogKey(" DutyCycleControlIgnoreLimits"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::DutyCycleNoFOCCommand(std::function<double()> dutyCycleSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::DutyCycleNoFOCCommand(std::function<double()> dutyCycleSupplier) {
     return RunEnd(
                 [this, dutyCycleSupplier] { SetOpenLoopDutyCycleNoFOCImpl(dutyCycleSupplier()); },
                 [this] { SetOpenLoopDutyCycleNoFOCImpl(0.0); })
             .WithName(LogKey(" DutyCycleNoFOCControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::DutyCycleNoFOCCommandNoEnd(std::function<double()> dutyCycleSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T,
+    U>::DutyCycleNoFOCCommandNoEnd(std::function<double()> dutyCycleSupplier) {
     return RunEnd(
                 [this, dutyCycleSupplier] { SetOpenLoopDutyCycleNoFOCImpl(dutyCycleSupplier()); },
                 [] {})
             .WithName(LogKey(" DutyCycleNoFOCControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VoltageCommand(std::function<double()> voltageSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VoltageCommand(std::function<double()> voltageSupplier) {
     return RunEnd(
                 [this, voltageSupplier] { SetVoltageImpl(voltageSupplier()); },
                 [this] { SetVoltageImpl(0.0); })
             .WithName(LogKey(" VoltageControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SetTorqueCurrentFOCCommand(std::function<double()> currentSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SetTorqueCurrentFOCCommand(std::function<double()> currentSupplier) {
     return RunEnd(
                 [this, currentSupplier] { SetTorqueCurrentFOCImpl(currentSupplier()); },
                 [] {})
             .WithName(LogKey(" torqueCurrentFOCCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityTorqueCurrentCommand(std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T,
+    U>::VelocityTorqueCurrentCommand(std::function<vel_t()> velocitySupplier) {
     return RunEnd(
-                [this, velocitySupplier] { SetVelocityTorqueCurrentFOCImpl(velocitySupplier(), 0.0); },
+                [this, velocitySupplier] { SetVelocityTorqueCurrentFOCImpl(velocitySupplier().value(), 0.0); },
                 [] {})
             .WithName(LogKey(" velocityTorqueCurrentCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityTorqueCurrentCommand(
-    std::function<double()> velocitySupplier, std::function<double()> feedforwardSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityTorqueCurrentCommand(
+    std::function<vel_t()> velocitySupplier, std::function<double()> feedforwardSupplier) {
     return RunEnd(
                 [this, velocitySupplier, feedforwardSupplier] {
-                    SetVelocityTorqueCurrentFOCImpl(velocitySupplier(), feedforwardSupplier());
+                    SetVelocityTorqueCurrentFOCImpl(velocitySupplier().value(), feedforwardSupplier());
                 },
                 [] {})
             .WithName(LogKey(" velocityTorqueCurrentCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::PositionSetpointCommand(std::function<double()> unitSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::PositionSetpointCommand(std::function<pos_t()> unitSupplier) {
     return RunEnd(
-                [this, unitSupplier] { SetPositionSetpointImpl(unitSupplier()); },
+                [this, unitSupplier] { SetPositionSetpointImpl(unitSupplier().value()); },
                 [] {})
             .WithName(LogKey(" positionSetpointCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::PositionSetpointUntilOnTargetCommand(
-    std::function<double()> unitSupplier, std::function<double()> epsilonSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::PositionSetpointUntilOnTargetCommand(
+    std::function<pos_t()> unitSupplier, std::function<pos_t()> epsilonSupplier) {
     return PositionSetpointCommand(unitSupplier)
             .Until([this, unitSupplier, epsilonSupplier] {
-                return Util::EpsilonEquals(unitSupplier(), inputs.unitPosition, epsilonSupplier());
+                return Util::EpsilonEquals(unitSupplier().value(), inputs.unitPosition, epsilonSupplier().value());
             });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::PositionTorqueCurrentFOCCommand(std::function<double()> unitSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T,
+    U>::PositionTorqueCurrentFOCCommand(std::function<pos_t()> unitSupplier) {
     return RunEnd(
-                [this, unitSupplier] { SetPositionTorqueCurrentFOCImpl(unitSupplier()); },
+                [this, unitSupplier] { SetPositionTorqueCurrentFOCImpl(unitSupplier().value()); },
                 [] {})
             .WithName(LogKey(" positionTorqueCurrentFOCCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommand(std::function<double()> unitSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommand(std::function<pos_t()> unitSupplier) {
     return MotionMagicSetpointCommand(unitSupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommand(std::function<double()> unitSupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommand(
+    std::function<pos_t()> unitSupplier, int slot) {
     return RunEnd(
-                [this, unitSupplier, slot] { SetMotionMagicSetpointImpl(unitSupplier(), slot); },
+                [this, unitSupplier, slot] { SetMotionMagicSetpointImpl(unitSupplier().value(), slot); },
                 [] {})
             .WithName(LogKey(" motionMagicSetpointCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommand(
-    std::function<double()> unitSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommand(
+    std::function<pos_t()> unitSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier) {
     return MotionMagicSetpointCommand(unitSupplier, configSupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommand(
-    std::function<double()> unitSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommand(
+    std::function<pos_t()> unitSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
     int slot) {
     return RunEnd(
                 [this, unitSupplier, configSupplier, slot] {
-                    SetMotionMagicSetpointImpl(unitSupplier(), configSupplier(), slot);
+                    SetMotionMagicSetpointImpl(unitSupplier().value(), configSupplier(), slot);
                 },
                 [] {})
             .WithName(LogKey(" dynamicMotionMagicSetpointCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommand(
-    std::function<double()> unitSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommand(
+    std::function<pos_t()> unitSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
     std::function<double()> feedforwardSupplier,
     int slot) {
     return RunEnd(
                 [this, unitSupplier, configSupplier, feedforwardSupplier, slot] {
-                    SetMotionMagicSetpointImpl(unitSupplier(), configSupplier(), feedforwardSupplier(), slot);
+                    SetMotionMagicSetpointImpl(unitSupplier().value(), configSupplier(), feedforwardSupplier(), slot);
                 },
                 [] {})
             .WithName(LogKey(" dynamicMotionMagicSetpointCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommandBlocking(
-    std::function<double()> setpointSupplier, double tolerance) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlocking(
+    std::function<pos_t()> setpointSupplier, pos_t tolerance) {
     return MotionMagicSetpointCommandBlocking(setpointSupplier, tolerance, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommandBlocking(
-    std::function<double()> setpointSupplier, double tolerance, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlocking(
+    std::function<pos_t()> setpointSupplier, pos_t tolerance, int slot) {
     return MotionMagicSetpointCommand([setpointSupplier] { return setpointSupplier(); }, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(GetCurrentPosition(), setpointSupplier(), tolerance);
+                return Util::EpsilonEquals(
+                    GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommandBlocking(
-    std::function<double()> setpointSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlocking(
+    std::function<pos_t()> setpointSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-    double tolerance) {
+    pos_t tolerance) {
     return MotionMagicSetpointCommandBlocking(setpointSupplier, configSupplier, tolerance, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommandBlocking(
-    std::function<double()> setpointSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlocking(
+    std::function<pos_t()> setpointSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-    double tolerance,
+    pos_t tolerance,
     int slot) {
     return MotionMagicSetpointCommand(setpointSupplier, configSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(GetCurrentPosition(), setpointSupplier(), tolerance);
+                return Util::EpsilonEquals(
+                    GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicSetpointCommandBlocking(
-    std::function<double()> setpointSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlocking(
+    std::function<pos_t()> setpointSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
     std::function<double()> feedforwardSupplier,
-    double tolerance,
+    pos_t tolerance,
     int slot) {
     return MotionMagicSetpointCommand(setpointSupplier, configSupplier, feedforwardSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(GetCurrentPosition(), setpointSupplier(), tolerance);
+                return Util::EpsilonEquals(
+                    GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommand(std::function<double()> unitSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommand(
+    std::function<pos_t()> unitSupplier) {
     return MotionMagicTorqueCurrentFOCCommand(unitSupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommand(
-    std::function<double()> unitSupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommand(
+    std::function<pos_t()> unitSupplier, int slot) {
     return RunEnd(
-                [this, unitSupplier, slot] { SetMotionMagicTorqueCurrentFOCImpl(unitSupplier(), slot); },
+                [this, unitSupplier, slot] { SetMotionMagicTorqueCurrentFOCImpl(unitSupplier().value(), slot); },
                 [] {})
             .WithName(LogKey(" motionMagicTorqueCurrentFOCCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommand(
-    std::function<double()> unitSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommand(
+    std::function<pos_t()> unitSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier) {
     return MotionMagicTorqueCurrentFOCCommand(unitSupplier, configSupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommand(
-    std::function<double()> unitSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommand(
+    std::function<pos_t()> unitSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
     int slot) {
     return RunEnd(
                 [this, unitSupplier, configSupplier, slot] {
-                    SetMotionMagicTorqueCurrentFOCImpl(unitSupplier(), configSupplier(), slot);
+                    SetMotionMagicTorqueCurrentFOCImpl(unitSupplier().value(), configSupplier(), slot);
                 },
                 [] {})
             .WithName(LogKey(" dynamicMotionMagicTorqueCurrentFOCCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommand(
-    std::function<double()> unitSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommand(
+    std::function<pos_t()> unitSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
     std::function<double()> feedforwardSupplier,
     int slot) {
     return RunEnd(
                 [this, unitSupplier, configSupplier, feedforwardSupplier, slot] {
-                    SetMotionMagicTorqueCurrentFOCImpl(unitSupplier(), configSupplier(), feedforwardSupplier(), slot);
+                    SetMotionMagicTorqueCurrentFOCImpl(
+                        unitSupplier().value(), configSupplier(), feedforwardSupplier(), slot);
                 },
                 [] {})
             .WithName(LogKey(" dynamicMotionMagicTorqueCurrentFOCCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
-    std::function<double()> setpointSupplier, double tolerance) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
+    std::function<pos_t()> setpointSupplier, pos_t tolerance) {
     return MotionMagicTorqueCurrentFOCCommandBlocking(setpointSupplier, tolerance, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
-    std::function<double()> setpointSupplier, double tolerance, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
+    std::function<pos_t()> setpointSupplier, pos_t tolerance, int slot) {
     return MotionMagicTorqueCurrentFOCCommand([setpointSupplier] { return setpointSupplier(); }, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(GetCurrentPosition(), setpointSupplier(), tolerance);
+                return Util::EpsilonEquals(
+                    GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
-    std::function<double()> setpointSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
+    std::function<pos_t()> setpointSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-    double tolerance) {
+    pos_t tolerance) {
     return MotionMagicTorqueCurrentFOCCommandBlocking(setpointSupplier, configSupplier, tolerance, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
-    std::function<double()> setpointSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
+    std::function<pos_t()> setpointSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
-    double tolerance,
+    pos_t tolerance,
     int slot) {
     return MotionMagicTorqueCurrentFOCCommand(setpointSupplier, configSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(GetCurrentPosition(), setpointSupplier(), tolerance);
+                return Util::EpsilonEquals(
+                    GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
-    std::function<double()> setpointSupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCommandBlocking(
+    std::function<pos_t()> setpointSupplier,
     std::function<ctre::phoenix6::configs::MotionMagicConfigs()> configSupplier,
     std::function<double()> feedforwardSupplier,
-    double tolerance,
+    pos_t tolerance,
     int slot) {
     return MotionMagicTorqueCurrentFOCCommand(setpointSupplier, configSupplier, feedforwardSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(GetCurrentPosition(), setpointSupplier(), tolerance);
+                return Util::EpsilonEquals(
+                    GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointCommand(std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocitySetpointCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
-                [this, velocitySupplier, slot] { SetVelocitySetpointImpl(velocitySupplier(), slot); },
+                [this, velocitySupplier, slot] { SetVelocitySetpointImpl(velocitySupplier().value(), slot); },
                 [] {})
             .WithName(LogKey(" VelocityControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointNoFOCCommand(std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointNoFOCCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocitySetpointNoFOCCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointNoFOCCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointNoFOCCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
-                [this, velocitySupplier, slot] { SetVelocitySetpointNoFOCImpl(velocitySupplier(), slot); },
+                [this, velocitySupplier, slot] { SetVelocitySetpointNoFOCImpl(velocitySupplier().value(), slot); },
                 [] {})
             .WithName(LogKey(" VelocityNoFOCControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocityMotionMagicSetpointCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
-                [this, velocitySupplier, slot] { SetVelocityMotionMagicSetpointImpl(velocitySupplier(), slot); },
+                [this, velocitySupplier, slot] {
+                    SetVelocityMotionMagicSetpointImpl(velocitySupplier().value(), slot);
+                },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointCommand(
-    std::function<double()> velocitySupplier,
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointCommand(
+    std::function<vel_t()> velocitySupplier,
     std::function<double()> feedforwardSupplier,
     int slot) {
     return RunEnd(
                 [this, velocitySupplier, feedforwardSupplier, slot] {
                     SetVelocityMotionMagicSetpointImpl(
-                        velocitySupplier(), slot, feedforwardSupplier());
+                        velocitySupplier().value(), slot, feedforwardSupplier());
                 },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoEndCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointNoEndCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocityMotionMagicSetpointNoEndCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoEndCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointNoEndCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
-                [this, velocitySupplier, slot] { SetVelocityMotionMagicSetpointImpl(velocitySupplier(), slot); },
-                [] {})
-            .WithName(LogKey(" VelocityMotionMagicControl"));
-}
-
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoEndCommand(
-    std::function<double()> velocitySupplier, int slot, std::function<double()> feedforwardSupplier) {
-    return RunEnd(
-                [this, velocitySupplier, feedforwardSupplier, slot] {
-                    SetVelocityMotionMagicSetpointImpl(
-                        velocitySupplier(), slot, feedforwardSupplier());
+                [this, velocitySupplier, slot] {
+                    SetVelocityMotionMagicSetpointImpl(velocitySupplier().value(), slot);
                 },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoFOCNoEndCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointNoEndCommand(
+    std::function<vel_t()> velocitySupplier, int slot, std::function<double()> feedforwardSupplier) {
+    return RunEnd(
+                [this, velocitySupplier, feedforwardSupplier, slot] {
+                    SetVelocityMotionMagicSetpointImpl(
+                        velocitySupplier().value(), slot, feedforwardSupplier());
+                },
+                [] {})
+            .WithName(LogKey(" VelocityMotionMagicControl"));
+}
+
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointNoFOCNoEndCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocityMotionMagicSetpointNoFOCNoEndCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoFOCNoEndCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointNoFOCNoEndCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
-                [this, velocitySupplier, slot] { SetVelocityMotionMagicSetpointNoFOCImpl(velocitySupplier(), slot); },
+                [this, velocitySupplier, slot] {
+                    SetVelocityMotionMagicSetpointNoFOCImpl(velocitySupplier().value(), slot);
+                },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicNoFOCControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicTorqueCurrentFOCCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicTorqueCurrentFOCCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocityMotionMagicTorqueCurrentFOCCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicTorqueCurrentFOCCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicTorqueCurrentFOCCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
                 [this, velocitySupplier, slot] {
-                    SetVelocityMotionMagicTorqueCurrentFOCImpl(velocitySupplier(), slot);
+                    SetVelocityMotionMagicTorqueCurrentFOCImpl(velocitySupplier().value(), slot);
                 },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicTorqueCurrentFOCControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicTorqueCurrentFOCNoEndCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicTorqueCurrentFOCNoEndCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocityMotionMagicTorqueCurrentFOCNoEndCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicTorqueCurrentFOCNoEndCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicTorqueCurrentFOCNoEndCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
                 [this, velocitySupplier, slot] {
-                    SetVelocityMotionMagicTorqueCurrentFOCImpl(velocitySupplier(), slot);
+                    SetVelocityMotionMagicTorqueCurrentFOCImpl(velocitySupplier().value(), slot);
                 },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicTorqueCurrentFOCControl"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocitySetpointIgnoreLimitsCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
-                [this, velocitySupplier, slot] { SetVelocitySetpointIgnoreLimitsImpl(velocitySupplier(), slot); },
+                [this, velocitySupplier, slot] {
+                    SetVelocitySetpointIgnoreLimitsImpl(velocitySupplier().value(), slot);
+                },
                 [] {})
             .WithName(LogKey(" VelocityControlIgnoreLimits"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointNoFOCIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointNoFOCIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocitySetpointNoFOCIgnoreLimitsCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocitySetpointNoFOCIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocitySetpointNoFOCIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
-                [this, velocitySupplier, slot] { SetVelocitySetpointNoFOCIgnoreLimitsImpl(velocitySupplier(), slot); },
+                [this, velocitySupplier, slot] {
+                    SetVelocitySetpointNoFOCIgnoreLimitsImpl(velocitySupplier().value(), slot);
+                },
                 [] {})
             .WithName(LogKey(" VelocityNoFOCControlIgnoreLimits"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocityMotionMagicSetpointIgnoreLimitsCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
                 [this, velocitySupplier, slot] {
-                    SetVelocityMotionMagicSetpointIgnoreLimitsImpl(velocitySupplier(), slot);
+                    SetVelocityMotionMagicSetpointIgnoreLimitsImpl(velocitySupplier().value(), slot);
                 },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicControlIgnoreLimits"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoFOCIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointNoFOCIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier) {
     return VelocityMotionMagicSetpointNoFOCIgnoreLimitsCommand(velocitySupplier, 0);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::VelocityMotionMagicSetpointNoFOCIgnoreLimitsCommand(
-    std::function<double()> velocitySupplier, int slot) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::VelocityMotionMagicSetpointNoFOCIgnoreLimitsCommand(
+    std::function<vel_t()> velocitySupplier, int slot) {
     return RunEnd(
                 [this, velocitySupplier, slot] {
-                    SetVelocityMotionMagicSetpointNoFOCIgnoreLimitsImpl(velocitySupplier(), slot);
+                    SetVelocityMotionMagicSetpointNoFOCIgnoreLimitsImpl(velocitySupplier().value(), slot);
                 },
                 [] {})
             .WithName(LogKey(" VelocityMotionMagicNoFOCControlIgnoreLimits"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SetCoastCommand() {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SetCoastCommand() {
     return StartEnd(
                 [this] { SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue::Coast); },
                 [this] { SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue::Brake); })
@@ -802,49 +830,51 @@ frc2::CommandPtr ServoMotorSubsystem<T, U>::SetCoastCommand() {
             .IgnoringDisable(true);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SetMotionMagicConfigCommand(
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SetMotionMagicConfigCommand(
     ctre::phoenix6::configs::MotionMagicConfigs configs) {
     return frc2::cmd::RunOnce([this, configs] { SetMotionMagicConfig(configs); });
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetSupplyCurrentLimit(double amps) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetSupplyCurrentLimit(double amps) {
     SetSupplyCurrentLimitImpl(amps);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SetSupplyCurrentLimitCommand(double amps) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SetSupplyCurrentLimitCommand(double amps) {
     return RunOnce([this, amps] { SetSupplyCurrentLimitImpl(amps); })
             .WithName(LogKey("/setSupplyCurrentLimitCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SetSupplyCurrentLimitCommand(std::function<double()> ampsSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SetSupplyCurrentLimitCommand(
+    std::function<double()> ampsSupplier) {
     return RunOnce([this, ampsSupplier] { SetSupplyCurrentLimitImpl(ampsSupplier()); })
             .WithName(LogKey("/setSupplyCurrentLimitCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystem<T, U>::SetStatorCurrentLimit(double amps) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystem<pos_t, T, U>::SetStatorCurrentLimit(double amps) {
     SetStatorCurrentLimitImpl(amps);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SetStatorCurrentLimitCommand(double amps) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SetStatorCurrentLimitCommand(double amps) {
     return RunOnce([this, amps] { SetStatorCurrentLimitImpl(amps); })
             .WithName(LogKey("/setStatorCurrentLimitCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SetStatorCurrentLimitCommand(std::function<double()> ampsSupplier) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SetStatorCurrentLimitCommand(
+    std::function<double()> ampsSupplier) {
     return RunOnce([this, ampsSupplier] { SetStatorCurrentLimitImpl(ampsSupplier()); })
             .WithName(LogKey("/setStatorCurrentLimitCommand"));
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystem<T, U>::SystemTestCommand(
-    const std::string &testName, double dutyCycle, double durationSecs) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::SystemTestCommand(
+    const std::string& testName, double dutyCycle, double durationSecs) {
     return frc2::cmd::Sequence(
                 frc2::cmd::RunOnce([this] { SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue::Coast); }),
                 frc2::cmd::Run(
@@ -852,7 +882,8 @@ frc2::CommandPtr ServoMotorSubsystem<T, U>::SystemTestCommand(
                         SetOpenLoopDutyCycleImpl(dutyCycle);
                         akit::Logger::RecordOutput("SystemTest/" + testName + "/StatorCurrent", GetStatorCurrentAmps());
                         akit::Logger::RecordOutput("SystemTest/" + testName + "/SupplyCurrent", GetSupplyCurrentAmps());
-                        akit::Logger::RecordOutput("SystemTest/" + testName + "/Velocity", GetCurrentVelocity());
+                        akit::Logger::RecordOutput("SystemTest/" + testName + "/Velocity",
+                                                   GetCurrentVelocity().value());
                     },
                     {this})
                 .WithTimeout(units::second_t{durationSecs}),

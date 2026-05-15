@@ -11,21 +11,21 @@ concept IsCanCoderInputs = std::derived_from<T, CanCoderInputs>;
 template<typename T>
 concept IsCanCoderIO = std::derived_from<T, CanCoderIO>;
 
-template<IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
-class ServoMotorSubsystemWithCanCoder : public ServoMotorSubsystem<T, U> {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
+class ServoMotorSubsystemWithCanCoder : public ServoMotorSubsystem<pos_t, T, U> {
 public:
-    ServoMotorSubsystemWithCanCoder(const ServoMotorSubsystemWithCanCoderConfig &config,
-                                    T inputs, U *io, V cancoderInputs, W *cancoderIO);
+    ServoMotorSubsystemWithCanCoder(const ServoMotorSubsystemWithCanCoderConfig<pos_t>& config,
+                                    T inputs, U* io, V cancoderInputs, W* cancoderIO);
 
     void Periodic() override;
 
     void ResetOffset();
 
 protected:
-    ServoMotorSubsystemWithCanCoderConfig canCoderConf;
+    ServoMotorSubsystemWithCanCoderConfig<pos_t> canCoderConf;
     bool hasSetOffset = false;
     V cancoderInputs;
-    W *cancoderIO;
+    W* cancoderIO;
 };
 
 #include "lib/subsystems/ServoMotorSubsystemWithCanCoder.ipp"

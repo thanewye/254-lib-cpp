@@ -8,11 +8,11 @@
 #include "ServoMotorSubsystemWithFollowers.h"
 #include "akit/Logger.h"
 
-template<IsMotorInputs T, IsMotorIO U>
-ServoMotorSubsystemWithFollowers<T, U>::ServoMotorSubsystemWithFollowers(
-    ServoMotorSubsystemWithFollowersConfig &config, T leaderInputs, U *leaderIO,
-    std::vector<T> followerInputs, std::vector<U *> followerIOs)
-    : ServoMotorSubsystem<T, U>(config, std::move(leaderInputs), leaderIO)
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+ServoMotorSubsystemWithFollowers<pos_t, T, U>::ServoMotorSubsystemWithFollowers(
+    ServoMotorSubsystemWithFollowersConfig<pos_t>& config, T leaderInputs, U* leaderIO,
+    std::vector<T> followerInputs, std::vector<U*> followerIOs)
+    : ServoMotorSubsystem<pos_t, T, U>(config, std::move(leaderInputs), leaderIO)
       , leaderConfig(config)
       , followerConfigs(leaderConfig.followers)
       , followerInputs(std::move(followerInputs))
@@ -21,92 +21,93 @@ ServoMotorSubsystemWithFollowers<T, U>::ServoMotorSubsystemWithFollowers(
     assert(this->followerInputs.size() == this->followerConfigs.size());
     followerLogKeys.reserve(this->followerInputs.size());
     for (size_t i = 0; i < this->followerIOs.size(); i++) {
-        MotorIO *follower = this->followerIOs[i];
+        MotorIO* follower = this->followerIOs[i];
         follower->Follow(leaderConfig.talonCANID, followerConfigs[i].inverted);
         followerLogKeys.push_back(this->LogKey("/follower" + std::to_string(i)));
     }
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystemWithFollowers<T, U>::Periodic() {
-    ServoMotorSubsystem<T, U>::Periodic();
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystemWithFollowers<pos_t, T, U>::Periodic() {
+    ServoMotorSubsystem<pos_t, T, U>::Periodic();
     for (size_t i = 0; i < followerConfigs.size(); i++) {
         followerIOs[i]->ReadInputs(followerInputs[i]);
         akit::Logger::ProcessInputs(followerLogKeys[i], followerInputs[i]);
     }
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystemWithFollowers<T, U>::SetCurrentPosition(double positionUnits) {
-    ServoMotorSubsystem<T, U>::SetCurrentPosition(positionUnits);
-    for (auto *follower: followerIOs) {
-        follower->SetCurrentPosition(positionUnits);
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystemWithFollowers<pos_t, T, U>::SetCurrentPosition(pos_t position) {
+    ServoMotorSubsystem<pos_t, T, U>::SetCurrentPosition(position);
+    for (auto* follower : followerIOs) {
+        follower->SetCurrentPosition(position.value());
     }
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-void ServoMotorSubsystemWithFollowers<T, U>::SetCurrentPositionAsZero() {
-    ServoMotorSubsystem<T, U>::SetCurrentPositionAsZero();
-    for (auto *follower: followerIOs) {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+void ServoMotorSubsystemWithFollowers<pos_t, T, U>::SetCurrentPositionAsZero() {
+    ServoMotorSubsystem<pos_t, T, U>::SetCurrentPositionAsZero();
+    for (auto* follower : followerIOs) {
         follower->SetCurrentPositionAsZero();
     }
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-double ServoMotorSubsystemWithFollowers<T, U>::GetCurrentPosition() const {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+pos_t ServoMotorSubsystemWithFollowers<pos_t, T, U>::GetCurrentPosition() const {
     double averagePosition = this->inputs.unitPosition;
-    for (const auto &follower: followerInputs) {
+    for (const auto& follower : followerInputs) {
         averagePosition += follower.unitPosition;
     }
-    return averagePosition / (followerIOs.size() + 1);
+    return pos_t{averagePosition / (followerIOs.size() + 1)};
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-double ServoMotorSubsystemWithFollowers<T, U>::GetCurrentVelocity() const {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+typename ServoMotorSubsystemWithFollowers<pos_t, T, U>::vel_t
+ServoMotorSubsystemWithFollowers<pos_t, T, U>::GetCurrentVelocity() const {
     double averageVelocity = this->inputs.velocityUnitsPerSecond;
-    for (const auto &follower: followerInputs) {
+    for (const auto& follower : followerInputs) {
         averageVelocity += follower.velocityUnitsPerSecond;
     }
-    return averageVelocity / (followerIOs.size() + 1);
+    return vel_t{averageVelocity / (followerIOs.size() + 1)};
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-double ServoMotorSubsystemWithFollowers<T, U>::GetAverageStatorCurrentAmps() const {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<pos_t, T, U>::GetAverageStatorCurrentAmps() const {
     return GetStatorCurrentAmps() / (followerIOs.size() + 1);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-double ServoMotorSubsystemWithFollowers<T, U>::GetAverageSupplyCurrentAmps() const {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<pos_t, T, U>::GetAverageSupplyCurrentAmps() const {
     return GetSupplyCurrentAmps() / (followerIOs.size() + 1);
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-double ServoMotorSubsystemWithFollowers<T, U>::GetStatorCurrentAmps() const {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<pos_t, T, U>::GetStatorCurrentAmps() const {
     double totalCurrent = this->inputs.currentStatorAmps;
-    for (const auto &follower: followerInputs) {
+    for (const auto& follower : followerInputs) {
         totalCurrent += follower.currentStatorAmps;
     }
     return totalCurrent;
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-double ServoMotorSubsystemWithFollowers<T, U>::GetSupplyCurrentAmps() const {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+double ServoMotorSubsystemWithFollowers<pos_t, T, U>::GetSupplyCurrentAmps() const {
     double totalCurrent = this->inputs.currentSupplyAmps;
-    for (const auto &follower: followerInputs) {
+    for (const auto& follower : followerInputs) {
         totalCurrent += follower.currentSupplyAmps;
     }
     return totalCurrent;
 }
 
-template<IsMotorInputs T, IsMotorIO U>
-frc2::CommandPtr ServoMotorSubsystemWithFollowers<T, U>::SystemTestCommand(
+template<typename pos_t, IsMotorInputs T, IsMotorIO U>
+frc2::CommandPtr ServoMotorSubsystemWithFollowers<pos_t, T, U>::SystemTestCommand(
     std::string_view testName, double dutyCycle, units::second_t duration) {
     std::vector<frc2::CommandPtr> allTests;
 
     allTests.push_back(frc2::cmd::Sequence(
         frc2::cmd::RunOnce([this] {
             this->SetNeutralModeImpl(ctre::phoenix6::signals::NeutralModeValue::Coast);
-            for (auto *followerIo: followerIOs) {
+            for (auto* followerIo : followerIOs) {
                 followerIo->SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue::Coast);
                 followerIo->SetOpenLoopDutyCycle(0.0);
             }

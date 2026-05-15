@@ -1,4 +1,4 @@
-#include "lib/subsystems/SimTalonFXIO.h"
+#pragma once
 
 #include <ctre/phoenix6/signals/SpnEnums.hpp>
 #include <ctre/phoenix6/sim/ChassisReference.hpp>
@@ -10,19 +10,20 @@
 
 #include "akit/Logger.h"
 
-frc::DCMotor SimTalonFXIO::GetMotorModel(
-    ServoMotorSubsystemConfig::Motor motorModel) {
+template<typename pos_t>
+frc::DCMotor SimTalonFXIO<pos_t>::GetMotorModel(ServoMotorModel motorModel) {
     switch (motorModel) {
-        case ServoMotorSubsystemConfig::Motor::KrakenX44:
+        case ServoMotorModel::KrakenX44:
             return frc::DCMotor::KrakenX44(1);
-        case ServoMotorSubsystemConfig::Motor::KrakenX60:
-        case ServoMotorSubsystemConfig::Motor::UNSPECIFIED:
+        case ServoMotorModel::KrakenX60:
+        case ServoMotorModel::UNSPECIFIED:
         default:
             return frc::DCMotor::KrakenX60(1);
     }
 }
 
-SimTalonFXIO::SimTalonFXIO(const ServoMotorSubsystemConfig &config)
+template<typename pos_t>
+SimTalonFXIO<pos_t>::SimTalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config)
     : SimTalonFXIO(
         config,
         frc::sim::DCMotorSim(
@@ -33,22 +34,23 @@ SimTalonFXIO::SimTalonFXIO(const ServoMotorSubsystemConfig &config)
             GetMotorModel(config.simMotorModel),
             {0.001, 0.001})) {}
 
-SimTalonFXIO::SimTalonFXIO(const ServoMotorSubsystemConfig &config,
-                           frc::sim::DCMotorSim sim)
-    : TalonFXIO(config)
+template<typename pos_t>
+SimTalonFXIO<pos_t>::SimTalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config,
+                                  frc::sim::DCMotorSim sim)
+    : TalonFXIO<pos_t>(config)
       , sim(std::move(sim))
       , kSimVoltageKey(config.name + "/Sim/SimulatorVoltage")
       , kSimPositionRadKey(config.name + "/Sim/SimulatorPositionRadians")
       , kSimRawRotorPositionKey(config.name + "/Sim/setRawRotorPosition")
       , kSimVelocityRadSKey(config.name + "/Sim/SimulatorVelocityRadS")
       , kSetPositionRadKey(config.name + "/Sim/setPositionRad") {
-    auto &simState = talon.GetSimState();
+    auto& simState = this->talon.GetSimState();
     simState.Orientation =
             config.fxConfig.MotorOutput.Inverted ==
             ctre::phoenix6::signals::InvertedValue::Clockwise_Positive
                 ? ctre::phoenix6::sim::ChassisReference::Clockwise_Positive
                 : ctre::phoenix6::sim::ChassisReference::CounterClockwise_Positive;
-    if (config.simMotorModel == ServoMotorSubsystemConfig::Motor::KrakenX44) {
+    if (config.simMotorModel == ServoMotorModel::KrakenX44) {
         simState.SetMotorType(
             ctre::phoenix6::sim::TalonFXSimState::MotorType::KrakenX44);
     }
@@ -58,13 +60,15 @@ SimTalonFXIO::SimTalonFXIO(const ServoMotorSubsystemConfig &config,
     simNotifier->StartPeriodic(5_ms);
 }
 
-void SimTalonFXIO::ReadInputs(MotorInputs &inputs) {
-    TalonFXIO::ReadInputs(inputs);
+template<typename pos_t>
+void SimTalonFXIO<pos_t>::ReadInputs(MotorInputs& inputs) {
+    TalonFXIO<pos_t>::ReadInputs(inputs);
 }
 
-void SimTalonFXIO::SetPositionRad(double radians) {
+template<typename pos_t>
+void SimTalonFXIO<pos_t>::SetPositionRad(double radians) {
     const double invertMultiplier =
-            config.fxConfig.MotorOutput.Inverted ==
+            this->config.fxConfig.MotorOutput.Inverted ==
             ctre::phoenix6::signals::InvertedValue::Clockwise_Positive
                 ? -1.0
                 : 1.0;
@@ -72,25 +76,30 @@ void SimTalonFXIO::SetPositionRad(double radians) {
     akit::Logger::RecordOutput(kSetPositionRadKey, radians);
 }
 
-void SimTalonFXIO::OverrideRPS(std::optional<double> rps) {
+template<typename pos_t>
+void SimTalonFXIO<pos_t>::OverrideRPS(std::optional<double> rps) {
     overrideRPS = rps;
 }
 
-void SimTalonFXIO::OverridePosition(std::optional<double> radians) {
+template<typename pos_t>
+void SimTalonFXIO<pos_t>::OverridePosition(std::optional<double> radians) {
     overridePositionRad = radians;
 }
 
-void SimTalonFXIO::SetInvertVoltage(bool invertVoltage) {
+template<typename pos_t>
+void SimTalonFXIO<pos_t>::SetInvertVoltage(bool invertVoltage) {
     this->invertVoltage = invertVoltage;
 }
 
-double SimTalonFXIO::GetIntendedRPS() const {
+template<typename pos_t>
+double SimTalonFXIO<pos_t>::GetIntendedRPS() const {
     return lastRPS.load();
 }
 
+template<typename pos_t>
 std::function<SimCanCoderIO::SimCanCoderState()>
-SimTalonFXIO::GetSupplierForCancoder(
-    const ServoMotorSubsystemWithCanCoderConfig &canCoderConfig) {
+SimTalonFXIO<pos_t>::GetSupplierForCancoder(
+    const ServoMotorSubsystemWithCanCoderConfig<pos_t>& canCoderConfig) {
     return [this, ratio = canCoderConfig.GetCanCoderToRotorRatio()] {
         return SimCanCoderIO::SimCanCoderState{
             .positionRotations = lastRotations.load() * ratio,
@@ -99,12 +108,14 @@ SimTalonFXIO::GetSupplierForCancoder(
     };
 }
 
-double SimTalonFXIO::GetSimRatio() const {
-    return config.gearing;
+template<typename pos_t>
+double SimTalonFXIO<pos_t>::GetSimRatio() const {
+    return this->config.gearing;
 }
 
-double SimTalonFXIO::AddFriction(double motorVoltage,
-                                 double frictionVoltage) const {
+template<typename pos_t>
+double SimTalonFXIO<pos_t>::AddFriction(double motorVoltage,
+                                        double frictionVoltage) const {
     if (std::abs(motorVoltage) < frictionVoltage) {
         return 0.0;
     }
@@ -114,8 +125,9 @@ double SimTalonFXIO::AddFriction(double motorVoltage,
     return motorVoltage + frictionVoltage;
 }
 
-void SimTalonFXIO::UpdateSimState() {
-    auto &simState = talon.GetSimState();
+template<typename pos_t>
+void SimTalonFXIO<pos_t>::UpdateSimState() {
+    auto& simState = this->talon.GetSimState();
     double simVoltage =
             AddFriction(simState.GetMotorVoltage().value(), 0.1);
     if (invertVoltage) {

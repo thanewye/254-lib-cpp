@@ -1,4 +1,4 @@
-#include "lib/subsystems/SimElevator.h"
+#pragma once
 
 #include <ctre/phoenix6/signals/SpnEnums.hpp>
 #include <ctre/phoenix6/sim/ChassisReference.hpp>
@@ -9,10 +9,11 @@
 
 #include "akit/Logger.h"
 
-SimElevator::SimElevatorTalonFX::SimElevatorTalonFX(
-    const ServoMotorSubsystemConfig &config)
-    : TalonFXIO(config)
-      , simState(talon.GetSimState()) {
+template<typename pos_t>
+SimElevator<pos_t>::SimElevatorTalonFX::SimElevatorTalonFX(
+    const ServoMotorSubsystemConfig<pos_t>& config)
+    : TalonFXIO<pos_t>(config)
+      , simState(this->talon.GetSimState()) {
     simState.Orientation =
             config.fxConfig.MotorOutput.Inverted ==
             ctre::phoenix6::signals::InvertedValue::Clockwise_Positive
@@ -20,8 +21,9 @@ SimElevator::SimElevatorTalonFX::SimElevatorTalonFX(
                 : ctre::phoenix6::sim::ChassisReference::CounterClockwise_Positive;
 }
 
-SimElevator::SimElevator(const ServoMotorSubsystemConfig &config,
-                         const SimElevatorConfig &simConfig)
+template<typename pos_t>
+SimElevator<pos_t>::SimElevator(const ServoMotorSubsystemConfig<pos_t>& config,
+                                const SimElevatorConfig& simConfig)
     : config(config)
       , simConfig(simConfig)
       , leadIO(config)
@@ -30,18 +32,19 @@ SimElevator::SimElevator(const ServoMotorSubsystemConfig &config,
           1.0 / simConfig.gearing,
           units::kilogram_t{simConfig.carriageMassKg},
           units::meter_t{simConfig.drumRadiusMeters},
-          units::meter_t{config.kMinPositionUnits},
-          units::meter_t{config.kMaxPositionUnits},
+          units::meter_t{config.kMinPosition.value()},
+          units::meter_t{config.kMaxPosition.value()},
           simConfig.simulateGravity,
           units::meter_t{simConfig.startingHeightMeters},
           {0.0, 0.0}) {
     StartNotifier();
 }
 
-SimElevator::SimElevator(
-    const ServoMotorSubsystemWithFollowersConfig &config,
-    const SimElevatorConfig &simConfig)
-    : config(static_cast<const ServoMotorSubsystemConfig &>(config))
+template<typename pos_t>
+SimElevator<pos_t>::SimElevator(
+    const ServoMotorSubsystemWithFollowersConfig<pos_t>& config,
+    const SimElevatorConfig& simConfig)
+    : config(static_cast<const ServoMotorSubsystemConfig<pos_t>&>(config))
       , simConfig(simConfig)
       , leadIO(config)
       , sim(
@@ -49,13 +52,13 @@ SimElevator::SimElevator(
           1.0 / simConfig.gearing,
           units::kilogram_t{simConfig.carriageMassKg},
           units::meter_t{simConfig.drumRadiusMeters},
-          units::meter_t{config.kMinPositionUnits},
-          units::meter_t{config.kMaxPositionUnits},
+          units::meter_t{config.kMinPosition.value()},
+          units::meter_t{config.kMaxPosition.value()},
           simConfig.simulateGravity,
           units::meter_t{simConfig.startingHeightMeters},
           {0.0, 0.0}) {
     followerInverted.reserve(config.followers.size());
-    for (const auto &follower: config.followers) {
+    for (const auto& follower : config.followers) {
         followerIOs.push_back(
             std::make_unique<SimElevatorTalonFX>(follower.config));
         followerInverted.push_back(follower.inverted);
@@ -63,27 +66,31 @@ SimElevator::SimElevator(
     StartNotifier();
 }
 
-TalonFXIO *SimElevator::GetLeadIO() {
+template<typename pos_t>
+TalonFXIO<pos_t>* SimElevator<pos_t>::GetLeadIO() {
     return &leadIO;
 }
 
-std::vector<TalonFXIO *> SimElevator::GetFollowerIO() const {
-    std::vector<TalonFXIO *> followerIO;
+template<typename pos_t>
+std::vector<TalonFXIO<pos_t>*> SimElevator<pos_t>::GetFollowerIO() const {
+    std::vector<TalonFXIO<pos_t>*> followerIO;
     followerIO.reserve(followerIOs.size());
-    for (auto &follower: followerIOs) {
+    for (auto& follower : followerIOs) {
         followerIO.push_back(follower.get());
     }
     return followerIO;
 }
 
-void SimElevator::StartNotifier() {
+template<typename pos_t>
+void SimElevator<pos_t>::StartNotifier() {
     simNotifier = std::make_unique<frc::Notifier>(
         [this] { UpdateSimState(); });
     simNotifier->StartPeriodic(5_ms);
 }
 
-double SimElevator::AddFriction(double motorVoltage,
-                                double frictionVoltage) {
+template<typename pos_t>
+double SimElevator<pos_t>::AddFriction(double motorVoltage,
+                                       double frictionVoltage) {
     if (std::abs(motorVoltage) < frictionVoltage) {
         return 0.0;
     }
@@ -93,8 +100,9 @@ double SimElevator::AddFriction(double motorVoltage,
     return motorVoltage + frictionVoltage;
 }
 
-void SimElevator::UpdateSimState() {
-    auto &simState = leadIO.simState;
+template<typename pos_t>
+void SimElevator<pos_t>::UpdateSimState() {
+    auto& simState = leadIO.simState;
     const double rawVoltage = simState.GetMotorVoltage().value();
     const double simVoltage = AddFriction(rawVoltage, 0.25);
 

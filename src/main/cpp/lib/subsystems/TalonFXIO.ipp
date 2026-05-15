@@ -1,9 +1,11 @@
-#include "lib/subsystems/TalonFXIO.h"
+#pragma once
+
 #include "lib/util/CANStatusLogger.h"
 #include "lib/util/CTREUtil.h"
 #include "lib/util/StatusSignalManager.h"
 
-TalonFXIO::TalonFXIO(const ServoMotorSubsystemConfig& config)
+template<typename pos_t>
+TalonFXIO<pos_t>::TalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config)
     : talon(config.talonCANID.GetDeviceNumber(), config.talonCANID.GetBus())
       , config(config)
       , positionSignal(talon.GetPosition())
@@ -28,7 +30,8 @@ TalonFXIO::TalonFXIO(const ServoMotorSubsystemConfig& config)
     }
 }
 
-void TalonFXIO::ReadInputs(MotorInputs& inputs) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::ReadInputs(MotorInputs& inputs) {
     inputs.unitPosition = RotorToUnits(positionSignal.GetValueAsDouble());
     inputs.velocityUnitsPerSecond = RotorToUnits(velocitySignal.GetValueAsDouble());
     inputs.appliedVolts = voltageSignal.GetValueAsDouble();
@@ -38,29 +41,35 @@ void TalonFXIO::ReadInputs(MotorInputs& inputs) {
     inputs.motorTempCelsius = temperatureSignal.GetValueAsDouble();
 }
 
-void TalonFXIO::SetOpenLoopDutyCycle(double dutyCycle) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetOpenLoopDutyCycle(double dutyCycle) {
     talon.SetControl(dutyCycleControl.WithOutput(dutyCycle));
 }
 
-void TalonFXIO::SetOpenLoopDutyCycleNoFOC(double dutyCycle) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetOpenLoopDutyCycleNoFOC(double dutyCycle) {
     talon.SetControl(dutyCycleControlNoFOC.WithOutput(dutyCycle));
 }
 
-void TalonFXIO::SetOpenLoopDutyCycleIgnoreLimits(double dutyCycle) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetOpenLoopDutyCycleIgnoreLimits(double dutyCycle) {
     talon.SetControl(dutyCycleControlIgnoreLimits.WithOutput(dutyCycle));
 }
 
-void TalonFXIO::SetPositionSetpoint(double units) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetPositionSetpoint(double units) {
     talon.SetControl(positionVoltageControl.WithPosition(units::angle::turn_t{ClampPosition(units)}));
 }
 
-void TalonFXIO::SetMotionMagicSetpoint(double units, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetMotionMagicSetpoint(double units, int slot) {
     talon.SetControl(
         motionMagicPositionControl.WithPosition(units::angle::turn_t{ClampPosition(units)}).WithSlot(slot));
 }
 
-void TalonFXIO::SetMotionMagicSetpoint(double units, double velocity, double acceleration, double jerk, int slot,
-                                       double feedforward) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetMotionMagicSetpoint(double units, double velocity, double acceleration, double jerk,
+                                              int slot, double feedforward) {
     talon.SetControl(dynamicMotionMagicVoltage
         .WithPosition(units::angle::turn_t{ClampPosition(units)})
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(velocity)})
@@ -70,25 +79,29 @@ void TalonFXIO::SetMotionMagicSetpoint(double units, double velocity, double acc
         .WithFeedForward(units::voltage::volt_t{feedforward}));
 }
 
-void TalonFXIO::SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue mode) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue mode) {
     config.fxConfig.MotorOutput.NeutralMode = mode;
     talon.SetNeutralMode(mode);
 }
 
-void TalonFXIO::SetVelocitySetpoint(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocitySetpoint(double unitsPerSecond, int slot) {
     talon.SetControl(
         velocityVoltageControl.WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)}).
         WithSlot(slot));
 }
 
-void TalonFXIO::SetVelocitySetpointNoFOC(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocitySetpointNoFOC(double unitsPerSecond, int slot) {
     talon.SetControl(
         velocityVoltageControlNoFOC.WithVelocity(units::angular_velocity::turns_per_second_t{
             UnitsToRotor(unitsPerSecond)
         }).WithSlot(slot));
 }
 
-void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot) {
     talon.SetControl(motionMagicVelocityVoltageControl
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
@@ -96,7 +109,8 @@ void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot) 
         .WithFeedForward(0_V));
 }
 
-void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, double feedforward) {
     talon.SetControl(motionMagicVelocityVoltageControl
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
@@ -104,7 +118,8 @@ void TalonFXIO::SetVelocityMotionMagicSetpoint(double unitsPerSecond, int slot, 
         .WithFeedForward(units::voltage::volt_t{feedforward}));
 }
 
-void TalonFXIO::SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int slot) {
     talon.SetControl(motionMagicVelocityVoltageControlNoFOC
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
@@ -112,7 +127,8 @@ void TalonFXIO::SetVelocityMotionMagicSetpointNoFOC(double unitsPerSecond, int s
         .WithFeedForward(0_V));
 }
 
-void TalonFXIO::SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, int slot) {
     talon.SetControl(motionMagicVelocityTorqueCurrentFOC
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
@@ -120,21 +136,24 @@ void TalonFXIO::SetVelocityMotionMagicTorqueCurrentFOC(double unitsPerSecond, in
         .WithFeedForward(0_A));
 }
 
-void TalonFXIO::SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocitySetpointIgnoreLimits(double unitsPerSecond, int slot) {
     talon.SetControl(
         velocityVoltageControlIgnoreLimits.WithVelocity(units::angular_velocity::turns_per_second_t{
             UnitsToRotor(unitsPerSecond)
         }).WithSlot(slot));
 }
 
-void TalonFXIO::SetVelocitySetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocitySetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot) {
     talon.SetControl(
         velocityVoltageControlNoFOCIgnoreLimits.WithVelocity(units::angular_velocity::turns_per_second_t{
             UnitsToRotor(unitsPerSecond)
         }).WithSlot(slot));
 }
 
-void TalonFXIO::SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond, int slot) {
     talon.SetControl(motionMagicVelocityVoltageControlIgnoreLimits
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
@@ -142,7 +161,8 @@ void TalonFXIO::SetVelocityMotionMagicSetpointIgnoreLimits(double unitsPerSecond
         .WithFeedForward(0_V));
 }
 
-void TalonFXIO::SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerSecond, int slot) {
     talon.SetControl(motionMagicVelocityVoltageControlNoFOCIgnoreLimits
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithAcceleration(config.fxConfig.MotionMagic.MotionMagicAcceleration)
@@ -150,31 +170,37 @@ void TalonFXIO::SetVelocityMotionMagicSetpointNoFOCIgnoreLimits(double unitsPerS
         .WithFeedForward(0_V));
 }
 
-void TalonFXIO::SetVoltageOutput(double voltage) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVoltageOutput(double voltage) {
     talon.SetControl(voltageControl.WithOutput(units::voltage::volt_t{voltage}));
 }
 
-void TalonFXIO::SetCurrentPositionAsZero() {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetCurrentPositionAsZero() {
     SetCurrentPosition(0);
 }
 
-void TalonFXIO::SetCurrentPosition(double positionUnits) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetCurrentPosition(double positionUnits) {
     talon.SetPosition(units::angle::turn_t{UnitsToRotor(positionUnits)});
 }
 
-void TalonFXIO::SetEnableSoftLimits(bool forward, bool reverse) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetEnableSoftLimits(bool forward, bool reverse) {
     config.fxConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = forward;
     config.fxConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = reverse;
     CTREUtil::ApplyConfiguration(talon, config.fxConfig.SoftwareLimitSwitch);
 }
 
-void TalonFXIO::SetEnableHardLimits(bool forward, bool reverse) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetEnableHardLimits(bool forward, bool reverse) {
     config.fxConfig.HardwareLimitSwitch.ForwardLimitEnable = forward;
     config.fxConfig.HardwareLimitSwitch.ReverseLimitEnable = reverse;
     CTREUtil::ApplyConfiguration(talon, config.fxConfig.HardwareLimitSwitch);
 }
 
-void TalonFXIO::SetEnableAutosetPositionValue(bool forward, bool reverse) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetEnableAutosetPositionValue(bool forward, bool reverse) {
     config.fxConfig.HardwareLimitSwitch.ForwardLimitAutosetPositionEnable = forward;
     config.fxConfig.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = reverse;
     config.fxConfig.HardwareLimitSwitch.ForwardLimitEnable = forward;
@@ -183,7 +209,8 @@ void TalonFXIO::SetEnableAutosetPositionValue(bool forward, bool reverse) {
     CTREUtil::ApplyConfiguration(talon, config.fxConfig.HardwareLimitSwitch);
 }
 
-void TalonFXIO::Follow(const CANDeviceId& masterId, bool opposeMasterDirection) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::Follow(const CANDeviceId& masterId, bool opposeMasterDirection) {
     talon.SetControl(followerControl
         .WithLeaderID(masterId.GetDeviceNumber())
         .WithMotorAlignment(opposeMasterDirection
@@ -191,30 +218,35 @@ void TalonFXIO::Follow(const CANDeviceId& masterId, bool opposeMasterDirection) 
                                 : ctre::phoenix6::signals::MotorAlignmentValue::Aligned));
 }
 
-void TalonFXIO::SetTorqueCurrentFOC(double current) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetTorqueCurrentFOC(double current) {
     talon.SetControl(torqueCurrentFOC.WithOutput(units::current::ampere_t{current}));
 }
 
-void TalonFXIO::SetVelocityTorqueCurrentFOC(double unitsPerSecond, double feedforward) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVelocityTorqueCurrentFOC(double unitsPerSecond, double feedforward) {
     talon.SetControl(velocityTorqueCurrentFOC
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(unitsPerSecond)})
         .WithFeedForward(units::current::ampere_t{feedforward}));
 }
 
-void TalonFXIO::SetPositionTorqueCurrentFOC(double units, double feedforward) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetPositionTorqueCurrentFOC(double units, double feedforward) {
     talon.SetControl(positionTorqueCurrentFOC
         .WithPosition(units::angle::turn_t{ClampPosition(units)})
         .WithFeedForward(units::current::ampere_t{feedforward}));
 }
 
-void TalonFXIO::SetMotionMagicTorqueCurrentFOC(double units, int slot) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetMotionMagicTorqueCurrentFOC(double units, int slot) {
     talon.SetControl(motionMagicTorqueCurrentFOC
         .WithPosition(units::angle::turn_t{ClampPosition(units)})
         .WithSlot(slot));
 }
 
-void TalonFXIO::SetMotionMagicTorqueCurrentFOC(double units, double velocity, double acceleration, double jerk,
-                                               int slot, double feedforward) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetMotionMagicTorqueCurrentFOC(double units, double velocity, double acceleration, double jerk,
+                                                      int slot, double feedforward) {
     talon.SetControl(dynamicMotionMagicTorqueCurrentFOC
         .WithPosition(units::angle::turn_t{ClampPosition(units)})
         .WithVelocity(units::angular_velocity::turns_per_second_t{UnitsToRotor(velocity)})
@@ -224,17 +256,20 @@ void TalonFXIO::SetMotionMagicTorqueCurrentFOC(double units, double velocity, do
         .WithFeedForward(units::current::ampere_t{feedforward}));
 }
 
-void TalonFXIO::SetMotionMagicConfig(const ctre::phoenix6::configs::MotionMagicConfigs& mmConfig) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetMotionMagicConfig(const ctre::phoenix6::configs::MotionMagicConfigs& mmConfig) {
     config.fxConfig.MotionMagic = mmConfig;
     CTREUtil::ApplyConfiguration(talon, config.fxConfig.MotionMagic);
 }
 
-void TalonFXIO::SetVoltageConfig(const ctre::phoenix6::configs::VoltageConfigs& voltageConfig) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetVoltageConfig(const ctre::phoenix6::configs::VoltageConfigs& voltageConfig) {
     config.fxConfig.Voltage = voltageConfig;
     CTREUtil::ApplyConfiguration(talon, config.fxConfig.Voltage);
 }
 
-void TalonFXIO::SetSupplyCurrentLimit(double amps) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetSupplyCurrentLimit(double amps) {
     if (std::abs(lastAppliedSupplyLimitAmps - amps) < 1e-12) {
         return;
     }
@@ -244,7 +279,8 @@ void TalonFXIO::SetSupplyCurrentLimit(double amps) {
     CTREUtil::ApplyConfigurationNonBlocking(talon, config.fxConfig.CurrentLimits);
 }
 
-void TalonFXIO::SetStatorCurrentLimit(double amps) {
+template<typename pos_t>
+void TalonFXIO<pos_t>::SetStatorCurrentLimit(double amps) {
     if (std::abs(lastAppliedStatorLimitAmps - amps) < 1e-12) {
         return;
     }
