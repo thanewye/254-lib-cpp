@@ -22,6 +22,7 @@ add_executable(frc_2026_cpp ${ROBOT_SOURCES}
 target_include_directories(frc_2026_cpp PRIVATE
         ${CMAKE_SOURCE_DIR}/src/main/cpp
         ${CMAKE_SOURCE_DIR}/third_party/pfr/include
+        ${CMAKE_SOURCE_DIR}/third_party/magic_enum/include
 
         # WPILib
         /Users/ethanye/.gradle/caches/8.11/transforms/58762833e41f59b7a1a94d3032b654e9/transformed/wpilibNewCommands-cpp-2026.2.1-headers

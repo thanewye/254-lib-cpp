@@ -64,6 +64,7 @@ model {
                 exportedHeaders {
                     srcDir 'src/main/cpp'
                     srcDir 'third_party/pfr/include'
+                    srcDir 'third_party/magic_enum/include'
                 }
             }
 
