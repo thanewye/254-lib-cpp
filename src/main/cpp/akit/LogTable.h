@@ -142,8 +142,9 @@ public:
     [[nodiscard]] T Get(std::string_view key, T defaultValue) const {
         const LogValue* lv = Get(key);
         if (!lv || lv->type != LoggableType::kRaw) return defaultValue;
+        if (lv->customTypeStr != wpi::GetStructTypeString<T>()) return defaultValue;
         const auto& raw = std::get<std::vector<uint8_t>>(lv->value);
-        if (raw.size() < wpi::Struct<T>::GetSize()) return defaultValue;
+        if (raw.size() != wpi::Struct<T>::GetSize()) return defaultValue;
         return wpi::UnpackStruct<T>(raw);
     }
 
@@ -151,6 +152,7 @@ public:
     [[nodiscard]] std::vector<T> Get(std::string_view key, const std::vector<T>& defaultValue = {}) const {
         const LogValue* lv = Get(key);
         if (!lv || lv->type != LoggableType::kRaw) return defaultValue;
+        if (lv->customTypeStr != std::string(wpi::GetStructTypeString<T>()) + "[]") return defaultValue;
         const auto& raw = std::get<std::vector<uint8_t>>(lv->value);
         const size_t elemSize = wpi::Struct<T>::GetSize();
         if (elemSize == 0 || raw.size() % elemSize != 0) return defaultValue;

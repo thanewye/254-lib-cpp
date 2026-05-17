@@ -27,7 +27,7 @@ bool LogTable::WriteAllowed(const std::string& fullKey, const LoggableType type,
             fullKey, static_cast<int>(it->second.type), static_cast<int>(type));
         return false;
     }
-    if (!customTypeStr.empty() && it->second.customTypeStr != customTypeStr) {
+    if (it->second.customTypeStr != customTypeStr) {
         FRC_ReportError(frc::err::Error,
             "[AdvantageKit] Struct type mismatch on \"{}\" (existing={} attempted={})",
             fullKey, it->second.customTypeStr, customTypeStr);
