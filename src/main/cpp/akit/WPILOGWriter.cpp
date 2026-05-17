@@ -19,37 +19,34 @@
 
 namespace akit::wpilog {
     LoggableType WPILOGWriter::GetType(const LogValue& value) const {
-        return std::visit([]<typename T>(const T&) -> LoggableType {
-            if constexpr (std::is_same_v<T, bool>) {
-                return LoggableType::kBoolean;
-            } else if constexpr (std::is_same_v<T, int64_t>) {
-                return LoggableType::kInteger;
-            } else if constexpr (std::is_same_v<T, double>) {
-                return LoggableType::kDouble;
-            } else if constexpr (std::is_same_v<T, std::string>) {
-                return LoggableType::kString;
-            } else if constexpr (std::is_same_v<T, std::vector<double>>) {
-                return LoggableType::kDoubleArray;
-            } else {
-                return LoggableType::kRaw;
-            }
-        }, value);
+        return value.type;
     }
 
-    void WPILOGWriter::AppendValue(const int64_t entryID, const LogValue& value, const int64_t timestamp) {
-        std::visit([this, entryID, timestamp]<typename T>(const T& typedValue) {
-            if constexpr (std::is_same_v<T, bool>) {
-                log_->AppendBoolean(entryID, typedValue, timestamp);
-            } else if constexpr (std::is_same_v<T, int64_t>) {
-                log_->AppendInteger(entryID, typedValue, timestamp);
-            } else if constexpr (std::is_same_v<T, double>) {
-                log_->AppendDouble(entryID, typedValue, timestamp);
-            } else if constexpr (std::is_same_v<T, std::string>) {
-                log_->AppendString(entryID, typedValue, timestamp);
-            } else if constexpr (std::is_same_v<T, std::vector<double>>) {
-                log_->AppendDoubleArray(entryID, typedValue, timestamp);
-            }
-        }, value);
+    void WPILOGWriter::AppendValue(const int64_t entryID, const LogValue& lv, const int64_t timestamp) {
+        std::visit([this, entryID, timestamp]<typename T>(const T& v) {
+            if constexpr (std::is_same_v<T, bool>)
+                log_->AppendBoolean(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, int64_t>)
+                log_->AppendInteger(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, float>)
+                log_->AppendFloat(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, double>)
+                log_->AppendDouble(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::string>)
+                log_->AppendString(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::vector<uint8_t>>)
+                log_->AppendRaw(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::vector<int>>)
+                log_->AppendBooleanArray(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::vector<int64_t>>)
+                log_->AppendIntegerArray(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::vector<float>>)
+                log_->AppendFloatArray(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::vector<double>>)
+                log_->AppendDoubleArray(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::vector<std::string>>)
+                log_->AppendStringArray(entryID, v, timestamp);
+        }, lv.value);
     }
 
     WPILOGWriter::WPILOGWriter(const std::string& path, AdvantageScopeOpenBehavior openBehavior) {
@@ -73,10 +70,10 @@ namespace akit::wpilog {
         }
     }
 
-    WPILOGWriter::WPILOGWriter(const std::string &path) : WPILOGWriter(path, AUTO) {}
+    WPILOGWriter::WPILOGWriter(const std::string& path) : WPILOGWriter(path, AUTO) {}
 
     WPILOGWriter::WPILOGWriter(AdvantageScopeOpenBehavior openBehavior)
-        : WPILOGWriter(frc::RobotBase::IsSimulation() ? defaultPathSim_ : defaultPathRio_, openBehavior){}
+        : WPILOGWriter(frc::RobotBase::IsSimulation() ? defaultPathSim_ : defaultPathRio_, openBehavior) {}
 
     WPILOGWriter::WPILOGWriter()
         : WPILOGWriter(frc::RobotBase::IsSimulation() ? defaultPathSim_ : defaultPathRio_, AUTO) {}
@@ -147,10 +144,12 @@ namespace akit::wpilog {
         const int64_t timestamp = table.GetTimestamp();
         if (autoRename_) {
             if (!logDate_.has_value()) {
-                if (table.Get("DriverStation/DSAttached", false) && table.Get("SystemStats/SystemTimeValid", false) || frc::RobotBase::IsSimulation()) {
+                if (table.Get("DriverStation/DSAttached", false) && table.Get("SystemStats/SystemTimeValid", false) ||
+                    frc::RobotBase::IsSimulation()) {
                     if (!dsAttachedTime_.has_value()) {
                         dsAttachedTime_ = static_cast<double>(frc::RobotController::GetFPGATime()) / 1000000.0;
-                    } else if (static_cast<double>(frc::RobotController::GetFPGATime()) / 1000000.0 - dsAttachedTime_.value() > timestampUpdateDelay_ || frc::RobotBase::IsSimulation()) {
+                    } else if (static_cast<double>(frc::RobotController::GetFPGATime()) / 1000000.0 - dsAttachedTime_.
+                               value() > timestampUpdateDelay_ || frc::RobotBase::IsSimulation()) {
                         const auto now = std::chrono::system_clock::now();
                         std::time_t t = std::chrono::system_clock::to_time_t(now);
                         std::tm localTime{};
@@ -164,23 +163,30 @@ namespace akit::wpilog {
             HAL_MatchType matchType;
             switch (table.Get("DriverStation/MatchType", 0LL)) {
                 case 1:
-                    matchType = HAL_kMatchType_practice; break;
+                    matchType = HAL_kMatchType_practice;
+                    break;
                 case 2:
-                    matchType = HAL_kMatchType_qualification; break;
+                    matchType = HAL_kMatchType_qualification;
+                    break;
                 case 3:
-                    matchType = HAL_kMatchType_elimination; break;
+                    matchType = HAL_kMatchType_elimination;
+                    break;
                 default:
-                    matchType = HAL_kMatchType_none; break;
+                    matchType = HAL_kMatchType_none;
+                    break;
             }
             if (!logMatchText_.has_value() && matchType != HAL_kMatchType_none) {
                 logMatchText_ = "";
                 switch (matchType) {
                     case HAL_kMatchType_practice:
-                        logMatchText_ = "p"; break;
+                        logMatchText_ = "p";
+                        break;
                     case HAL_kMatchType_qualification:
-                        logMatchText_ = "q"; break;
+                        logMatchText_ = "q";
+                        break;
                     case HAL_kMatchType_elimination:
-                        logMatchText_ = "e"; break;
+                        logMatchText_ = "e";
+                        break;
                     default:
                         break;
                 }
@@ -190,7 +196,7 @@ namespace akit::wpilog {
             // Update filename
             std::string newFilename = "akit_";
             if (!logDate_.has_value()) {
-                newFilename +=randomIdentifier_;
+                newFilename += randomIdentifier_;
             } else {
                 std::ostringstream timeStream;
                 timeStream << std::put_time(&logDate_.value(), kTimeFormat);
@@ -207,7 +213,7 @@ namespace akit::wpilog {
                 newFilename += eventName;
             }
 
-            if (logMatchText_.has_value()  && !logMatchText_->empty()) {
+            if (logMatchText_.has_value() && !logMatchText_->empty()) {
                 newFilename += "_";
                 newFilename += *logMatchText_;
             }
@@ -231,16 +237,19 @@ namespace akit::wpilog {
         log_->AppendInteger(timestampID_, timestamp, timestamp);
         const auto& newMap = table.GetAll();
         for (const auto& [key, value] : newMap) {
-            const auto type = GetType(value);
             const auto existingID = entryIDs.find(key);
             bool appendData = false;
 
             if (existingID == entryIDs.end()) {
-                entryIDs.emplace(
-                    key,
-                    log_->Start(key, GetWPILOGType(type), WPILOGConstants::entryMetadata, timestamp)
-                );
-                entryTypes.emplace(key, type);
+                const std::string metadata = value.unitStr.has_value()
+                                                 ? [&] {
+                                                     std::string s = WPILOGConstants::entryMetadataUnits;
+                                                     s.replace(s.find("$UNITSTR"), 8, *value.unitStr);
+                                                     return s;
+                                                 }()
+                                                 : WPILOGConstants::entryMetadata;
+                entryIDs.emplace(key, log_->Start(key, value.GetWPILOGType(), metadata, timestamp));
+                entryTypes.emplace(key, value.type);
                 appendData = true;
             } else {
                 auto oldValue = lastStorage_.values.find(key);

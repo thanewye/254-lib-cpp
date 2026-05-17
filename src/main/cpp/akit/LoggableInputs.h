@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <boost/pfr.hpp>
+#include <frc/Errors.h>
 
 #include "akit/LogTable.h"
 
@@ -33,12 +34,24 @@ namespace akit {
 
     template<LoggableAggregate T>
     void ToLog(const T& obj, LogTable& table) {
+        if (table.GetDepth() > 100) {
+            FRC_ReportError(frc::err::Error,
+                "[AdvantageKit] Detected recursive table structure at prefix \"{}\". Aborting.",
+                table.GetPrefix());
+            return;
+        }
         magic_log::to_log_impl(obj, table,
                             std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
     }
 
     template<LoggableAggregate T>
     void FromLog(T& obj, const LogTable& table) {
+        if (table.GetDepth() > 100) {
+            FRC_ReportError(frc::err::Error,
+                "[AdvantageKit] Detected recursive table structure at prefix \"{}\". Aborting.",
+                table.GetPrefix());
+            return;
+        }
         magic_log::from_log_impl(obj, table,
                               std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
     }
