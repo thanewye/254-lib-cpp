@@ -24,7 +24,7 @@ namespace akit {
                                   boost::pfr::get<Is>(defaults));
             }(), ...);
         }
-    } // namespace detail
+    }
 
     template<typename T>
     concept LoggableAggregate =
@@ -41,4 +41,4 @@ namespace akit {
         magic_log::from_log_impl(obj, table,
                               std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
     }
-} // namespace akit
+}
