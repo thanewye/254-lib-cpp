@@ -48,6 +48,7 @@ namespace akit::wpilog {
 
         [[nodiscard]] LoggableType GetType(const LogValue& value) const;
         void AppendValue(int64_t entryID, const LogValue& value, int64_t timestamp);
+
     public:
         WPILOGWriter(const std::string& path, AdvantageScopeOpenBehavior openBehavior);
         WPILOGWriter(const std::string& path);

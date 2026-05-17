@@ -72,33 +72,43 @@ namespace akit {
     void Logger::RecordOutput(const std::string& key, const bool value) {
         RecordOutput(key, LogValue{value});
     }
+
     void Logger::RecordOutput(const std::string& key, const int64_t value) {
         RecordOutput(key, LogValue{value});
     }
+
     void Logger::RecordOutput(const std::string& key, const float value) {
         RecordOutput(key, LogValue{value});
     }
+
     void Logger::RecordOutput(const std::string& key, const double value) {
         RecordOutput(key, LogValue{value});
     }
+
     void Logger::RecordOutput(const std::string& key, const std::string_view value) {
         RecordOutput(key, LogValue{std::string(value)});
     }
+
     void Logger::RecordOutput(const std::string& key, const std::span<const uint8_t> value) {
         RecordOutput(key, LogValue{std::vector<uint8_t>(value.begin(), value.end())});
     }
+
     void Logger::RecordOutput(const std::string& key, const std::span<const int> value) {
         RecordOutput(key, LogValue{std::vector<int>(value.begin(), value.end())});
     }
+
     void Logger::RecordOutput(const std::string& key, const std::span<const int64_t> value) {
         RecordOutput(key, LogValue{std::vector<int64_t>(value.begin(), value.end())});
     }
+
     void Logger::RecordOutput(const std::string& key, const std::span<const float> value) {
         RecordOutput(key, LogValue{std::vector<float>(value.begin(), value.end())});
     }
+
     void Logger::RecordOutput(const std::string& key, const std::span<const double> value) {
         RecordOutput(key, LogValue{std::vector<double>(value.begin(), value.end())});
     }
+
     void Logger::RecordOutput(const std::string& key, const std::span<const std::string> value) {
         RecordOutput(key, LogValue{std::vector<std::string>(value.begin(), value.end())});
     }
@@ -114,7 +124,7 @@ namespace akit {
 
     void Logger::SetReplayMode(const bool replayMode) { replayMode_ = replayMode; }
 
-    bool Logger::HasReplaySource () {
+    bool Logger::HasReplaySource() {
         return replayMode_;
     }
 
@@ -124,10 +134,10 @@ namespace akit {
             std::visit([]<typename T0>(const T0& v) {
                 using T = std::decay_t<T0>;
                 if constexpr (std::is_same_v<T, std::vector<double>>
-                           || std::is_same_v<T, std::vector<float>>
-                           || std::is_same_v<T, std::vector<int64_t>>
-                           || std::is_same_v<T, std::vector<uint8_t>>
-                           || std::is_same_v<T, std::vector<int>>) {
+                              || std::is_same_v<T, std::vector<float>>
+                              || std::is_same_v<T, std::vector<int64_t>>
+                              || std::is_same_v<T, std::vector<uint8_t>>
+                              || std::is_same_v<T, std::vector<int>>) {
                     std::cout << "[";
                     for (size_t i = 0; i < v.size(); ++i)
                         std::cout << v[i] << (i + 1 < v.size() ? ", " : "");
@@ -153,7 +163,8 @@ namespace akit {
     const LogStorage& Logger::GetCurrentStorage() {
         return currentStorage_;
     }
-    void Logger::AddDataReceiver(LogDataReceiver *receiver) {
+
+    void Logger::AddDataReceiver(LogDataReceiver* receiver) {
         if (std::ranges::find(receivers_, receiver) != receivers_.end()) return;
         receivers_.push_back(receiver);
     }

@@ -11,6 +11,8 @@
 #include "akit/WPILOGWriter.h"
 #include "frc2026/Robot.h"
 
+#include <frc/geometry/Pose2d.h>
+
 namespace {
     akit::networktables::NT4Publisher& GetNT4Publisher() {
         static akit::networktables::NT4Publisher publisher;
@@ -33,7 +35,7 @@ Robot::Robot() {
 
 void Robot::RobotPeriodic() {
     akit::Logger::PeriodicBeforeUser();
-    akit::Logger::RecordOutput("stuff", std::rand() % 10 + 1);
+    akit::Logger::RecordOutput("stuff", frc::Pose2d(1.0_m, 26.0_in, 5_rad));
     frc2::CommandScheduler::GetInstance().Run();
     akit::Logger::PeriodicAfterUser();
 }

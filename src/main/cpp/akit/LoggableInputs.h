@@ -33,12 +33,12 @@ namespace akit {
     template<LoggableAggregate T>
     void ToLog(const T& obj, LogTable& table) {
         magic_log::to_log_impl(obj, table,
-                            std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
+                               std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
     }
 
     template<LoggableAggregate T>
     void FromLog(T& obj, const LogTable& table) {
         magic_log::from_log_impl(obj, table,
-                              std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
+                                 std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
     }
 }
