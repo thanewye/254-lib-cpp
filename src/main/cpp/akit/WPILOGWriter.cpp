@@ -16,6 +16,7 @@
 #include "Logger.h"
 #include "WPILOGConstants.h"
 #include "WPILOGWriter.h"
+#include "lib/util/OSUtil.h"
 
 namespace akit::wpilog {
     LoggableType WPILOGWriter::GetType(const LogValue& value) const {
@@ -151,10 +152,8 @@ namespace akit::wpilog {
                     } else if (static_cast<double>(frc::RobotController::GetFPGATime()) / 1000000.0 - dsAttachedTime_.
                                value() > timestampUpdateDelay_ || frc::RobotBase::IsSimulation()) {
                         const auto now = std::chrono::system_clock::now();
-                        std::time_t t = std::chrono::system_clock::to_time_t(now);
-                        std::tm localTime{};
-                        localtime_r(&t, &localTime);
-                        logDate_ = localTime;
+                        const std::time_t t = std::chrono::system_clock::to_time_t(now);
+                        logDate_ = OSUtil::LocalTime(t);
                     }
                 } else {
                     dsAttachedTime_ = std::nullopt;

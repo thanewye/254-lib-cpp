@@ -19,7 +19,12 @@ add_executable(frc_2026_cpp ${ROBOT_SOURCES}
         src/main/cpp/lib/subsystems/SimTalonFXIO.ipp
         src/main/cpp/lib/subsystems/SimElevator.ipp)
 
-file(GLOB GRADLE_HEADER_DIRS "$ENV{HOME}/.gradle/caches/*/transforms/*/transformed/*-headers")
+if(WIN32)
+    set(USER_HOME_DIR "$ENV{USERPROFILE}")
+else()
+    set(USER_HOME_DIR "$ENV{HOME}")
+endif()
+file(GLOB GRADLE_HEADER_DIRS "${USER_HOME_DIR}/.gradle/caches/*/transforms/*/transformed/*-headers")
 
 target_include_directories(frc_2026_cpp PRIVATE
         ${CMAKE_SOURCE_DIR}/src/main/cpp
