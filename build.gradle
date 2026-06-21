@@ -105,7 +105,7 @@ model {
 afterEvaluate {
     tasks.named('build') {
         setDependsOn([
-            'frcUserProgramOsxuniversalDebugExecutable',
+            "frcUserProgram${wpi.platforms.desktop.capitalize()}DebugExecutable",
             'frcUserProgramLinuxathenaReleaseExecutable',
         ])
     }
