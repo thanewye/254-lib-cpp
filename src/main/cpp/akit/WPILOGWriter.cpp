@@ -144,7 +144,7 @@ namespace akit::wpilog {
         const int64_t timestamp = table.GetTimestamp();
         if (autoRename_) {
             if (!logDate_.has_value()) {
-                if (table.Get("DriverStation/DSAttached", false) && table.Get("SystemStats/SystemTimeValid", false) ||
+                if ((table.Get("DriverStation/DSAttached", false) && table.Get("SystemStats/SystemTimeValid", false)) ||
                     frc::RobotBase::IsSimulation()) {
                     if (!dsAttachedTime_.has_value()) {
                         dsAttachedTime_ = static_cast<double>(frc::RobotController::GetFPGATime()) / 1000000.0;
@@ -161,7 +161,7 @@ namespace akit::wpilog {
                 }
             }
             HAL_MatchType matchType;
-            switch (table.Get("DriverStation/MatchType", 0LL)) {
+            switch (table.Get("DriverStation/MatchType", static_cast<int64_t>(0))) {
                 case 1:
                     matchType = HAL_kMatchType_practice;
                     break;
@@ -190,7 +190,7 @@ namespace akit::wpilog {
                     default:
                         break;
                 }
-                *logMatchText_ += std::to_string(table.Get("DriverStation/MatchNumber", 0LL));
+                *logMatchText_ += std::to_string(table.Get("DriverStation/MatchNumber", static_cast<int64_t>(0)));
             }
 
             // Update filename
