@@ -1,5 +1,5 @@
 #pragma once
-#include <ctime>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -7,9 +7,8 @@
 
 #include <wpi/DataLogWriter.h>
 
-#include "LogDataReceiver.h"
-#include "LoggableType.h"
-#include "lib/util/CANStatusLogger.h"
+#include "akit/log/LogDataReceiver.h"
+#include "akit/log/LoggableType.h"
 
 namespace akit::wpilog {
     class WPILOGWriter : public LogDataReceiver {
@@ -45,6 +44,7 @@ namespace akit::wpilog {
 
         std::unordered_map<std::string, int64_t> entryIDs;
         std::unordered_map<std::string, LoggableType> entryTypes;
+        std::unordered_map<std::string, std::optional<std::string>> entryUnits;
 
         [[nodiscard]] LoggableType GetType(const LogValue& value) const;
         void AppendValue(int64_t entryID, const LogValue& value, int64_t timestamp);

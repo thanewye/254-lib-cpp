@@ -2,7 +2,7 @@
 
 #include <frc/Errors.h>
 
-#include "LogTable.h"
+#include "akit/log/LogTable.h"
 
 namespace akit {
     LogTable::LogTable(LogStorage& storage, std::string prefix)
@@ -76,10 +76,24 @@ namespace akit {
             storage_->values.insert_or_assign(fk, LogValue{std::vector<uint8_t>(value.begin(), value.end())});
     }
 
-    void LogTable::Put(const std::string& key, const std::span<const int> value) const {
+    void LogTable::Put(const std::string& key, const std::span<const bool> value) const {
         const std::string fk = FullKey(key);
         if (WriteAllowed(fk, LoggableType::kBooleanArray))
-            storage_->values.insert_or_assign(fk, LogValue{std::vector<int>(value.begin(), value.end())});
+            storage_->values.insert_or_assign(fk, LogValue{std::vector<bool>(value.begin(), value.end())});
+    }
+
+    void LogTable::Put(const std::string& key, const std::vector<bool>& value) const {
+        const std::string fk = FullKey(key);
+        if (WriteAllowed(fk, LoggableType::kBooleanArray))
+            storage_->values.insert_or_assign(fk, LogValue{value});
+    }
+
+    void LogTable::Put(const std::string& key, const std::span<const int> value) const {
+        const std::string fk = FullKey(key);
+        if (WriteAllowed(fk, LoggableType::kIntegerArray))
+            storage_->values.insert_or_assign(
+                fk,
+                LogValue{std::vector<int64_t>(value.begin(), value.end())});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const int64_t> value) const {
@@ -134,6 +148,10 @@ namespace akit {
         return GetTyped<bool>(key, defaultValue);
     }
 
+    int LogTable::Get(const std::string_view key, const int defaultValue) const {
+        return static_cast<int>(GetTyped<int64_t>(key, static_cast<int64_t>(defaultValue)));
+    }
+
     int64_t LogTable::Get(const std::string_view key, const int64_t defaultValue) const {
         return GetTyped<int64_t>(key, defaultValue);
     }
@@ -156,10 +174,35 @@ namespace akit {
             key, std::vector<uint8_t>(defaultValue.begin(), defaultValue.end()));
     }
 
+    std::vector<bool> LogTable::Get(const std::string_view key,
+                                    const std::span<const bool> defaultValue) const {
+        const LogValue* lv = Get(key);
+        if (!lv) return std::vector<bool>(defaultValue.begin(), defaultValue.end());
+        const auto* bools = std::get_if<std::vector<bool>>(&lv->value);
+        if (!bools) return std::vector<bool>(defaultValue.begin(), defaultValue.end());
+        return *bools;
+    }
+
+    std::vector<bool> LogTable::Get(const std::string_view key,
+                                    const std::vector<bool>& defaultValue) const {
+        const LogValue* lv = Get(key);
+        if (!lv) return defaultValue;
+        const auto* bools = std::get_if<std::vector<bool>>(&lv->value);
+        if (!bools) return defaultValue;
+        return *bools;
+    }
+
     std::vector<int> LogTable::Get(const std::string_view key,
                                    const std::span<const int> defaultValue) const {
-        return GetTyped<std::vector<int>>(
-            key, std::vector<int>(defaultValue.begin(), defaultValue.end()));
+        const LogValue* lv = Get(key);
+        if (!lv) return std::vector<int>(defaultValue.begin(), defaultValue.end());
+        const auto* ints = std::get_if<std::vector<int64_t>>(&lv->value);
+        if (!ints) return std::vector<int>(defaultValue.begin(), defaultValue.end());
+        std::vector<int> result;
+        result.reserve(ints->size());
+        for (const auto value : *ints)
+            result.push_back(static_cast<int>(value));
+        return result;
     }
 
     std::vector<int64_t> LogTable::Get(const std::string_view key,
@@ -275,6 +318,15 @@ namespace akit {
                     out += v ? "true" : "false";
                 } else if constexpr (std::is_same_v<T, std::string>) {
                     out += "\"" + v + "\"";
+                } else if constexpr (std::is_same_v<T, std::vector<bool>>) {
+                    out += "[";
+                    bool first = true;
+                    for (const auto elem : v) {
+                        if (!first) out += ",";
+                        out += elem ? "true" : "false";
+                        first = false;
+                    }
+                    out += "]";
                 } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
                     out += "[";
                     bool first = true;
@@ -285,7 +337,6 @@ namespace akit {
                     }
                     out += "]";
                 } else if constexpr (std::is_same_v<T, std::vector<uint8_t>>
-                                     || std::is_same_v<T, std::vector<int>>
                                      || std::is_same_v<T, std::vector<int64_t>>
                                      || std::is_same_v<T, std::vector<float>>
                                      || std::is_same_v<T, std::vector<double>>) {

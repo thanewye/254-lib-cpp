@@ -1,9 +1,16 @@
 #include <networktables/NetworkTableInstance.h>
 #include <wpi/json.h>
 
-#include "NT4Publisher.h"
+#include "akit/networktables/NT4Publisher.h"
 
 namespace akit::networktables {
+    namespace {
+        std::string NormalizeTopicKey(const std::string& key) {
+            if (!key.empty() && key.front() == '/') return key.substr(1);
+            return key;
+        }
+    }
+
     NT4Publisher::NT4Publisher() {
         akitTable_ = nt::NetworkTableInstance::GetDefault().GetTable("/AdvantageKit");
         timestampPublisher_ = akitTable_->GetIntegerTopic(timestampKey.substr(1)).Publish(nt::PubSubOptions{
@@ -18,17 +25,17 @@ namespace akit::networktables {
         timestampPublisher_.Set(timestamp, timestamp);
 
         for (const auto& [key, value] : values) {
-            if (key.starts_with("/.schema/")) continue;
             auto oldValue = lastStorage_.values.find(key);
             if (oldValue != lastStorage_.values.end() && value == oldValue->second) continue;
 
             auto& publisher = GetOrCreatePublisher(key, value);
+            const auto topicKey = NormalizeTopicKey(key);
 
             if (value.unitStr.has_value() && !value.unitStr->empty()) {
-                auto existing = units_.find(key);
+                auto existing = units_.find(topicKey);
                 if (existing == units_.end() || existing->second != *value.unitStr) {
-                    akitTable_->GetTopic(key).SetProperty("unit", "\"" + *value.unitStr + "\"");
-                    units_.insert_or_assign(key, *value.unitStr);
+                    akitTable_->GetTopic(topicKey).SetProperty("unit", "\"" + *value.unitStr + "\"");
+                    units_.insert_or_assign(topicKey, *value.unitStr);
                 }
             }
 
@@ -47,8 +54,13 @@ namespace akit::networktables {
                         publisher.SetString(typedValue, timestamp);
                     else if constexpr (std::is_same_v<T, std::vector<uint8_t>>)
                         publisher.SetRaw(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, std::vector<int>>)
-                        publisher.SetBooleanArray(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, std::vector<bool>>) {
+                        std::vector<int> wpilibArray;
+                        wpilibArray.reserve(typedValue.size());
+                        for (const auto value : typedValue)
+                            wpilibArray.push_back(value);
+                        publisher.SetBooleanArray(wpilibArray, timestamp);
+                    }
                     else if constexpr (std::is_same_v<T, std::vector<int64_t>>)
                         publisher.SetIntegerArray(typedValue, timestamp);
                     else if constexpr (std::is_same_v<T, std::vector<float>>)
@@ -69,22 +81,23 @@ namespace akit::networktables {
     }
 
     nt::GenericPublisher& NT4Publisher::GetOrCreatePublisher(const std::string& key, const LogValue& value) {
-        auto publisher = publishers_.find(key);
+        const auto topicKey = NormalizeTopicKey(key);
+        auto publisher = publishers_.find(topicKey);
 
         // publisher does not exist, create
         if (publisher == publishers_.end()) {
-            nt::Topic topic = akitTable_->GetTopic(key);
+            nt::Topic topic = akitTable_->GetTopic(topicKey);
             auto unit = value.unitStr;
 
             // construct publisher within the emplace (black magic)
             auto [createdPublisher, inserted] = publishers_.emplace(
-                key,
+                topicKey,
                 topic.GenericPublish(GetNT4Type(value), nt::PubSubOptions{.sendAll = true})
             );
 
             if (unit.has_value() && !unit->empty()) {
                 topic.SetProperty("unit", "\"" + unit.value() + "\"");
-                units_.emplace(key, *unit);
+                units_.emplace(topicKey, *unit);
             }
 
             return createdPublisher->second;

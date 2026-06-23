@@ -1,10 +1,15 @@
 #pragma once
 
+#include <concepts>
+#include <functional>
 #include <span>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
+#include <mutex>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -15,9 +20,11 @@
 #include <frc/util/Color8Bit.h>
 #include <wpi/struct/Struct.h>
 
-#include "LogDataReceiver.h"
-#include "LogStorage.h"
-#include "LoggableInputs.h"
+#include "akit/log/LogDataReceiver.h"
+#include "akit/log/LogReplaySource.h"
+#include "akit/log/LogStorage.h"
+#include "akit/inputs/LoggableInputs.h"
+#include "akit/log/ReceiverThread.h"
 
 namespace akit {
     class Logger {
@@ -25,18 +32,49 @@ namespace akit {
         static void Start();
         static void End();
 
+        static void PeriodicBeforeUser();
+        static void PeriodicAfterUser();
+        static void PeriodicAfterUser(int64_t userCodeUs, int64_t periodicBeforeUs);
+        static void PeriodicAfterUser(int64_t userCodeUs, int64_t periodicBeforeUs,
+                                      std::string_view extraConsoleData);
+
+        static void SetReplaySource(LogReplaySource* source);
+        static bool HasReplaySource();
+        static bool IsRunning() { return running_; }
+        static void Clear();
+
+        static void RecordMetadata(const std::string& key, std::string_view value);
+
         template<LoggableAggregate T>
         static void ProcessInputs(std::string_view key, T& inputs) {
             if (!running_) return;
             LogTable currentTable = LogTable(currentStorage_).GetSubtable(key);
-            if (replayMode_) FromLog(inputs, currentTable);
+            if (IsReplayMode()) FromLog(inputs, currentTable);
             else ToLog(inputs, currentTable);
         }
 
         static void RecordOutput(const std::string& key, LogValue value);
         static void RecordOutput(const std::string& key, bool value);
+        template<typename Supplier>
+            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, bool>
+        static void RecordOutput(const std::string& key, Supplier&& value) {
+            RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
+        }
+
         static void RecordOutput(const std::string& key, int value) { RecordOutput(key, static_cast<int64_t>(value)); }
+        template<typename Supplier>
+            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, int>
+        static void RecordOutput(const std::string& key, Supplier&& value) {
+            RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
+        }
+
         static void RecordOutput(const std::string& key, int64_t value);
+        template<typename Supplier>
+            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, int64_t>
+        static void RecordOutput(const std::string& key, Supplier&& value) {
+            RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
+        }
+
         static void RecordOutput(const std::string& key, float value);
 
         static void RecordOutput(const std::string& key, float value, std::string_view unit) {
@@ -44,6 +82,11 @@ namespace akit {
         }
 
         static void RecordOutput(const std::string& key, double value);
+        template<typename Supplier>
+            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, double>
+        static void RecordOutput(const std::string& key, Supplier&& value) {
+            RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
+        }
 
         static void RecordOutput(const std::string& key, double value, std::string_view unit) {
             RecordOutput(key, LogValue{value, "", std::string(unit)});
@@ -55,15 +98,15 @@ namespace akit {
 
         static void RecordOutput(const std::string& key, std::string_view value);
 
-        // 1D array outputs.
         static void RecordOutput(const std::string& key, std::span<const uint8_t> value);
+        static void RecordOutput(const std::string& key, std::span<const bool> value);
+        static void RecordOutput(const std::string& key, const std::vector<bool>& value);
         static void RecordOutput(const std::string& key, std::span<const int> value);
         static void RecordOutput(const std::string& key, std::span<const int64_t> value);
         static void RecordOutput(const std::string& key, std::span<const float> value);
         static void RecordOutput(const std::string& key, std::span<const double> value);
         static void RecordOutput(const std::string& key, std::span<const std::string> value);
 
-        // 2D array outputs — stored as key/length + key/0, key/1, …
         static void RecordOutput(const std::string& key, std::span<const std::vector<uint8_t>> value) {
             RecordOutput2D<uint8_t>(key, value);
         }
@@ -88,20 +131,31 @@ namespace akit {
             RecordOutput2D<std::string>(key, value);
         }
 
-        // Enum output — stored as the enumerator name string (requires magic_enum).
         template<typename E>
             requires std::is_enum_v<E>
         static void RecordOutput(const std::string& key, E value) {
             RecordOutput(key, std::string_view(magic_enum::enum_name(value)));
         }
 
-        // units::unit_t<U> — stored as double with the unit name as metadata.
+        template<typename E>
+            requires std::is_enum_v<E>
+        static void RecordOutput(const std::string& key, std::span<const E> values) {
+            if (!running_) return;
+            LogTable(currentStorage_).GetSubtable(
+                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+        }
+
+        template<typename E>
+            requires std::is_enum_v<E>
+        static void RecordOutput(const std::string& key, std::span<const std::vector<E>> values) {
+            RecordOutput2D<E>(key, values);
+        }
+
         template<typename U>
         static void RecordOutput(const std::string& key, units::unit_t<U> value) {
             RecordOutput(key, value.value(), value.name());
         }
 
-        // frc::Color / frc::Color8Bit — stored as "#RRGGBB" hex string.
         static void RecordOutput(const std::string& key, frc::Color value) {
             RecordOutput(key, std::string_view{value.HexString()});
         }
@@ -110,39 +164,35 @@ namespace akit {
             RecordOutput(key, std::string_view{value.HexString()});
         }
 
-        // wpi::StructSerializable<T> — serialized as raw bytes with struct schema registration.
         template<wpi::StructSerializable T>
         static void RecordOutput(const std::string& key, const T& value) {
             if (!running_) return;
             LogTable(currentStorage_).GetSubtable(
-                replayMode_ ? "ReplayOutputs" : "RealOutputs").Put(key, value);
+                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, value);
         }
 
         template<wpi::StructSerializable T>
         static void RecordOutput(const std::string& key, const std::vector<T>& values) {
             if (!running_) return;
             LogTable(currentStorage_).GetSubtable(
-                replayMode_ ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
         }
 
-        static void RecordMetadata(const std::string& key, std::string_view value);
+        template<wpi::StructSerializable T>
+        static void RecordOutput(const std::string& key, std::span<const T> values) {
+            if (!running_) return;
+            LogTable(currentStorage_).GetSubtable(
+                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+        }
 
-        static void SetReplayMode(bool replayMode);
-        static bool HasReplaySource();
-        static void Clear();
-
-        static void PeriodicBeforeUser();
-        static void PeriodicAfterUser();
-
-        // Runs fn only on every Nth robot cycle — use to downsample expensive outputs.
-        template<typename Fn>
-        static void RunEveryN(int period, Fn&& fn) {
+        template<typename func>
+        static void RunEveryN(int period, func&& fn) {
             if (period < 1) {
                 FRC_ReportError(frc::err::Error,
                                 "[AdvantageKit] RunEveryN period must be >= 1 (got {})", period);
                 return;
             }
-            if (cycles_ % period == 0) std::forward<Fn>(fn)();
+            if (cycles_ % period == 0) std::forward<func>(fn)();
         }
 
         static units::second_t GetTimestamp();
@@ -151,16 +201,20 @@ namespace akit {
         static void DumpCurrentStorage();
 
         static void AddDataReceiver(LogDataReceiver* receiver);
-
-        static std::vector<LogDataReceiver*> receivers_;
+        static void ClearReceivers();
+        static bool GetReceiverQueueFault();
 
     private:
-        static LogStorage currentStorage_;
-        static std::unordered_map<std::string, std::string> metadata_;
-        static bool replayMode_;
-        static bool running_;
-        static int cycles_;
-        static int64_t lastTimestamp_;
+        inline static LogStorage currentStorage_{};
+        inline static std::unordered_map<std::string, std::string> metadata_{};
+        inline static LogReplaySource* replaySource_ = nullptr;
+        inline static bool running_ = false;
+        inline static int cycles_ = 0;
+        inline static int64_t lastTimestamp_ = 0;
+        inline static std::mutex mutex_{};
+        inline static ReceiverThread receiverThread_{};
+
+        static bool IsReplayMode() { return replaySource_ != nullptr; }
 
         template<typename T>
         static void RecordOutput2D(const std::string& key, std::span<const std::vector<T>> value) {

@@ -13,9 +13,9 @@
 #include <frc/RobotBase.h>
 #include <frc/RobotController.h>
 
-#include "Logger.h"
-#include "WPILOGConstants.h"
-#include "WPILOGWriter.h"
+#include "akit/Logger.h"
+#include "akit/wpilog/WPILOGConstants.h"
+#include "akit/wpilog/WPILOGWriter.h"
 #include "lib/util/OSUtil.h"
 
 namespace akit::wpilog {
@@ -37,8 +37,13 @@ namespace akit::wpilog {
                 log_->AppendString(entryID, v, timestamp);
             else if constexpr (std::is_same_v<T, std::vector<uint8_t>>)
                 log_->AppendRaw(entryID, v, timestamp);
-            else if constexpr (std::is_same_v<T, std::vector<int>>)
-                log_->AppendBooleanArray(entryID, v, timestamp);
+            else if constexpr (std::is_same_v<T, std::vector<bool>>) {
+                std::vector<int> wpilibArray;
+                wpilibArray.reserve(v.size());
+                for (const auto value : v)
+                    wpilibArray.push_back(value);
+                log_->AppendBooleanArray(entryID, wpilibArray, timestamp);
+            }
             else if constexpr (std::is_same_v<T, std::vector<int64_t>>)
                 log_->AppendIntegerArray(entryID, v, timestamp);
             else if constexpr (std::is_same_v<T, std::vector<float>>)
@@ -66,7 +71,7 @@ namespace akit::wpilog {
             autoRename_ = false;
         } else {
             folder_ = path;
-            fileName_ = "akit" + randomIdentifier_ + ".wpilog";
+            fileName_ = "akit_" + randomIdentifier_ + ".wpilog";
             autoRename_ = true;
         }
     }
@@ -101,9 +106,23 @@ namespace akit::wpilog {
         // reset data
         entryIDs.clear();
         entryTypes.clear();
+        entryUnits.clear();
         dsAttachedTime_ = std::nullopt;
         logDate_ = std::nullopt;
         logMatchText_ = std::nullopt;
+
+        if (frc::RobotBase::IsSimulation() && openBehavior_ != NEVER) {
+            try {
+                namespace fs = std::filesystem;
+                std::string fullLogPath = fs::absolute(fs::path(folder_) / fileName_).lexically_normal().string();
+                fs::path tempPath = fs::temp_directory_path() / ascopeFileName_;
+                std::ofstream writer(tempPath);
+                if (!writer) throw std::runtime_error("could not open file");
+                writer << fullLogPath << "\n";
+            } catch (const std::exception&) {
+                FRC_ReportError(frc::err::Error, "[AdvantageKit] Failed to send log path to AdvantageScope.");
+            }
+        }
     }
 
     void WPILOGWriter::End() {
@@ -143,6 +162,12 @@ namespace akit::wpilog {
     void WPILOGWriter::PutTable(const LogTable& table) {
         if (!isOpen_) return;
         const int64_t timestamp = table.GetTimestamp();
+        const auto getMetadata = [](const std::optional<std::string>& unit) {
+            if (!unit.has_value()) return std::string(WPILOGConstants::entryMetadata);
+            std::string metadata = WPILOGConstants::entryMetadataUnits;
+            metadata.replace(metadata.find("$UNITSTR"), 8, *unit);
+            return metadata;
+        };
         if (autoRename_) {
             if (!logDate_.has_value()) {
                 if ((table.Get("DriverStation/DSAttached", false) && table.Get("SystemStats/SystemTimeValid", false)) ||
@@ -240,19 +265,24 @@ namespace akit::wpilog {
             bool appendData = false;
 
             if (existingID == entryIDs.end()) {
-                const std::string metadata = value.unitStr.has_value()
-                                                 ? [&] {
-                                                     std::string s = WPILOGConstants::entryMetadataUnits;
-                                                     s.replace(s.find("$UNITSTR"), 8, *value.unitStr);
-                                                     return s;
-                                                 }()
-                                                 : WPILOGConstants::entryMetadata;
-                entryIDs.emplace(key, log_->Start(key, value.GetWPILOGType(), metadata, timestamp));
+                entryIDs.emplace(key, log_->Start(key, value.GetWPILOGType(), getMetadata(value.unitStr), timestamp));
                 entryTypes.emplace(key, value.type);
+                entryUnits.emplace(key, value.unitStr);
                 appendData = true;
             } else {
                 auto oldValue = lastStorage_.values.find(key);
-                appendData = oldValue == lastStorage_.values.end() || oldValue->second != value;
+                appendData = oldValue == lastStorage_.values.end()
+                             || oldValue->second.type != value.type
+                             || oldValue->second.customTypeStr != value.customTypeStr
+                             || oldValue->second.value != value.value;
+
+                auto currentUnit = entryUnits.find(key);
+                const std::optional<std::string> oldUnit =
+                    currentUnit == entryUnits.end() ? std::nullopt : currentUnit->second;
+                if (oldUnit != value.unitStr) {
+                    log_->SetMetadata(entryIDs.at(key), getMetadata(value.unitStr), timestamp);
+                    entryUnits.insert_or_assign(key, value.unitStr);
+                }
             }
 
             if (appendData) {

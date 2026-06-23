@@ -7,7 +7,7 @@
 #include <networktables/IntegerTopic.h>
 #include <networktables/NetworkTable.h>
 
-#include "akit/LogDataReceiver.h"
+#include "akit/log/LogDataReceiver.h"
 
 namespace akit::networktables {
     class NT4Publisher : public LogDataReceiver {

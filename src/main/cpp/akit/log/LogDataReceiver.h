@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "LogTable.h"
+#include "akit/log/LogTable.h"
 
 namespace akit {
     class LogDataReceiver {

@@ -7,7 +7,7 @@
 #include <variant>
 #include <vector>
 
-#include "LoggableType.h"
+#include "akit/log/LoggableType.h"
 
 namespace akit {
     using LogValueVariant = std::variant<
@@ -17,7 +17,7 @@ namespace akit {
         float, // Float
         double, // Double
         std::string, // String
-        std::vector<int>, // BooleanArray (int per element: WPILib span<const int> API)
+        std::vector<bool>, // BooleanArray
         std::vector<int64_t>, // IntegerArray
         std::vector<float>, // FloatArray
         std::vector<double>, // DoubleArray
@@ -48,7 +48,7 @@ namespace akit {
         explicit LogValue(std::string v, std::string typeStr = "")
             : value(std::move(v)), type(LoggableType::kString), customTypeStr(std::move(typeStr)) {}
 
-        explicit LogValue(std::vector<int> v, std::string typeStr = "")
+        explicit LogValue(std::vector<bool> v, std::string typeStr = "")
             : value(std::move(v)), type(LoggableType::kBooleanArray), customTypeStr(std::move(typeStr)) {}
 
         explicit LogValue(std::vector<int64_t> v, std::string typeStr = "")
@@ -88,7 +88,9 @@ namespace akit {
 
     struct LogStorage {
         std::unordered_map<std::string, LogValue> values;
+        // timestamp in Us
         int64_t timestamp = 0;
         void Clear() { values.clear(); }
+        [[nodiscard]] bool Empty() const { return values.empty(); }
     };
 } // namespace akit

@@ -7,8 +7,8 @@
 #include <frc2/command/CommandScheduler.h>
 
 #include "akit/Logger.h"
-#include "akit/NT4Publisher.h"
-#include "akit/WPILOGWriter.h"
+#include "akit/networktables/NT4Publisher.h"
+#include "akit/wpilog/WPILOGWriter.h"
 #include "frc2026/Robot.h"
 
 #include <frc/geometry/Pose2d.h>

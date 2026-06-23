@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <ratio>
 #include <span>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -13,7 +15,7 @@
 #include <frc/util/Color8Bit.h>
 #include <wpi/struct/Struct.h>
 
-#include "akit/LogStorage.h"
+#include "akit/log/LogStorage.h"
 
 using std::vector;
 using std::span;
@@ -44,6 +46,8 @@ namespace akit {
 
         // arrays
         void Put(const string& key, span<const uint8_t> value) const;
+        void Put(const string& key, span<const bool> value) const;
+        void Put(const string& key, const vector<bool>& value) const;
         void Put(const string& key, span<const int> value) const;
         void Put(const string& key, span<const int64_t> value) const;
         void Put(const string& key, span<const float> value) const;
@@ -65,10 +69,31 @@ namespace akit {
             Put(key, string_view(magic_enum::enum_name(value)));
         }
 
+        template<typename E>
+            requires std::is_enum_v<E>
+        void Put(const string& key, span<const E> values) const {
+            vector<string> strings;
+            strings.reserve(values.size());
+            for (const auto& v : values)
+                strings.emplace_back(magic_enum::enum_name(v));
+            Put(key, span<const string>(strings));
+        }
+
+        template<typename E>
+            requires std::is_enum_v<E>
+        void Put(const string& key, span<const vector<E>> values) const {
+            Put(key + "/length", static_cast<int64_t>(values.size()));
+            for (size_t i = 0; i < values.size(); i++) {
+                Put(key + "/" + std::to_string(i), span<const E>(values[i]));
+            }
+        }
+
         // wpilib strong units, convenient that they have a name
         template<typename U>
         void Put(const string& key, units::unit_t<U> value) const {
-            Put(key, value.value(), value.name());
+            using BaseUnit = units::unit<std::ratio<1>, typename units::traits::unit_traits<U>::base_unit_type>;
+            const auto baseValue = value.template convert<BaseUnit>();
+            Put(key, baseValue.value(), baseValue.name());
         }
 
         // wpilib colors, as hex string
@@ -101,10 +126,27 @@ namespace akit {
             Put(key, LogValue{std::move(buf), string(wpi::GetStructTypeString<T>()) + "[]"});
         }
 
+        // span of aforementioned structs
+        template<wpi::StructSerializable T>
+        void Put(const string& key, span<const T> values) const {
+            AddStructSchema<T>();
+            const size_t elemSize = wpi::Struct<T>::GetSize();
+            vector<uint8_t> buf(elemSize * values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                wpi::PackStruct(span{buf}.subspan(i * elemSize, elemSize), values[i]);
+            }
+            Put(key, LogValue{std::move(buf), string(wpi::GetStructTypeString<T>()) + "[]"});
+        }
+
+        template<typename T>
+            requires std::is_aggregate_v<T> && (!std::is_array_v<T>) && (!wpi::StructSerializable<T>)
+        void Put(const string& key, const T& value) const;
+
         /* --------------------GETTERS-------------------- */
 
         // primitives
         [[nodiscard]] bool Get(string_view key, bool defaultValue) const;
+        [[nodiscard]] int Get(string_view key, int defaultValue) const;
         [[nodiscard]] int64_t Get(string_view key, int64_t defaultValue) const;
         [[nodiscard]] float Get(string_view key, float defaultValue) const;
         [[nodiscard]] double Get(string_view key, double defaultValue) const;
@@ -112,6 +154,8 @@ namespace akit {
 
         // arrays
         [[nodiscard]] vector<uint8_t> Get(string_view key, span<const uint8_t> defaultValue) const;
+        [[nodiscard]] vector<bool> Get(string_view key, span<const bool> defaultValue) const;
+        [[nodiscard]] vector<bool> Get(string_view key, const vector<bool>& defaultValue) const;
         [[nodiscard]] vector<int> Get(string_view key, span<const int> defaultValue) const;
         [[nodiscard]] vector<int64_t> Get(string_view key, span<const int64_t> defaultValue) const;
         [[nodiscard]] vector<float> Get(string_view key, span<const float> defaultValue) const;
@@ -140,9 +184,66 @@ namespace akit {
             return magic_enum::enum_cast<E>(name).value_or(defaultValue);
         }
 
+        template<typename E>
+            requires std::is_enum_v<E>
+        [[nodiscard]] vector<E> Get(string_view key, span<const E> defaultValue) const {
+            vector<string> defaultNames;
+            defaultNames.reserve(defaultValue.size());
+            for (const auto& value : defaultValue) {
+                defaultNames.emplace_back(magic_enum::enum_name(value));
+            }
+
+            const auto names = Get(key, span<const string>(defaultNames));
+            vector<E> result;
+            result.reserve(names.size());
+            for (const auto& name : names) {
+                auto enumValue = magic_enum::enum_cast<E>(name);
+                if (!enumValue.has_value()) {
+                    return vector<E>(defaultValue.begin(), defaultValue.end());
+                }
+                result.push_back(*enumValue);
+            }
+            return result;
+        }
+
+        template<typename E>
+            requires std::is_enum_v<E>
+        [[nodiscard]] vector<vector<E>> Get(string_view key,
+                                            span<const vector<E>> defaultValue) const {
+            vector<vector<E>> defaultRows(defaultValue.begin(), defaultValue.end());
+            const LogValue* lv = Get(string(key) + "/length");
+            if (!lv) return defaultRows;
+            const auto* lenPtr = std::get_if<int64_t>(&lv->value);
+            if (!lenPtr) return defaultRows;
+
+            vector<vector<E>> result;
+            result.reserve(static_cast<size_t>(*lenPtr));
+            for (int64_t i = 0; i < *lenPtr; i++) {
+                vector<E> rowDefault = i < static_cast<int64_t>(defaultRows.size())
+                                           ? defaultRows[static_cast<size_t>(i)]
+                                           : vector<E>{};
+                const auto rowNames = Get(string(key) + "/" + std::to_string(i), vector<string>{});
+                vector<E> row;
+                row.reserve(rowNames.size());
+                bool valid = true;
+                for (const auto& rowName : rowNames) {
+                    auto enumValue = magic_enum::enum_cast<E>(rowName);
+                    if (!enumValue.has_value()) {
+                        valid = false;
+                        break;
+                    }
+                    row.push_back(*enumValue);
+                }
+                result.push_back(valid ? std::move(row) : std::move(rowDefault));
+            }
+            return result;
+        }
+
         template<typename U>
         [[nodiscard]] units::unit_t<U> Get(string_view key, units::unit_t<U> defaultValue) const {
-            return units::unit_t<U>{Get(key, defaultValue.value())};
+            using BaseUnit = units::unit<std::ratio<1>, typename units::traits::unit_traits<U>::base_unit_type>;
+            const auto baseDefault = defaultValue.template convert<BaseUnit>();
+            return units::unit_t<U>{units::unit_t<BaseUnit>{Get(key, baseDefault.value())}};
         }
 
         [[nodiscard]] frc::Color Get(string_view key, frc::Color defaultValue) const {
@@ -177,6 +278,10 @@ namespace akit {
                 result.push_back(wpi::UnpackStruct<T>(span{raw}.subspan(i, elemSize)));
             return result;
         }
+
+        template<typename T>
+            requires std::is_aggregate_v<T> && (!std::is_array_v<T>) && (!wpi::StructSerializable<T>)
+        T Get(string_view key, T defaultValue) const;
 
         // raw value accessor w/ no default, returns nullptr (pls don't use this)
         [[nodiscard]] const LogValue* Get(string_view key) const;
@@ -250,11 +355,15 @@ namespace akit {
             if (!lv) return {defaultValue.begin(), defaultValue.end()};
             const auto* lenPtr = std::get_if<int64_t>(&lv->value);
             if (!lenPtr) return {defaultValue.begin(), defaultValue.end()};
+            vector<vector<T>> defaults(defaultValue.begin(), defaultValue.end());
             vector<vector<T>> result;
             result.reserve(static_cast<size_t>(*lenPtr));
             for (int64_t i = 0; i < *lenPtr; i++) {
-                result.push_back(GetTyped<vector<T>>(
-                    string(key) + "/" + std::to_string(i), {}));
+                const auto& rowDefault = i < static_cast<int64_t>(defaults.size())
+                                             ? defaults[static_cast<size_t>(i)]
+                                             : vector<T>{};
+                result.push_back(Get(string(key) + "/" + std::to_string(i),
+                                     span<const T>(rowDefault)));
             }
             return result;
         }
