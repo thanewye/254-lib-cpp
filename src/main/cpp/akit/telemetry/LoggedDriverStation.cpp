@@ -1,6 +1,8 @@
 #include "akit/telemetry/LoggedDriverStation.h"
 
+#include <cctype>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <frc/DriverStation.h>
@@ -9,16 +11,32 @@
 #include <frc/simulation/DriverStationSim.h>
 #include <hal/DriverStation.h>
 
+namespace {
+    std::string Trim(const std::string_view value) {
+        size_t start = 0;
+        while (start < value.size() && std::isspace(static_cast<unsigned char>(value[start]))) {
+            start++;
+        }
+
+        size_t end = value.size();
+        while (end > start && std::isspace(static_cast<unsigned char>(value[end - 1]))) {
+            end--;
+        }
+
+        return std::string(value.substr(start, end - start));
+    }
+} // namespace
+
 namespace akit {
     void LoggedDriverStation::SaveToLog(const LogTable& table) {
         int32_t status = 0;
 
-        table.Put("AllianceStation", HAL_GetAllianceStation(&status));
-        table.Put("EventName", std::string_view{frc::DriverStation::GetEventName()});
-        table.Put("GameSpecificMessage", std::string_view{frc::DriverStation::GetGameSpecificMessage()});
+        table.Put("AllianceStation", static_cast<int64_t>(HAL_GetAllianceStation(&status)));
+        table.Put("EventName", Trim(frc::DriverStation::GetEventName()));
+        table.Put("GameSpecificMessage", Trim(frc::DriverStation::GetGameSpecificMessage()));
         table.Put("MatchNumber", frc::DriverStation::GetMatchNumber());
         table.Put("ReplayNumber", frc::DriverStation::GetReplayNumber());
-        table.Put("MatchType", frc::DriverStation::GetMatchType());
+        table.Put("MatchType", static_cast<int64_t>(frc::DriverStation::GetMatchType()));
         table.Put("MatchTime", frc::DriverStation::GetMatchTime());
 
         table.Put("Enabled", frc::DriverStation::IsEnabled());
@@ -33,8 +51,8 @@ namespace akit {
 
             HAL_JoystickDescriptor desc{};
             HAL_GetJoystickDescriptor(id, &desc);
-            joystickTable.Put("Name", std::string_view{desc.name});
-            joystickTable.Put("Type", static_cast<frc::GenericHID::HIDType>(desc.type));
+            joystickTable.Put("Name", Trim(desc.name));
+            joystickTable.Put("Type", static_cast<int64_t>(desc.type));
             joystickTable.Put("Xbox", static_cast<bool>(desc.isXbox));
             joystickTable.Put("ButtonCount", desc.buttonCount);
 
@@ -52,25 +70,60 @@ namespace akit {
             std::vector<float> axisValues(axes.axes, axes.axes + axes.count);
             joystickTable.Put("AxisValues", std::span<const float>(axisValues));
 
-            std::vector<frc::Joystick::AxisType> axisTypes(axes.count);
+            std::vector<int> axisTypes(axes.count);
             for (int i = 0; i < axes.count; i++) {
-                axisTypes[i] = static_cast<frc::Joystick::AxisType>(desc.axisTypes[i]);
+                axisTypes[i] = desc.axisTypes[i];
             }
-            joystickTable.Put("AxisTypes", std::span<const frc::Joystick::AxisType>(axisTypes));
+            joystickTable.Put("AxisTypes", std::span<const int>(axisTypes));
         }
     }
 
     void LoggedDriverStation::ReplayFromLog(const LogTable& table) {
         using frc::sim::DriverStationSim;
 
-        const auto allianceStation = table.Get("AllianceStation", HAL_AllianceStationID_kUnknown);
-        DriverStationSim::SetAllianceStationId(allianceStation);
+        const auto allianceStation = table.Get("AllianceStation", 0);
+        switch (allianceStation) {
+            case HAL_AllianceStationID_kRed1:
+                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed1);
+                break;
+            case HAL_AllianceStationID_kRed2:
+                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed2);
+                break;
+            case HAL_AllianceStationID_kRed3:
+                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed3);
+                break;
+            case HAL_AllianceStationID_kBlue1:
+                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue1);
+                break;
+            case HAL_AllianceStationID_kBlue2:
+                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue2);
+                break;
+            case HAL_AllianceStationID_kBlue3:
+                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue3);
+                break;
+            default:
+                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kUnknown);
+                break;
+        }
         DriverStationSim::SetEventName(table.Get("EventName", std::string{}));
         DriverStationSim::SetGameSpecificMessage(table.Get("GameSpecificMessage", std::string{}));
         DriverStationSim::SetMatchNumber(table.Get("MatchNumber", 0));
         DriverStationSim::SetReplayNumber(table.Get("ReplayNumber", 0));
-        const auto matchType = table.Get("MatchType", frc::DriverStation::MatchType::kNone);
-        DriverStationSim::SetMatchType(matchType);
+        const auto matchType = table.Get("MatchType", 0);
+        switch (matchType) {
+            case 1:
+                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kPractice);
+                break;
+            case 2:
+                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kQualification);
+                break;
+            case 3:
+                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kElimination);
+                break;
+            default:
+                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kNone);
+                break;
+        }
         DriverStationSim::SetMatchTime(table.Get("MatchTime", -1.0));
 
         const bool dsAttached = table.Get("DSAttached", false);
@@ -85,7 +138,7 @@ namespace akit {
             const LogTable joystickTable = table.GetSubtable("Joystick" + std::to_string(id));
             DriverStationSim::SetJoystickName(id, joystickTable.Get("Name", std::string{}));
 
-            const auto joystickType = joystickTable.Get("Type", frc::GenericHID::HIDType::kUnknown);
+            const auto joystickType = joystickTable.Get("Type", 0);
             DriverStationSim::SetJoystickType(id, joystickType);
             DriverStationSim::SetJoystickIsXbox(id, joystickTable.Get("Xbox", false));
             DriverStationSim::SetJoystickButtonCount(id, joystickTable.Get("ButtonCount", 0));
@@ -100,8 +153,8 @@ namespace akit {
             }
 
             const auto axisValues = joystickTable.Get("AxisValues", std::vector<float>{});
-            auto axisTypes = joystickTable.Get("AxisTypes", std::span<const frc::Joystick::AxisType>{});
-            axisTypes.resize(axisValues.size(), frc::Joystick::AxisType::kXAxis);
+            auto axisTypes = joystickTable.Get("AxisTypes", std::span<const int>{});
+            axisTypes.resize(axisValues.size(), 0);
 
             const auto axisCount = static_cast<int>(axisValues.size());
             DriverStationSim::SetJoystickAxisCount(id, axisCount);

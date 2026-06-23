@@ -7,7 +7,7 @@
 namespace akit {
     LogTable::LogTable(LogStorage& storage, std::string prefix)
         : storage_(&storage)
-          , prefix_(std::move(prefix)) {}
+          , prefix_(prefix.empty() ? "/" : std::move(prefix)) {}
 
     LogTable::LogTable(LogStorage& storage, std::string prefix, int depth)
         : storage_(&storage)
@@ -15,13 +15,13 @@ namespace akit {
           , depth_(depth) {}
 
     void LogTable::Put(const std::string& key, LogValue value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, value.type, value.customTypeStr))
             storage_->values.insert_or_assign(fk, std::move(value));
     }
 
     void LogTable::Put(const std::string& key, const bool value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kBoolean))
             storage_->values.insert_or_assign(fk, LogValue{value});
     }
@@ -31,31 +31,31 @@ namespace akit {
     }
 
     void LogTable::Put(const std::string& key, const int64_t value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kInteger))
             storage_->values.insert_or_assign(fk, LogValue{value});
     }
 
     void LogTable::Put(const std::string& key, const float value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kFloat))
             storage_->values.insert_or_assign(fk, LogValue{value});
     }
 
     void LogTable::Put(const std::string& key, const float value, const std::string_view unit) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kFloat))
             storage_->values.insert_or_assign(fk, LogValue{value, "", std::string(unit)});
     }
 
     void LogTable::Put(const std::string& key, const double value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kDouble))
             storage_->values.insert_or_assign(fk, LogValue{value});
     }
 
     void LogTable::Put(const std::string& key, const double value, const std::string_view unit) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kDouble))
             storage_->values.insert_or_assign(fk, LogValue{value, "", std::string(unit)});
     }
@@ -65,31 +65,31 @@ namespace akit {
     }
 
     void LogTable::Put(const std::string& key, const std::string_view value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kString))
             storage_->values.insert_or_assign(fk, LogValue{std::string(value)});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const uint8_t> value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kRaw))
             storage_->values.insert_or_assign(fk, LogValue{std::vector<uint8_t>(value.begin(), value.end())});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const bool> value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kBooleanArray))
             storage_->values.insert_or_assign(fk, LogValue{std::vector<bool>(value.begin(), value.end())});
     }
 
     void LogTable::Put(const std::string& key, const std::vector<bool>& value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kBooleanArray))
             storage_->values.insert_or_assign(fk, LogValue{value});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const int> value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kIntegerArray))
             storage_->values.insert_or_assign(
                 fk,
@@ -97,31 +97,38 @@ namespace akit {
     }
 
     void LogTable::Put(const std::string& key, const std::span<const int64_t> value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kIntegerArray))
             storage_->values.insert_or_assign(fk, LogValue{std::vector<int64_t>(value.begin(), value.end())});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const float> value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kFloatArray))
             storage_->values.insert_or_assign(fk, LogValue{std::vector<float>(value.begin(), value.end())});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const double> value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kDoubleArray))
             storage_->values.insert_or_assign(fk, LogValue{std::vector<double>(value.begin(), value.end())});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const std::string> value) const {
-        const std::string fk = FullKey(key);
+        const std::string fk = NormalizeKey(key);
         if (WriteAllowed(fk, LoggableType::kStringArray))
             storage_->values.insert_or_assign(fk, LogValue{std::vector<std::string>(value.begin(), value.end())});
     }
 
     void LogTable::Put(const std::string& key, const std::span<const std::vector<uint8_t>> value) const {
         Put2D<uint8_t>(key, value);
+    }
+
+    void LogTable::Put(const std::string& key, const std::span<const std::vector<bool>> value) const {
+        Put(NormalizeKey(key, "length", false), static_cast<int64_t>(value.size()));
+        for (size_t i = 0; i < value.size(); i++) {
+            Put(NormalizeKey(key, std::to_string(i), false), value[i]);
+        }
     }
 
     void LogTable::Put(const std::string& key, const std::span<const std::vector<int>> value) const {
@@ -234,6 +241,25 @@ namespace akit {
         return Get2D<uint8_t>(key, defaultValue);
     }
 
+    std::vector<std::vector<bool>> LogTable::Get(const std::string_view key,
+                                                 const std::span<const std::vector<bool>> defaultValue) const {
+        std::vector<std::vector<bool>> defaults(defaultValue.begin(), defaultValue.end());
+        const LogValue* lv = Get(NormalizeKey(key, "length", false));
+        if (!lv) return defaults;
+        const auto* lenPtr = std::get_if<int64_t>(&lv->value);
+        if (!lenPtr) return defaults;
+
+        std::vector<std::vector<bool>> result;
+        result.reserve(static_cast<size_t>(*lenPtr));
+        for (int64_t i = 0; i < *lenPtr; i++) {
+            const auto& rowDefault = i < static_cast<int64_t>(defaults.size())
+                                         ? defaults[static_cast<size_t>(i)]
+                                         : std::vector<bool>{};
+            result.push_back(Get(NormalizeKey(key, std::to_string(i), false), rowDefault));
+        }
+        return result;
+    }
+
     std::vector<std::vector<int>> LogTable::Get(const std::string_view key,
                                                 const std::span<const std::vector<int>> defaultValue) const {
         return Get2D<int>(key, defaultValue);
@@ -259,12 +285,12 @@ namespace akit {
     const { return Get2D<std::string>(key, defaultValue); }
 
     const LogValue* LogTable::Get(const std::string_view key) const {
-        auto it = storage_->values.find(FullKey(key));
+        auto it = storage_->values.find(NormalizeKey(key));
         return it == storage_->values.end() ? nullptr : &it->second;
     }
 
     LogTable LogTable::GetSubtable(std::string_view key) const {
-        std::string nextPrefix = FullKey(key);
+        std::string nextPrefix = NormalizeKey(key);
         nextPrefix += "/";
         return LogTable(*storage_, std::move(nextPrefix), depth_ + 1);
     }
@@ -358,10 +384,20 @@ namespace akit {
         return out;
     }
 
-    std::string LogTable::FullKey(const std::string_view key) const {
-        std::string fullKey = prefix_;
-        fullKey += key;
-        return fullKey;
+    std::string LogTable::NormalizeKey(const std::string_view key, const std::string_view child,
+                                       const bool includePrefix) const {
+        size_t start = 0;
+        while (start < key.size() && key[start] == '/') start++;
+        std::string normalizedKey;
+        if (includePrefix) {
+            normalizedKey = prefix_;
+        }
+        normalizedKey += key.substr(start);
+        if (!child.empty()) {
+            normalizedKey += "/";
+            normalizedKey += child;
+        }
+        return normalizedKey;
     }
 
     bool LogTable::WriteAllowed(const std::string& fullKey, const LoggableType type,

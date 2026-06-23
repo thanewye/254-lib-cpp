@@ -101,6 +101,7 @@ namespace akit {
         static void RecordOutput(const std::string& key, std::span<const uint8_t> value);
         static void RecordOutput(const std::string& key, std::span<const bool> value);
         static void RecordOutput(const std::string& key, const std::vector<bool>& value);
+        static void RecordOutput(const std::string& key, std::span<const std::vector<bool>> value);
         static void RecordOutput(const std::string& key, std::span<const int> value);
         static void RecordOutput(const std::string& key, std::span<const int64_t> value);
         static void RecordOutput(const std::string& key, std::span<const float> value);
@@ -173,6 +174,13 @@ namespace akit {
 
         template<wpi::StructSerializable T>
         static void RecordOutput(const std::string& key, const std::vector<T>& values) {
+            if (!running_) return;
+            LogTable(currentStorage_).GetSubtable(
+                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+        }
+
+        template<wpi::StructSerializable T>
+        static void RecordOutput(const std::string& key, std::span<const std::vector<T>> values) {
             if (!running_) return;
             LogTable(currentStorage_).GetSubtable(
                 IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);

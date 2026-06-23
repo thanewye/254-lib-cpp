@@ -67,19 +67,24 @@ namespace akit {
     void Logger::PeriodicBeforeUser() {
         cycles_++;
         if (!running_) return;
+        const uint64_t entryUpdateStart = frc::RobotController::GetFPGATime();
+        LogTable root(currentStorage_);
 
         if (!IsReplayMode()) {
             currentStorage_.timestamp = static_cast<int64_t>(frc::Timer::GetFPGATimestamp().value() * 1'000'000.0);
-            return;
+        } else {
+            if (!replaySource_->UpdateTable(root)) {
+                End();
+                return;
+            }
         }
 
-        LogTable root(currentStorage_);
-        if (!replaySource_->UpdateTable(root)) {
-            End();
-            return;
+        const uint64_t driverStationStart = frc::RobotController::GetFPGATime();
+        if (HasReplaySource()) {
+            LoggedDriverStation::ReplayFromLog(root.GetSubtable("DriverStation"));
+            RecordOutput("Logger/DriverStationMS", (frc::RobotController::GetFPGATime() - driverStationStart) / 1000.0);
         }
-
-        LoggedDriverStation::ReplayFromLog(root.GetSubtable("DriverStation"));
+        RecordOutput("Logger/EntryUpdateMS", (driverStationStart - entryUpdateStart) / 1000.0);
     }
 
     void Logger::PeriodicAfterUser() {
@@ -97,31 +102,45 @@ namespace akit {
 
         LogTable root(currentStorage_);
         if (!HasReplaySource()) {
+            const uint64_t dsStart = frc::RobotController::GetFPGATime();
             LogTable dsTable = root.GetSubtable("DriverStation");
             LoggedDriverStation::SaveToLog(dsTable);
             LoggedPowerDistribution::GetInstance()->SaveToLog(root.GetSubtable("PowerDistribution"));
             LoggedSystemStats::SaveToLog(root.GetSubtable("SystemStats"));
+            RecordOutput("Logger/DriverStationMS", (frc::RobotController::GetFPGATime() - dsStart) / 1000.0);
         }
         const uint64_t radioStart = frc::RobotController::GetFPGATime();
         if (!HasReplaySource()) {
             RadioLogger::Periodic(root.GetSubtable("RadioStatus"));
-            RecordOutput("Logger/RadioLogMS", (frc::RobotController::GetFPGATime() - radioStart) / 1000.0);
         }
+        const uint64_t consoleStart = frc::RobotController::GetFPGATime();
+        std::string consoleData(extraConsoleData);
+        if (!consoleData.empty()) {
+            const size_t lastNonWhitespace = consoleData.find_last_not_of(" \t\r\n");
+            if (lastNonWhitespace == std::string::npos) {
+                consoleData.clear();
+            } else {
+                consoleData.erase(lastNonWhitespace + 1);
+            }
+            if (!consoleData.empty()) RecordOutput("Console", consoleData);
+        }
+        const uint64_t consoleEnd = frc::RobotController::GetFPGATime();
+
+        RecordOutput("Logger/RadioLogMS", (consoleStart - radioStart) / 1000.0);
+        RecordOutput("Logger/ConsoleMS", (consoleEnd - consoleStart) / 1000.0);
+
         LogTable loggerTable = root.GetSubtable("Logger");
         loggerTable.Put("Timestamp", currentStorage_.timestamp / 1'000'000.0);
         loggerTable.Put("TimeSinceLastCycle", (currentStorage_.timestamp - lastTimestamp_) / 1'000'000.0);
         loggerTable.Put("CycleCount", static_cast<int64_t>(cycles_));
         lastTimestamp_ = currentStorage_.timestamp;
 
-        uint64_t afterEnd = frc::RobotController::GetFPGATime();
-        int64_t periodicAfterUs = static_cast<int64_t>(afterEnd - afterStart);
+        int64_t periodicAfterUs = static_cast<int64_t>(consoleEnd - afterStart);
 
-        LogTable robotTable = root.GetSubtable("LoggedRobot");
-        robotTable.Put("UserCodeMS", userCodeUs / 1000.0);
-        robotTable.Put("LogPeriodicMS", (periodicBeforeUs + periodicAfterUs) / 1000.0);
-        robotTable.Put("FullCycleMS", (periodicBeforeUs + userCodeUs + periodicAfterUs) / 1000.0);
-
-        loggerTable.Put("QueuedCycles", static_cast<int64_t>(receiverThread_.QueueSize()));
+        RecordOutput("LoggedRobot/UserCodeMS", userCodeUs / 1000.0);
+        RecordOutput("LoggedRobot/LogPeriodicMS", (periodicBeforeUs + periodicAfterUs) / 1000.0);
+        RecordOutput("LoggedRobot/FullCycleMS", (periodicBeforeUs + userCodeUs + periodicAfterUs) / 1000.0);
+        RecordOutput("Logger/QueuedCycles", static_cast<int64_t>(receiverThread_.QueueSize()));
         LogStorage snapshot;
         LogTable::Clone(root, snapshot);
         if (!receiverThread_.Enqueue(std::move(snapshot))) {
@@ -167,6 +186,11 @@ namespace akit {
 
     void Logger::RecordOutput(const std::string& key, const std::vector<bool>& value) {
         RecordOutput(key, LogValue{value});
+    }
+
+    void Logger::RecordOutput(const std::string& key, const std::span<const std::vector<bool>> value) {
+        if (!running_) return;
+        LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, value);
     }
 
     void Logger::RecordOutput(const std::string& key, const std::span<const int> value) {

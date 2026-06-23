@@ -297,6 +297,53 @@ TEST(LogTableArrayParityTest, Integer2DArrayRoundTripUsesPerRowIntegerArrays) {
               expected);
 }
 
+TEST(LogTableArrayParityTest, Boolean2DArrayRoundTripUsesPerRowBooleanArrays) {
+    LogStorage storage;
+    LogTable table(storage);
+    const std::vector<std::vector<bool>> expected{{true, false}, {false, true, true}};
+
+    table.Put("flags2d", std::span<const std::vector<bool>>(expected));
+
+    EXPECT_EQ(table.Get("flags2d", std::span<const std::vector<bool>>(expected)),
+              expected);
+}
+
+TEST(LogTableStructTest, Struct2DArrayRoundTripUsesPerRowStructArrays) {
+    LogStorage storage;
+    LogTable table(storage);
+    const std::vector<std::vector<frc::Rotation2d>> expected{
+        {frc::Rotation2d{units::radian_t{0.5}}, frc::Rotation2d{units::radian_t{1.0}}},
+        {frc::Rotation2d{units::radian_t{1.5}}},
+    };
+
+    table.Put("rotations2d", std::span<const std::vector<frc::Rotation2d>>(expected));
+
+    const auto actual = table.Get("rotations2d", std::span<const std::vector<frc::Rotation2d>>(expected));
+    ASSERT_EQ(actual.size(), expected.size());
+    for (size_t row = 0; row < actual.size(); ++row) {
+        ASSERT_EQ(actual[row].size(), expected[row].size());
+        for (size_t col = 0; col < actual[row].size(); ++col) {
+            EXPECT_DOUBLE_EQ(actual[row][col].Radians().value(), expected[row][col].Radians().value());
+        }
+    }
+}
+
+TEST(LogTableParityTest, RootKeysCanonicalizeLeadingSlashBehavior) {
+    LogStorage storage;
+    LogTable table(storage);
+
+    table.Put("plain", 1);
+    table.Put("/slash", 2);
+    table.GetSubtable("/nested").Put("/value", 3);
+
+    EXPECT_TRUE(storage.values.contains("/plain"));
+    EXPECT_TRUE(storage.values.contains("/slash"));
+    EXPECT_TRUE(storage.values.contains("/nested/value"));
+    EXPECT_FALSE(storage.values.contains("plain"));
+    EXPECT_FALSE(storage.values.contains("//slash"));
+    EXPECT_FALSE(storage.values.contains("/nested//value"));
+}
+
 TEST(LogTableParityTest, AggregateSubtablePutGetRoundTrip) {
     LogStorage storage;
     LogTable table(storage);
@@ -356,7 +403,7 @@ TEST(LoggerParityTest, PersistentSnapshotsRetainUnchangedValuesAcrossCycles) {
 
     ASSERT_TRUE(g_captureReceiver.WaitForSnapshots(1, std::chrono::milliseconds(500)));
     ASSERT_EQ(g_captureReceiver.SnapshotCount(), 1u);
-    EXPECT_TRUE(g_captureReceiver.SnapshotAt(0).values.contains("RealOutputs/Persisted"));
+    EXPECT_TRUE(g_captureReceiver.SnapshotAt(0).values.contains("/RealOutputs/Persisted"));
 
     Logger::PeriodicBeforeUser();
     Logger::RecordOutput("Changing", 20.0);
@@ -365,10 +412,10 @@ TEST(LoggerParityTest, PersistentSnapshotsRetainUnchangedValuesAcrossCycles) {
     ASSERT_TRUE(g_captureReceiver.WaitForSnapshots(2, std::chrono::milliseconds(500)));
     ASSERT_EQ(g_captureReceiver.SnapshotCount(), 2u);
     const auto secondSnapshot = g_captureReceiver.SnapshotAt(1).values;
-    ASSERT_TRUE(secondSnapshot.contains("RealOutputs/Persisted"));
-    ASSERT_TRUE(secondSnapshot.contains("RealOutputs/Changing"));
-    EXPECT_DOUBLE_EQ(std::get<double>(secondSnapshot.at("RealOutputs/Persisted").value), 1.0);
-    EXPECT_DOUBLE_EQ(std::get<double>(secondSnapshot.at("RealOutputs/Changing").value), 20.0);
+    ASSERT_TRUE(secondSnapshot.contains("/RealOutputs/Persisted"));
+    ASSERT_TRUE(secondSnapshot.contains("/RealOutputs/Changing"));
+    EXPECT_DOUBLE_EQ(std::get<double>(secondSnapshot.at("/RealOutputs/Persisted").value), 1.0);
+    EXPECT_DOUBLE_EQ(std::get<double>(secondSnapshot.at("/RealOutputs/Changing").value), 20.0);
 
     Logger::End();
     Logger::Clear();
@@ -396,12 +443,12 @@ TEST(LoggerParityTest, EnqueuedSnapshotsAreIndependentOfCurrentStorageMutation) 
 
     ASSERT_TRUE(g_captureReceiver.WaitForSnapshots(2, std::chrono::milliseconds(500)));
     const auto first = g_captureReceiver.SnapshotAt(0).values;
-    ASSERT_TRUE(first.contains("RealOutputs/Value"));
-    EXPECT_DOUBLE_EQ(std::get<double>(first.at("RealOutputs/Value").value), 1.0);
+    ASSERT_TRUE(first.contains("/RealOutputs/Value"));
+    EXPECT_DOUBLE_EQ(std::get<double>(first.at("/RealOutputs/Value").value), 1.0);
 
     const auto second = g_captureReceiver.SnapshotAt(1).values;
-    ASSERT_TRUE(second.contains("RealOutputs/Value"));
-    EXPECT_DOUBLE_EQ(std::get<double>(second.at("RealOutputs/Value").value), 2.0);
+    ASSERT_TRUE(second.contains("/RealOutputs/Value"));
+    EXPECT_DOUBLE_EQ(std::get<double>(second.at("/RealOutputs/Value").value), 2.0);
 
     Logger::End();
     Logger::Clear();
@@ -421,7 +468,7 @@ TEST(LoggerParityTest, LateAddDataReceiverGetsSynchronousCatchUpSnapshot) {
 
     // No waiting: the late-add catch-up call is synchronous on the calling thread.
     ASSERT_EQ(lateReceiver.SnapshotCount(), 1u);
-    EXPECT_TRUE(lateReceiver.SnapshotAt(0).values.contains("RealOutputs/Existing"));
+    EXPECT_TRUE(lateReceiver.SnapshotAt(0).values.contains("/RealOutputs/Existing"));
 
     Logger::End();
     Logger::Clear();
@@ -439,10 +486,31 @@ TEST(LoggerParityTest, SupplierOverloadsForwardImmediatelyToValueOverloads) {
     Logger::RecordOutput("LambdaDouble", [] { return 1.25; });
 
     const auto& values = Logger::GetCurrentStorage().values;
-    EXPECT_TRUE(std::get<bool>(values.at("RealOutputs/LambdaBool").value));
-    EXPECT_EQ(std::get<int64_t>(values.at("RealOutputs/LambdaInt").value), 4);
-    EXPECT_EQ(std::get<int64_t>(values.at("RealOutputs/LambdaLong").value), 9);
-    EXPECT_DOUBLE_EQ(std::get<double>(values.at("RealOutputs/LambdaDouble").value), 1.25);
+    EXPECT_TRUE(std::get<bool>(values.at("/RealOutputs/LambdaBool").value));
+    EXPECT_EQ(std::get<int64_t>(values.at("/RealOutputs/LambdaInt").value), 4);
+    EXPECT_EQ(std::get<int64_t>(values.at("/RealOutputs/LambdaLong").value), 9);
+    EXPECT_DOUBLE_EQ(std::get<double>(values.at("/RealOutputs/LambdaDouble").value), 1.25);
+
+    Logger::End();
+    Logger::Clear();
+}
+
+TEST(LoggerParityTest, ExtraConsoleDataAndTimingMetricsUseCanonicalOutputKeys) {
+    EnsureLoggedRobotValidationSatisfied();
+    Logger::Clear();
+    Logger::Start();
+
+    Logger::PeriodicAfterUser(1'500, 500, "Exception line\nstack line\n");
+
+    const auto& values = Logger::GetCurrentStorage().values;
+    ASSERT_TRUE(values.contains("/RealOutputs/Console"));
+    EXPECT_EQ(std::get<std::string>(values.at("/RealOutputs/Console").value), "Exception line\nstack line");
+    EXPECT_TRUE(values.contains("/RealOutputs/Logger/EntryUpdateMS"));
+    EXPECT_TRUE(values.contains("/RealOutputs/Logger/DriverStationMS"));
+    EXPECT_TRUE(values.contains("/RealOutputs/Logger/ConsoleMS"));
+    EXPECT_TRUE(values.contains("/RealOutputs/Logger/QueuedCycles"));
+    EXPECT_TRUE(values.contains("/Logger/Timestamp"));
+    EXPECT_TRUE(values.contains("/RealOutputs/LoggedRobot/FullCycleMS"));
 
     Logger::End();
     Logger::Clear();

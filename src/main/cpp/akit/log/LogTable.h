@@ -25,7 +25,7 @@ using std::string;
 namespace akit {
     class LogTable {
     public:
-        LogTable(LogStorage& storage, string prefix = "");
+        LogTable(LogStorage& storage, string prefix = "/");
 
         /* --------------------SETTERS (or putters)-------------------- */
 
@@ -55,6 +55,7 @@ namespace akit {
         void Put(const string& key, span<const string> value) const;
 
         // 2d arrays
+        void Put(const string& key, span<const vector<bool>> value) const;
         void Put(const string& key, span<const vector<uint8_t>> value) const;
         void Put(const string& key, span<const vector<int>> value) const;
         void Put(const string& key, span<const vector<int64_t>> value) const;
@@ -82,9 +83,9 @@ namespace akit {
         template<typename E>
             requires std::is_enum_v<E>
         void Put(const string& key, span<const vector<E>> values) const {
-            Put(key + "/length", static_cast<int64_t>(values.size()));
+            Put(NormalizeKey(key, "length", false), static_cast<int64_t>(values.size()));
             for (size_t i = 0; i < values.size(); i++) {
-                Put(key + "/" + std::to_string(i), span<const E>(values[i]));
+                Put(NormalizeKey(key, std::to_string(i), false), span<const E>(values[i]));
             }
         }
 
@@ -138,6 +139,14 @@ namespace akit {
             Put(key, LogValue{std::move(buf), string(wpi::GetStructTypeString<T>()) + "[]"});
         }
 
+        template<wpi::StructSerializable T>
+        void Put(const string& key, span<const vector<T>> values) const {
+            Put(NormalizeKey(key, "length", false), static_cast<int64_t>(values.size()));
+            for (size_t i = 0; i < values.size(); i++) {
+                Put(NormalizeKey(key, std::to_string(i), false), values[i]);
+            }
+        }
+
         template<typename T>
             requires std::is_aggregate_v<T> && (!std::is_array_v<T>) && (!wpi::StructSerializable<T>)
         void Put(const string& key, const T& value) const;
@@ -164,6 +173,8 @@ namespace akit {
                                          span<const string> defaultValue) const;
 
         // 2d arrays
+        [[nodiscard]] vector<vector<bool>> Get(string_view key,
+                                               span<const vector<bool>> defaultValue) const;
         [[nodiscard]] vector<vector<uint8_t>> Get(string_view key,
                                                   span<const vector<uint8_t>> defaultValue) const;
         [[nodiscard]] vector<vector<int>> Get(string_view key,
@@ -211,7 +222,7 @@ namespace akit {
         [[nodiscard]] vector<vector<E>> Get(string_view key,
                                             span<const vector<E>> defaultValue) const {
             vector<vector<E>> defaultRows(defaultValue.begin(), defaultValue.end());
-            const LogValue* lv = Get(string(key) + "/length");
+            const LogValue* lv = Get(NormalizeKey(key, "length", false));
             if (!lv) return defaultRows;
             const auto* lenPtr = std::get_if<int64_t>(&lv->value);
             if (!lenPtr) return defaultRows;
@@ -222,7 +233,7 @@ namespace akit {
                 vector<E> rowDefault = i < static_cast<int64_t>(defaultRows.size())
                                            ? defaultRows[static_cast<size_t>(i)]
                                            : vector<E>{};
-                const auto rowNames = Get(string(key) + "/" + std::to_string(i), vector<string>{});
+                const auto rowNames = Get(NormalizeKey(key, std::to_string(i), false), vector<string>{});
                 vector<E> row;
                 row.reserve(rowNames.size());
                 bool valid = true;
@@ -279,6 +290,25 @@ namespace akit {
             return result;
         }
 
+        template<wpi::StructSerializable T>
+        [[nodiscard]] vector<vector<T>> Get(string_view key, span<const vector<T>> defaultValue) const {
+            vector<vector<T>> defaults(defaultValue.begin(), defaultValue.end());
+            const LogValue* lv = Get(NormalizeKey(key, "length", false));
+            if (!lv) return defaults;
+            const auto* lenPtr = std::get_if<int64_t>(&lv->value);
+            if (!lenPtr) return defaults;
+
+            vector<vector<T>> result;
+            result.reserve(static_cast<size_t>(*lenPtr));
+            for (int64_t i = 0; i < *lenPtr; i++) {
+                const auto& rowDefault = i < static_cast<int64_t>(defaults.size())
+                                             ? defaults[static_cast<size_t>(i)]
+                                             : vector<T>{};
+                result.push_back(Get(NormalizeKey(key, std::to_string(i), false), rowDefault));
+            }
+            return result;
+        }
+
         template<typename T>
             requires std::is_aggregate_v<T> && (!std::is_array_v<T>) && (!wpi::StructSerializable<T>)
         T Get(string_view key, T defaultValue) const;
@@ -308,7 +338,7 @@ namespace akit {
     private:
         LogTable(LogStorage& storage, string prefix, int depth);
 
-        [[nodiscard]] string FullKey(string_view key) const;
+        [[nodiscard]] string NormalizeKey(string_view key, string_view child = {}, bool includePrefix = true) const;
         [[nodiscard]] bool WriteAllowed(const string& fullKey, LoggableType type,
                                         string_view customTypeStr = "") const;
 
@@ -330,7 +360,7 @@ namespace akit {
 
         template<typename T>
         T GetTyped(const string_view key, T defaultValue) const {
-            auto it = storage_->values.find(FullKey(key));
+            auto it = storage_->values.find(NormalizeKey(key));
             if (it == storage_->values.end()) return defaultValue;
 
             if (auto* v = std::get_if<T>(&it->second.value)) {
@@ -342,16 +372,16 @@ namespace akit {
 
         template<typename T>
         void Put2D(const string& key, span<const vector<T>> value) const {
-            Put(key + "/length", static_cast<int64_t>(value.size()));
+            Put(NormalizeKey(key, "length", false), static_cast<int64_t>(value.size()));
             for (size_t i = 0; i < value.size(); i++) {
-                Put(key + "/" + std::to_string(i), span<const T>(value[i]));
+                Put(NormalizeKey(key, std::to_string(i), false), span<const T>(value[i]));
             }
         }
 
         template<typename T>
         vector<vector<T>> Get2D(string_view key,
                                 span<const vector<T>> defaultValue) const {
-            const LogValue* lv = Get(string(key) + "/length");
+            const LogValue* lv = Get(NormalizeKey(key, "length", false));
             if (!lv) return {defaultValue.begin(), defaultValue.end()};
             const auto* lenPtr = std::get_if<int64_t>(&lv->value);
             if (!lenPtr) return {defaultValue.begin(), defaultValue.end()};
@@ -362,7 +392,7 @@ namespace akit {
                 const auto& rowDefault = i < static_cast<int64_t>(defaults.size())
                                              ? defaults[static_cast<size_t>(i)]
                                              : vector<T>{};
-                result.push_back(Get(string(key) + "/" + std::to_string(i),
+                result.push_back(Get(NormalizeKey(key, std::to_string(i), false),
                                      span<const T>(rowDefault)));
             }
             return result;

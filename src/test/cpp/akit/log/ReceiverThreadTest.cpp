@@ -84,7 +84,7 @@ private:
 
 LogStorage MakeSnapshot(int64_t marker) {
     LogStorage storage;
-    storage.values.emplace("Marker", LogValue{marker});
+    storage.values.emplace("/Marker", LogValue{marker});
     return storage;
 }
 
@@ -196,7 +196,7 @@ TEST(ReceiverThreadTest, AddDataReceiverAndCatchUpDeliversSynchronouslyAndIsNotD
     thread.Start();
 
     LogStorage catchUpStorage;
-    catchUpStorage.values.emplace("Marker", LogValue{int64_t{42}});
+    catchUpStorage.values.emplace("/Marker", LogValue{int64_t{42}});
     LogTable catchUpView(catchUpStorage);
 
     RecordingReceiver receiver("R");

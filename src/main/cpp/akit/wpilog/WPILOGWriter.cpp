@@ -66,7 +66,7 @@ namespace akit::wpilog {
         }
         if (path.ends_with(".wpilog")) {
             std::filesystem::path pathFile(path);
-            folder_ = pathFile.parent_path().string();
+            folder_ = pathFile.parent_path().empty() ? "." : pathFile.parent_path().string();
             fileName_ = pathFile.filename().string();
             autoRename_ = false;
         } else {
@@ -86,7 +86,7 @@ namespace akit::wpilog {
 
     void WPILOGWriter::Start() {
         namespace fs = std::filesystem;
-        fs::create_directory(folder_);
+        fs::create_directories(folder_);
         if (const fs::path logFile = fs::path(folder_) / fileName_; fs::exists(logFile)) fs::remove(logFile);
 
         const std::string logPath = (fs::path(folder_) / fileName_).string();
@@ -111,18 +111,6 @@ namespace akit::wpilog {
         logDate_ = std::nullopt;
         logMatchText_ = std::nullopt;
 
-        if (frc::RobotBase::IsSimulation() && openBehavior_ != NEVER) {
-            try {
-                namespace fs = std::filesystem;
-                std::string fullLogPath = fs::absolute(fs::path(folder_) / fileName_).lexically_normal().string();
-                fs::path tempPath = fs::temp_directory_path() / ascopeFileName_;
-                std::ofstream writer(tempPath);
-                if (!writer) throw std::runtime_error("could not open file");
-                writer << fullLogPath << "\n";
-            } catch (const std::exception&) {
-                FRC_ReportError(frc::err::Error, "[AdvantageKit] Failed to send log path to AdvantageScope.");
-            }
-        }
     }
 
     void WPILOGWriter::End() {
