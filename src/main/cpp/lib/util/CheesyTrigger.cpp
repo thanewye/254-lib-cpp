@@ -5,7 +5,7 @@
 
 #include <frc2/command/CommandScheduler.h>
 
-#include "lib/util/errors.h"
+#include "lib/util/Errors.h"
 
 CheesyTrigger::CheesyTrigger(frc::EventLoop* loop, const std::function<bool()>& condition)
     : Trigger(loop, condition)

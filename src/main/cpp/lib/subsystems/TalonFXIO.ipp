@@ -1,7 +1,7 @@
 #pragma once
 
 #include "lib/util/CANStatusLogger.h"
-#include "lib/util/CtreUtil.h"
+#include "lib/util/CTREUtil.h"
 #include "lib/util/StatusSignalManager.h"
 
 template<typename pos_t>

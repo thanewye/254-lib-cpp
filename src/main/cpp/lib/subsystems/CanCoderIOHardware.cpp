@@ -3,7 +3,7 @@
 
 #include "lib/subsystems/CanCoderIOHardware.h"
 #include "lib/util/CANStatusLogger.h"
-#include "lib/util/CtreUtil.h"
+#include "lib/util/CTREUtil.h"
 #include "lib/util/StatusSignalManager.h"
 
 CanCoderIOHardware::CanCoderIOHardware(CanCoderConfig config)
