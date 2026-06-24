@@ -63,6 +63,13 @@ namespace akit {
             else ToLog(inputs, currentTable);
         }
 
+        static void ProcessInputs(std::string_view key, LoggableInputs& inputs) {
+            if (!running_) return;
+            LogTable currentTable = LogTable(currentStorage_).GetSubtable(key);
+            if (IsReplayMode()) inputs.FromLog(currentTable);
+            else inputs.ToLog(currentTable);
+        }
+
         static void RecordOutput(const std::string& key, LogValue value);
         static void RecordOutput(const std::string& key, bool value);
         template<typename Supplier>

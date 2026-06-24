@@ -1,4 +1,3 @@
-// LoggableInputs but using TMP for no vtable lookup that would come with using java interface style
 #pragma once
 
 #include <cctype>
@@ -12,7 +11,19 @@
 #include "akit/log/LogTable.h"
 
 namespace akit {
-    namespace magic_log {
+    // pure virtual interface for users who want to write ToLog/FromLog themselves
+    // instead of relying on compile time reflection, goes through vtable lookup
+    class LoggableInputs {
+    public:
+        virtual ~LoggableInputs() = default;
+
+        virtual void ToLog(LogTable& table) const = 0;
+        virtual void FromLog(const LogTable& table) = 0;
+    };
+
+    // LoggableInputs but using TMP and compile time reflection (Boost.pfr) for no
+    // vtable lookup and you don't have to write FromLog and ToLog
+    namespace detail{
         inline std::string CapitalizeFirst(std::string_view name) {
             std::string result(name);
             if (!result.empty()) {
@@ -36,7 +47,7 @@ namespace akit {
                                   boost::pfr::get<Is>(defaults));
             }(), ...);
         }
-    } // namespace magic_log
+    } // namespace detail
 
     template<typename T>
     concept LoggableAggregate =
@@ -44,13 +55,13 @@ namespace akit {
 
     template<LoggableAggregate T>
     void ToLog(const T& obj, LogTable& table) {
-        magic_log::to_log_impl(obj, table,
+        detail::to_log_impl(obj, table,
                                std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
     }
 
     template<LoggableAggregate T>
     void FromLog(T& obj, const LogTable& table) {
-        magic_log::from_log_impl(obj, table,
+        detail::from_log_impl(obj, table,
                                  std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
     }
 

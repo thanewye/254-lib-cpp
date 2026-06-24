@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <ratio>
 #include <span>
 #include <string>
@@ -22,6 +23,8 @@ using std::string_view;
 using std::string;
 
 namespace akit {
+    class LoggableInputs;
+
     class LogTable {
     public:
         LogTable(LogStorage& storage, string prefix = "/");
@@ -148,6 +151,7 @@ namespace akit {
 
         template<typename T>
             requires std::is_aggregate_v<T> && (!std::is_array_v<T>) && (!wpi::StructSerializable<T>)
+                && (!std::derived_from<T, LoggableInputs>)
         void Put(const string& key, const T& value) const;
 
         /* --------------------GETTERS-------------------- */
@@ -310,6 +314,7 @@ namespace akit {
 
         template<typename T>
             requires std::is_aggregate_v<T> && (!std::is_array_v<T>) && (!wpi::StructSerializable<T>)
+                && (!std::derived_from<T, LoggableInputs>)
         T Get(string_view key, T defaultValue) const;
 
         // raw value accessor w/ no default, returns nullptr (pls don't use this)
