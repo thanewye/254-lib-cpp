@@ -6,12 +6,12 @@
 
 #include <optional>
 
-#include <frc/TimedRobot.h>
 #include <frc2/command/CommandPtr.h>
 
+#include "akit/LoggedRobot.h"
 #include "frc2026/RobotContainer.h"
 
-class Robot : public frc::TimedRobot {
+class Robot : public akit::LoggedRobot {
 public:
     Robot();
 

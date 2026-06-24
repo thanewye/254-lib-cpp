@@ -34,10 +34,8 @@ Robot::Robot() {
 }
 
 void Robot::RobotPeriodic() {
-    akit::Logger::PeriodicBeforeUser();
     akit::Logger::RecordOutput("stuff", frc::Pose2d(1.0_m, 26.0_in, 5_rad));
     frc2::CommandScheduler::GetInstance().Run();
-    akit::Logger::PeriodicAfterUser();
 }
 
 void Robot::DisabledInit() {}
