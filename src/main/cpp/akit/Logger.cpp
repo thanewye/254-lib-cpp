@@ -8,10 +8,12 @@
 
 #include "akit/Logger.h"
 
+#include <frc/RobotBase.h>
 #include <frc/RobotController.h>
 
 #include "akit/AlertLogger.h"
 #include "akit/ConsoleSource.h"
+#include "akit/autolog/AutoLogOutputManager.h"
 #include "akit/telemetry/LoggedDriverStation.h"
 #include "akit/telemetry/LoggedPowerDistribution.h"
 #include "akit/LoggedRobot.h"
@@ -65,6 +67,7 @@ namespace akit {
         frc::RobotController::SetTimeSource([]() -> uint64_t {
             return frc::RobotController::GetFPGATime();
         });
+        console_.reset();
         if (IsReplayMode()) {
             replaySource_->End();
         }
@@ -127,6 +130,8 @@ namespace akit {
             LoggedSystemStats::SaveToLog(root.GetSubtable("SystemStats"));
             RecordOutput("Logger/DriverStationMS", (frc::RobotController::GetFPGATime() - dsStart) / 1000.0);
         }
+        const uint64_t autoLogStart = frc::RobotController::GetFPGATime();
+        AutoLogOutputManager::Periodic();
         const uint64_t alertStart = frc::RobotController::GetFPGATime();
         AlertLogger::Periodic();
         const uint64_t radioStart = frc::RobotController::GetFPGATime();
@@ -147,6 +152,7 @@ namespace akit {
         }
         const uint64_t consoleEnd = frc::RobotController::GetFPGATime();
 
+        RecordOutput("Logger/AutoLogMS", (alertStart - autoLogStart) / 1000.0);
         RecordOutput("Logger/AlertLogMS", (radioStart - alertStart) / 1000.0);
         RecordOutput("Logger/RadioLogMS", (consoleStart - radioStart) / 1000.0);
         RecordOutput("Logger/ConsoleMS", (consoleEnd - consoleStart) / 1000.0);
@@ -307,6 +313,7 @@ namespace akit {
     }
 
     void Logger::Clear() {
+        AutoLogOutputManager::Reset();
         currentStorage_.Clear();
         currentStorage_.timestamp = 0;
     }

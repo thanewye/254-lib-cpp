@@ -9,6 +9,7 @@
 #include <frc2/command/CommandPtr.h>
 
 #include "akit/LoggedRobot.h"
+#include "akit/autolog/AutoLogOutput.h"
 #include "frc2026/RobotContainer.h"
 
 class Robot : public akit::LoggedRobot {
@@ -45,4 +46,5 @@ private:
     std::optional<frc2::CommandPtr> m_autonomousCommand;
 
     RobotContainer m_container;
+    AUTOLOG_OUTPUT(int, number);
 };

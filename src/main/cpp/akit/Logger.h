@@ -191,10 +191,33 @@ namespace akit {
         }
 
         template<wpi::StructSerializable T>
+        static void RecordOutputStruct(const std::string& key, const T& value) {
+            if (!running_) return;
+            AddStructSchema<T>();
+            std::vector<uint8_t> buffer(wpi::Struct<T>::GetSize());
+            wpi::PackStruct(std::span{buffer}, value);
+            LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(
+                key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>())});
+        }
+
+        template<wpi::StructSerializable T>
         static void RecordOutput(const std::string& key, const std::vector<T>& values) {
             if (!running_) return;
             LogTable(currentStorage_).GetSubtable(
                 IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+        }
+
+        template<wpi::StructSerializable T>
+        static void RecordOutputStruct(const std::string& key, const std::vector<T>& values) {
+            if (!running_) return;
+            AddStructSchema<T>();
+            const size_t elementSize = wpi::Struct<T>::GetSize();
+            std::vector<uint8_t> buffer(elementSize * values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                wpi::PackStruct(std::span{buffer}.subspan(i * elementSize, elementSize), values[i]);
+            }
+            LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(
+                key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>()) + "[]"});
         }
 
         template<wpi::StructSerializable T>
@@ -205,10 +228,32 @@ namespace akit {
         }
 
         template<wpi::StructSerializable T>
+        static void RecordOutputStruct(const std::string& key, std::span<const std::vector<T>> values) {
+            if (!running_) return;
+            RecordOutput(key + "/length", static_cast<int64_t>(values.size()));
+            for (size_t i = 0; i < values.size(); i++) {
+                RecordOutputStruct(key + "/" + std::to_string(i), values[i]);
+            }
+        }
+
+        template<wpi::StructSerializable T>
         static void RecordOutput(const std::string& key, std::span<const T> values) {
             if (!running_) return;
             LogTable(currentStorage_).GetSubtable(
                 IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+        }
+
+        template<wpi::StructSerializable T>
+        static void RecordOutputStruct(const std::string& key, std::span<const T> values) {
+            if (!running_) return;
+            AddStructSchema<T>();
+            const size_t elementSize = wpi::Struct<T>::GetSize();
+            std::vector<uint8_t> buffer(elementSize * values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                wpi::PackStruct(std::span{buffer}.subspan(i * elementSize, elementSize), values[i]);
+            }
+            LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(
+                key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>()) + "[]"});
         }
 
         template<typename func>
@@ -241,6 +286,17 @@ namespace akit {
         inline static int64_t lastTimestamp_ = 0;
         inline static std::mutex mutex_{};
         inline static ReceiverThread receiverThread_{};
+
+        template<wpi::StructSerializable T>
+        static void AddStructSchema() {
+            wpi::ForEachStructSchema<T>([](std::string_view typeStr, std::string_view schema) {
+                std::string schemaKey = "/.schema/";
+                schemaKey += typeStr;
+                if (currentStorage_.values.contains(schemaKey)) return;
+                std::vector<uint8_t> bytes(schema.begin(), schema.end());
+                currentStorage_.values.emplace(schemaKey, LogValue{std::move(bytes), "structschema"});
+            });
+        }
 
         static bool IsReplayMode() { return replaySource_ != nullptr; }
 

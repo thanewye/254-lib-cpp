@@ -506,6 +506,7 @@ TEST(LoggerParityTest, ExtraConsoleDataAndTimingMetricsUseCanonicalOutputKeys) {
     ASSERT_TRUE(values.contains("/RealOutputs/Console"));
     EXPECT_EQ(std::get<std::string>(values.at("/RealOutputs/Console").value), "Exception line\nstack line");
     EXPECT_TRUE(values.contains("/RealOutputs/Logger/EntryUpdateMS"));
+    EXPECT_TRUE(values.contains("/RealOutputs/Logger/AutoLogMS"));
     EXPECT_TRUE(values.contains("/RealOutputs/Logger/DriverStationMS"));
     EXPECT_TRUE(values.contains("/RealOutputs/Logger/ConsoleMS"));
     EXPECT_TRUE(values.contains("/RealOutputs/Logger/QueuedCycles"));

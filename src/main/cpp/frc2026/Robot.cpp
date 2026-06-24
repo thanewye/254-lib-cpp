@@ -11,7 +11,7 @@
 #include "akit/wpilog/WPILOGWriter.h"
 #include "frc2026/Robot.h"
 
-#include <frc/geometry/Pose2d.h>
+#include <random>
 
 namespace {
     akit::networktables::NT4Publisher& GetNT4Publisher() {
@@ -34,7 +34,10 @@ Robot::Robot() {
 }
 
 void Robot::RobotPeriodic() {
-    akit::Logger::RecordOutput("stuff", frc::Pose2d(1.0_m, 26.0_in, 5_rad));
+    std::random_device random_device;
+    std::mt19937 gen(random_device());
+    std::uniform_int_distribution<> distr(1, 100);
+    number = distr(gen);
     frc2::CommandScheduler::GetInstance().Run();
 }
 
