@@ -50,6 +50,28 @@ wpi.sim.addDriverstation()
 
 model {
     components {
+        sendableChooserAccess(NativeLibrarySpec) {
+            targetPlatform wpi.platforms.roborio
+            if (includeDesktopSupport) {
+                targetPlatform wpi.platforms.desktop
+            }
+
+            sources.cpp {
+                source {
+                    srcDir 'src/main/cpp/akit/networktables/detail'
+                    include 'SendableChooserAccess.cpp'
+                }
+                exportedHeaders {
+                    srcDir 'src/main/cpp'
+                }
+            }
+            binaries.all {
+                cppCompiler.args '-fno-access-control'
+            }
+            wpi.cpp.vendor.cpp(it)
+            wpi.cpp.deps.wpilib(it)
+        }
+
         frcUserProgram(NativeExecutableSpec) {
             targetPlatform wpi.platforms.roborio
             if (includeDesktopSupport) {
@@ -60,12 +82,14 @@ model {
                 source {
                     srcDir 'src/main/cpp'
                     include '**/*.cpp', '**/*.cc'
+                    exclude 'akit/networktables/detail/SendableChooserAccess.cpp'
                 }
                 exportedHeaders {
                     srcDir 'src/main/cpp'
                     srcDir 'third_party/pfr/include'
                     srcDir 'third_party/magic_enum/include'
                 }
+                lib library: 'sendableChooserAccess', linkage: 'static'
             }
 
             // Set deploy task to deploy this component

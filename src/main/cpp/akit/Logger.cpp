@@ -13,6 +13,7 @@
 #include "akit/telemetry/LoggedDriverStation.h"
 #include "akit/telemetry/LoggedPowerDistribution.h"
 #include "akit/LoggedRobot.h"
+#include "akit/networktables/LoggedNetworkInput.h"
 #include "akit/telemetry/LoggedSystemStats.h"
 #include "akit/telemetry/RadioLogger.h"
 
@@ -82,9 +83,18 @@ namespace akit {
         const uint64_t driverStationStart = frc::RobotController::GetFPGATime();
         if (HasReplaySource()) {
             LoggedDriverStation::ReplayFromLog(root.GetSubtable("DriverStation"));
-            RecordOutput("Logger/DriverStationMS", (frc::RobotController::GetFPGATime() - driverStationStart) / 1000.0);
         }
+        const uint64_t dashboardInputsStart = frc::RobotController::GetFPGATime();
+        for (auto* input : dashboardInputs_) {
+            if (input != nullptr) input->Periodic();
+        }
+        const uint64_t dashboardInputsEnd = frc::RobotController::GetFPGATime();
+
         RecordOutput("Logger/EntryUpdateMS", (driverStationStart - entryUpdateStart) / 1000.0);
+        if (HasReplaySource()) {
+            RecordOutput("Logger/DriverStationMS", (dashboardInputsStart - driverStationStart) / 1000.0);
+        }
+        RecordOutput("Logger/DashboardInputsMS", (dashboardInputsEnd - dashboardInputsStart) / 1000.0);
     }
 
     void Logger::PeriodicAfterUser() {
@@ -229,6 +239,19 @@ namespace akit {
     void Logger::SetReplaySource(LogReplaySource* source) {
         if (running_) return;
         replaySource_ = source;
+    }
+
+    void Logger::RegisterDashboardInput(networktables::LoggedNetworkInput* dashboardInput) {
+        if (dashboardInput == nullptr) return;
+        if (std::find(dashboardInputs_.begin(), dashboardInputs_.end(), dashboardInput) == dashboardInputs_.end()) {
+            dashboardInputs_.push_back(dashboardInput);
+        }
+    }
+
+    void Logger::UnregisterDashboardInput(networktables::LoggedNetworkInput* dashboardInput) {
+        dashboardInputs_.erase(
+            std::remove(dashboardInputs_.begin(), dashboardInputs_.end(), dashboardInput),
+            dashboardInputs_.end());
     }
 
     bool Logger::HasReplaySource() {

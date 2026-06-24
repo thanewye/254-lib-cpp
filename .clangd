@@ -1,0 +1,4 @@
+If:
+  PathMatch: .*/akit/networktables/detail/SendableChooserAccess\.(h|cpp)
+CompileFlags:
+  Add: [-fno-access-control]

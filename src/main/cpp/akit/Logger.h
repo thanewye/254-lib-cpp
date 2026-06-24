@@ -26,6 +26,10 @@
 #include "akit/inputs/LoggableInputs.h"
 #include "akit/log/ReceiverThread.h"
 
+namespace akit::networktables {
+    class LoggedNetworkInput;
+}
+
 namespace akit {
     class Logger {
     public:
@@ -42,6 +46,8 @@ namespace akit {
         static bool HasReplaySource();
         static bool IsRunning() { return running_; }
         static void Clear();
+        static void RegisterDashboardInput(networktables::LoggedNetworkInput* dashboardInput);
+        static void UnregisterDashboardInput(networktables::LoggedNetworkInput* dashboardInput);
 
         static void RecordMetadata(const std::string& key, std::string_view value);
 
@@ -107,6 +113,14 @@ namespace akit {
         static void RecordOutput(const std::string& key, std::span<const float> value);
         static void RecordOutput(const std::string& key, std::span<const double> value);
         static void RecordOutput(const std::string& key, std::span<const std::string> value);
+
+        template<typename T>
+        static void ProcessDashboardInput(std::string_view tableKey, std::string_view valueKey, T& value, T defaultValue) {
+            if (!running_) return;
+            LogTable table = LogTable(currentStorage_).GetSubtable(tableKey);
+            if (IsReplayMode()) value = table.Get(valueKey, std::move(defaultValue));
+            else table.Put(std::string(valueKey), value);
+        }
 
         static void RecordOutput(const std::string& key, std::span<const std::vector<uint8_t>> value) {
             RecordOutput2D<uint8_t>(key, value);
@@ -216,6 +230,7 @@ namespace akit {
         inline static LogStorage currentStorage_{};
         inline static std::unordered_map<std::string, std::string> metadata_{};
         inline static LogReplaySource* replaySource_ = nullptr;
+        inline static std::vector<networktables::LoggedNetworkInput*> dashboardInputs_{};
         inline static bool running_ = false;
         inline static int cycles_ = 0;
         inline static int64_t lastTimestamp_ = 0;
