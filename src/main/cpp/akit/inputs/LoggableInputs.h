@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <boost/pfr.hpp>
+
 #include "akit/log/LogTable.h"
 
 namespace akit {
