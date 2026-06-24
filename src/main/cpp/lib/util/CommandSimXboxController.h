@@ -36,5 +36,5 @@ private:
     SimXboxController hid;
     const ControllerMapping* mapping = nullptr;
 
-    static const ControllerMapping& MappingForType(frc2026::Constants::SimControllerType type);
+    static const ControllerMapping& MappingForType(frc2026::constants::SimControllerType type);
 };

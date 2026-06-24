@@ -20,7 +20,7 @@
 
 #include "akit/Logger.h"
 
-namespace LogUtil {
+namespace log_util {
     inline bool ShouldLog() {
         return !frc::RobotBase::IsReal();
     }
@@ -138,4 +138,4 @@ namespace LogUtil {
     // SwerveModulePosition
     inline void RecordOutput(const std::string &key, const frc::SwerveModulePosition &position) {}
     inline void RecordOutput(const std::string &key, const std::vector<frc::SwerveModulePosition> &positions) {}
-}
+} // namespace log_util

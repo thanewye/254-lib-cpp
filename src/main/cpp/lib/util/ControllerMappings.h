@@ -2,7 +2,7 @@
 
 #include "lib/util/ControllerMapping.h"
 
-namespace ControllerMappings {
+namespace controller_mappings {
     const auto XBOX_MAPPING = ControllerMapping(
         {
             {"A", 1}, {"B", 2}, {"X", 4}, {"Y", 5},
@@ -28,4 +28,4 @@ namespace ControllerMappings {
             {"LeftTrigger", 2}, {"RightTrigger", 3}
         }
     );
-}
+} // namespace controller_mappings

@@ -82,4 +82,4 @@ namespace akit::networktables {
         std::unordered_map<std::string, V> options_;
         std::function<void(V)> listener_;
     };
-}
+} // namespace akit::networktables

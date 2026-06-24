@@ -3,7 +3,7 @@
 #include <frc/geometry/Translation2d.h>
 #include <units/length.h>
 
-namespace FieldConstants {
+namespace field_constants {
     inline constexpr units::meter_t kFieldLength = 16.5410_m;
     inline constexpr units::meter_t kFieldWidth = 8.0693_m;
     inline constexpr frc::Translation2d kBlueLeftCorner{0.0000_m, 8.0693_m};
@@ -39,4 +39,4 @@ namespace FieldConstants {
     inline constexpr frc::Translation2d kRedTowerRightCorner{15.9672_m, 4.8191_m};
     inline constexpr units::meter_t kGoalHeight = units::inch_t{60.0};
     inline constexpr units::meter_t kGoalRadius = units::inch_t{20.5};
-}
+} // namespace field_constants

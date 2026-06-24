@@ -85,4 +85,4 @@ namespace akit {
         int32_t status = 0;
         HAL_StopNotifier(notifier_, &status);
     }
-}
+} // namespace akit

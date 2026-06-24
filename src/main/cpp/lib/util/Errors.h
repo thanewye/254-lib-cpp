@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Errors {
+namespace errors {
     template<typename T>
     T* RequireNonNullParam(T* param, std::string_view paramName, std::string_view methodName) {
         if (param == nullptr) {
@@ -23,4 +23,4 @@ namespace Errors {
         }
         return param;
     }
-}
+} // namespace errors

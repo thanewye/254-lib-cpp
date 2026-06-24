@@ -33,7 +33,7 @@ frc2::CommandPtr LoggedTrigger::WrapCommand(frc2::CommandPtr&& command, const st
                       std::to_string(loc.line()) + "/" + cmdName;
 
     frc2::CommandPtr logCmd = frc2::InstantCommand([key] {
-        akit::Logger::RecordOutput(key, RobotTime::GetTimestampSeconds());
+        akit::Logger::RecordOutput(key, robot_time::GetTimestampSeconds());
     }).IgnoringDisable(true);
 
     std::vector<frc2::CommandPtr> cmds;

@@ -19,7 +19,7 @@ namespace {
         std::string escaped;
         escaped.reserve(value.size() + 2);
         escaped.push_back('"');
-        for (const char ch: value) {
+        for (const char ch : value) {
             if (ch == '"') {
                 escaped.push_back('"');
             }
@@ -29,7 +29,7 @@ namespace {
         return escaped;
     }
 
-    std::string Join(const std::vector<std::string> &values) {
+    std::string Join(const std::vector<std::string>& values) {
         std::ostringstream stream;
         for (size_t i = 0; i < values.size(); ++i) {
             if (i != 0) {
@@ -40,7 +40,7 @@ namespace {
         return stream.str();
     }
 
-    std::string DecodeValue(const wpi::log::DataLogRecord &record, std::string_view type) {
+    std::string DecodeValue(const wpi::log::DataLogRecord& record, std::string_view type) {
         if (type == "boolean") {
             bool value = false;
             return record.GetBoolean(&value) ? (value ? "true" : "false") : "";
@@ -77,7 +77,7 @@ namespace {
             record.GetBooleanArray(&values);
             std::vector<std::string> parts;
             parts.reserve(values.size());
-            for (const int value: values) {
+            for (const int value : values) {
                 parts.emplace_back(value ? "true" : "false");
             }
             return Join(parts);
@@ -89,7 +89,7 @@ namespace {
             }
             std::vector<std::string> parts;
             parts.reserve(values.size());
-            for (const int64_t value: values) {
+            for (const int64_t value : values) {
                 parts.emplace_back(std::to_string(value));
             }
             return Join(parts);
@@ -101,7 +101,7 @@ namespace {
             }
             std::vector<std::string> parts;
             parts.reserve(values.size());
-            for (const float value: values) {
+            for (const float value : values) {
                 std::ostringstream stream;
                 stream << value;
                 parts.emplace_back(stream.str());
@@ -115,7 +115,7 @@ namespace {
             }
             std::vector<std::string> parts;
             parts.reserve(values.size());
-            for (const double value: values) {
+            for (const double value : values) {
                 std::ostringstream stream;
                 stream << value;
                 parts.emplace_back(stream.str());
@@ -129,7 +129,7 @@ namespace {
             }
             std::vector<std::string> parts;
             parts.reserve(values.size());
-            for (const std::string_view value: values) {
+            for (const std::string_view value : values) {
                 parts.emplace_back(value);
             }
             return Join(parts);
@@ -139,10 +139,10 @@ namespace {
     }
 } // namespace
 
-namespace LogDumper {
+namespace log_dumper {
     std::vector<Row> ReadRows(
-        const std::string &logPath,
-        const std::vector<std::string> &keys,
+        const std::string& logPath,
+        const std::vector<std::string>& keys,
         const int64_t startMicros,
         const int64_t endMicros) {
         auto buffer = wpi::MemoryBuffer::GetFile(logPath);
@@ -157,14 +157,14 @@ namespace LogDumper {
 
         std::unordered_map<int, std::string> entryNames;
         std::unordered_map<int, std::string> entryTypes;
-        std::map<int64_t, std::vector<std::string> > rowsByTimestamp;
+        std::map<int64_t, std::vector<std::string>> rowsByTimestamp;
         std::unordered_map<std::string, size_t> keyToIndex;
 
         for (size_t i = 0; i < keys.size(); ++i) {
             keyToIndex.emplace(keys[i], i);
         }
 
-        for (const auto &record: reader) {
+        for (const auto& record : reader) {
             if (record.IsStart()) {
                 wpi::log::StartRecordData startData;
                 if (record.GetStartData(&startData)) {
@@ -198,7 +198,7 @@ namespace LogDumper {
                 continue;
             }
 
-            auto &row = rowsByTimestamp[timestamp];
+            auto& row = rowsByTimestamp[timestamp];
             if (row.empty()) {
                 row.resize(keys.size());
             }
@@ -207,32 +207,32 @@ namespace LogDumper {
 
         std::vector<Row> rows;
         rows.reserve(rowsByTimestamp.size());
-        for (auto &[timestamp, values]: rowsByTimestamp) {
+        for (auto& [timestamp, values] : rowsByTimestamp) {
             rows.push_back(Row{.timestampMicros = timestamp, .values = std::move(values)});
         }
         return rows;
     }
 
     void WriteCsv(
-        const std::vector<Row> &rows,
-        const std::vector<std::string> &keys,
-        std::ostream &output) {
+        const std::vector<Row>& rows,
+        const std::vector<std::string>& keys,
+        std::ostream& output) {
         output << "Timestamp(s)";
-        for (const auto &key: keys) {
+        for (const auto& key : keys) {
             output << ',' << EscapeCsv(key);
         }
         output << '\n';
 
-        for (const auto &row: rows) {
+        for (const auto& row : rows) {
             std::ostringstream timestampStream;
             timestampStream << std::fixed << std::setprecision(6)
                     << static_cast<double>(row.timestampMicros) / 1'000'000.0;
             output << timestampStream.str();
 
-            for (const auto &value: row.values) {
+            for (const auto& value : row.values) {
                 output << ',' << EscapeCsv(value);
             }
             output << '\n';
         }
     }
-}
+} // namespace log_dumper

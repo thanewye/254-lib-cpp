@@ -1,7 +1,7 @@
 #pragma once
 
 #include "lib/util/CANStatusLogger.h"
-#include "lib/util/CTREUtil.h"
+#include "lib/util/CtreUtil.h"
 #include "lib/util/StatusSignalManager.h"
 
 template<typename pos_t>
@@ -16,13 +16,13 @@ TalonFXIO<pos_t>::TalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config)
       , rawRotorPositionSignal(talon.GetRotorPosition())
       , temperatureSignal(talon.GetDeviceTemp())
       , signals{&positionSignal, &velocitySignal, &voltageSignal, &currentStatorSignal, &currentSupplySignal, &rawRotorPositionSignal, &temperatureSignal} {
-    CTREUtil::ConfigureTalonFX(talon, config.fxConfig);
-    CTREUtil::TryUntilOk(
+    ctre_util::ConfigureTalonFX(talon, config.fxConfig);
+    ctre_util::TryUntilOk(
         [&] {
             return ctre::phoenix6::BaseStatusSignal::SetUpdateFrequencyForAll(
                 units::frequency::hertz_t{config.updateFrequencyHz}, signals);
         }, talon.GetDeviceID());
-    CTREUtil::TryUntilOk(
+    ctre_util::TryUntilOk(
         [&] { return talon.OptimizeBusUtilization(); }, talon.GetDeviceID());
     CANStatusLogger::GetInstance().RegisterTalonFX(config.name, &talon, config.talonCANID);
     for (auto* sig : signals) {
@@ -189,14 +189,14 @@ template<typename pos_t>
 void TalonFXIO<pos_t>::SetEnableSoftLimits(bool forward, bool reverse) {
     config.fxConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = forward;
     config.fxConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = reverse;
-    CTREUtil::ApplyConfiguration(talon, config.fxConfig.SoftwareLimitSwitch);
+    ctre_util::ApplyConfiguration(talon, config.fxConfig.SoftwareLimitSwitch);
 }
 
 template<typename pos_t>
 void TalonFXIO<pos_t>::SetEnableHardLimits(bool forward, bool reverse) {
     config.fxConfig.HardwareLimitSwitch.ForwardLimitEnable = forward;
     config.fxConfig.HardwareLimitSwitch.ReverseLimitEnable = reverse;
-    CTREUtil::ApplyConfiguration(talon, config.fxConfig.HardwareLimitSwitch);
+    ctre_util::ApplyConfiguration(talon, config.fxConfig.HardwareLimitSwitch);
 }
 
 template<typename pos_t>
@@ -206,7 +206,7 @@ void TalonFXIO<pos_t>::SetEnableAutosetPositionValue(bool forward, bool reverse)
     config.fxConfig.HardwareLimitSwitch.ForwardLimitEnable = forward;
     config.fxConfig.HardwareLimitSwitch.ReverseLimitEnable = reverse;
 
-    CTREUtil::ApplyConfiguration(talon, config.fxConfig.HardwareLimitSwitch);
+    ctre_util::ApplyConfiguration(talon, config.fxConfig.HardwareLimitSwitch);
 }
 
 template<typename pos_t>
@@ -259,13 +259,13 @@ void TalonFXIO<pos_t>::SetMotionMagicTorqueCurrentFOC(double units, double veloc
 template<typename pos_t>
 void TalonFXIO<pos_t>::SetMotionMagicConfig(const ctre::phoenix6::configs::MotionMagicConfigs& mmConfig) {
     config.fxConfig.MotionMagic = mmConfig;
-    CTREUtil::ApplyConfiguration(talon, config.fxConfig.MotionMagic);
+    ctre_util::ApplyConfiguration(talon, config.fxConfig.MotionMagic);
 }
 
 template<typename pos_t>
 void TalonFXIO<pos_t>::SetVoltageConfig(const ctre::phoenix6::configs::VoltageConfigs& voltageConfig) {
     config.fxConfig.Voltage = voltageConfig;
-    CTREUtil::ApplyConfiguration(talon, config.fxConfig.Voltage);
+    ctre_util::ApplyConfiguration(talon, config.fxConfig.Voltage);
 }
 
 template<typename pos_t>
@@ -276,7 +276,7 @@ void TalonFXIO<pos_t>::SetSupplyCurrentLimit(double amps) {
     lastAppliedSupplyLimitAmps = amps;
     config.fxConfig.CurrentLimits.SupplyCurrentLimit = units::ampere_t{amps};
     config.fxConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-    CTREUtil::ApplyConfigurationNonBlocking(talon, config.fxConfig.CurrentLimits);
+    ctre_util::ApplyConfigurationNonBlocking(talon, config.fxConfig.CurrentLimits);
 }
 
 template<typename pos_t>
@@ -287,5 +287,5 @@ void TalonFXIO<pos_t>::SetStatorCurrentLimit(double amps) {
     lastAppliedStatorLimitAmps = amps;
     config.fxConfig.CurrentLimits.StatorCurrentLimit = units::ampere_t{amps};
     config.fxConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    CTREUtil::ApplyConfigurationNonBlocking(talon, config.fxConfig.CurrentLimits);
+    ctre_util::ApplyConfigurationNonBlocking(talon, config.fxConfig.CurrentLimits);
 }

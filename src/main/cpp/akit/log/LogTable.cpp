@@ -428,4 +428,4 @@ namespace akit {
             return pair.first.starts_with(prefix_);
         });
     }
-}
+} // namespace akit

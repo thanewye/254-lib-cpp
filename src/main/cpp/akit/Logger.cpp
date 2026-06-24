@@ -313,4 +313,4 @@ namespace akit {
     bool Logger::GetReceiverQueueFault() {
         return receiverThread_.HasFault();
     }
-}
+} // namespace akit

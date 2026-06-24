@@ -10,7 +10,7 @@
 #include <ctre/phoenix6/TalonFX.hpp>
 #include <fmt/format.h>
 
-namespace CTREUtil {
+namespace ctre_util {
     inline constexpr int kMaxRetries = 10;
 
     inline ctre::phoenix::StatusCode TryUntilOk(
@@ -159,4 +159,4 @@ namespace CTREUtil {
             ctre::phoenix6::signals::S2CloseStateValue::CloseWhenNotHigh,
             ctre::phoenix6::signals::S2FloatStateValue::PullLow);
     }
-} // namespace CTREUtil
+} // namespace ctre_util

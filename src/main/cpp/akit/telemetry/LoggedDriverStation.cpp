@@ -1,12 +1,10 @@
 #include "akit/telemetry/LoggedDriverStation.h"
 
-#include <cctype>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <frc/DriverStation.h>
-#include <frc/GenericHID.h>
 #include <frc/Joystick.h>
 #include <frc/simulation/DriverStationSim.h>
 #include <hal/DriverStation.h>
@@ -168,4 +166,4 @@ namespace akit {
             DriverStationSim::NotifyNewData();
         }
     }
-}
+} // namespace akit

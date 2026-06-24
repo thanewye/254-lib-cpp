@@ -8,7 +8,7 @@
 
 #include "lib/util/FieldConstants.h"
 
-namespace Util {
+namespace util {
     inline constexpr double kEpsilon = 1e-12;
 
     inline double Deadband(double value, double deadband) {
@@ -37,7 +37,7 @@ namespace Util {
 
     inline frc::Pose2d FlipPoseForAlliance(const frc::Pose2d &pose) {
         return frc::Pose2d{
-            FieldConstants::kFieldLength - pose.X(),
+            field_constants::kFieldLength - pose.X(),
             pose.Y(),
             pose.Rotation()
         };
@@ -45,4 +45,4 @@ namespace Util {
 
     template<typename T>
     std::function<T()> Memoize(std::function<T()> fn);
-}
+} // namespace util

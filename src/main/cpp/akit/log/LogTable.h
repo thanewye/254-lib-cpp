@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <ratio>
 #include <span>
 #include <string>
@@ -398,4 +397,4 @@ namespace akit {
             return result;
         }
     };
-}
+} // namespace akit

@@ -29,4 +29,4 @@ namespace akit::networktables::detail {
      * @return The default option key, or empty if none is set.
      */
     const std::string& StolenDefaultChoice(const frc::SendableChooserBase& chooser);
-}
+} // namespace akit::networktables::detail

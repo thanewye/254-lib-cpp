@@ -9,7 +9,7 @@ namespace akit::networktables {
             if (!key.empty() && key.front() == '/') return key.substr(1);
             return key;
         }
-    }
+    } // namespace
 
     NT4Publisher::NT4Publisher() {
         akitTable_ = nt::NetworkTableInstance::GetDefault().GetTable("/AdvantageKit");
@@ -104,4 +104,4 @@ namespace akit::networktables {
         }
         return publisher->second;
     }
-}
+} // namespace akit::networktables

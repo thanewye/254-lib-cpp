@@ -26,9 +26,10 @@
 #include "akit/inputs/LoggableInputs.h"
 #include "akit/log/ReceiverThread.h"
 
+// forward declaration reduces compile time slightly
 namespace akit::networktables {
     class LoggedNetworkInput;
-}
+} // namespace akit::networktables
 
 namespace akit {
     class Logger {
@@ -247,4 +248,4 @@ namespace akit {
             }
         }
     };
-}
+} // namespace akit

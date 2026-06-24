@@ -69,4 +69,4 @@ namespace akit {
         if (type == "json") return LoggableType::kString;
         return LoggableType::kRaw;
     }
-}
+} // namespace akit

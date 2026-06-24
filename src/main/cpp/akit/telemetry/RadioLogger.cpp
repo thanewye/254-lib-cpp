@@ -18,9 +18,6 @@ namespace akit {
     bool RadioLogger::isConnected_ = false;
     std::string RadioLogger::statusJson_;
     std::string RadioLogger::statusURL_;
-    constexpr int RadioLogger::connectTimeoutSecs;
-    constexpr int RadioLogger::readTimeoutSecs;
-    constexpr int RadioLogger::requestPeriodSecs;
     const std::regex RadioLogger::whitespacePattern{"\\s+"};
     std::unique_ptr<frc::Notifier> RadioLogger::notifier_;
 
@@ -96,4 +93,4 @@ namespace akit {
         table.Put("Connected", isConnected_);
         table.Put("Status", LogValue{statusJson_, "json"});
     }
-}
+} // namespace akit

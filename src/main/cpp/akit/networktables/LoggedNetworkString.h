@@ -26,4 +26,4 @@ namespace akit::networktables {
         std::string defaultValue_;
         std::string value_;
     };
-}
+} // namespace akit::networktables

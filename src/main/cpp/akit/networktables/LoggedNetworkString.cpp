@@ -31,4 +31,4 @@ namespace akit::networktables {
         if (!Logger::HasReplaySource()) value_ = entry_.Get(defaultValue_);
         Logger::ProcessDashboardInput(prefix, RemoveSlash(key_), value_, defaultValue_);
     }
-}
+} // namespace akit::networktables

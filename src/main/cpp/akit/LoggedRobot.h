@@ -26,4 +26,4 @@ namespace akit {
         HAL_NotifierHandle notifier_;
         inline static bool baseConstructed_ = false;
     };
-}
+} // namespace akit

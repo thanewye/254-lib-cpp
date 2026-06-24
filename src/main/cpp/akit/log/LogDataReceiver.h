@@ -14,5 +14,4 @@ namespace akit {
         virtual ~LogDataReceiver() = default;
         virtual void PutTable(const LogTable& table) = 0;
     };
-
-}
+} // namespace akit

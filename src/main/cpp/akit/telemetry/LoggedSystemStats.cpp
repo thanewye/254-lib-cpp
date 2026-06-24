@@ -87,4 +87,4 @@ namespace akit {
         }
         lastNTRemoteIds_ = std::move(currentRemoteIds);
     }
-}
+} // namespace akit

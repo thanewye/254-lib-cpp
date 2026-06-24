@@ -6,7 +6,7 @@
 #include <wpi/DataLogReader.h>
 #include <wpi/MemoryBuffer.h>
 
-namespace ListKeys {
+namespace list_keys {
     std::vector<std::string> Read(const std::string &logPath) {
         auto buffer = wpi::MemoryBuffer::GetFile(logPath);
         if (!buffer) {
@@ -32,4 +32,4 @@ namespace ListKeys {
 
         return {orderedKeys.begin(), orderedKeys.end()};
     }
-}
+} // namespace list_keys

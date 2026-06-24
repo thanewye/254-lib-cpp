@@ -11,4 +11,4 @@ namespace akit {
         virtual void End() {}
         virtual bool UpdateTable(LogTable& table) = 0;
     };
-}
+} // namespace akit

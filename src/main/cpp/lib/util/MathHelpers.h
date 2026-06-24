@@ -8,7 +8,7 @@
 #include <frc/geometry/Translation2d.h>
 #include <units/angle.h>
 
-namespace MathHelpers {
+namespace math_helpers {
     inline constexpr frc::Pose2d kPose2dZero{};
     inline constexpr frc::Rotation2d kRotation2dZero{};
     inline constexpr frc::Rotation2d kRotation2dPi = frc::Rotation2d{180_deg};
@@ -101,4 +101,4 @@ namespace MathHelpers {
         const frc::Translation2d closestPoint = start + segment * t;
         return query.Distance(closestPoint).value();
     }
-}
+} // namespace math_helpers

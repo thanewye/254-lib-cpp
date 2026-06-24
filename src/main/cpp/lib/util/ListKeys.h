@@ -3,6 +3,6 @@
 #include <string>
 #include <vector>
 
-namespace ListKeys {
+namespace list_keys {
     std::vector<std::string> Read(const std::string &logPath);
-}
+} // namespace list_keys

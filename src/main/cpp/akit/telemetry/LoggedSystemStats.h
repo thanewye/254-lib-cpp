@@ -11,4 +11,4 @@ namespace akit {
     private:
         inline static std::unordered_set<std::string> lastNTRemoteIds_;
     };
-}
+} // namespace akit

@@ -27,4 +27,4 @@ namespace akit {
         static const std::regex whitespacePattern;
         static std::unique_ptr<frc::Notifier> notifier_;
     };
-}
+} // namespace akit

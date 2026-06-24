@@ -5,11 +5,11 @@
 
 #include <frc2/command/CommandScheduler.h>
 
-#include "lib/util/Errors.h"
+#include "lib/util/errors.h"
 
 CheesyTrigger::CheesyTrigger(frc::EventLoop* loop, const std::function<bool()>& condition)
     : Trigger(loop, condition)
-    , loop(Errors::RequireNonNullParam(loop, "loop", "Trigger")) {}
+    , loop(errors::RequireNonNullParam(loop, "loop", "Trigger")) {}
 
 CheesyTrigger::CheesyTrigger(const std::function<bool()>& condition)
     : Trigger(frc2::CommandScheduler::GetInstance().GetActiveButtonLoop(), condition)

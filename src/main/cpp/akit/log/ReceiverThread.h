@@ -94,4 +94,4 @@ namespace akit {
 
         std::thread thread_;
     };
-}
+} // namespace akit

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace frc2026::Constants {
+namespace frc2026::constants {
 
     enum SimControllerType {
         KEYBOARD, XBOX, DUAL_SENSE
@@ -8,4 +8,4 @@ namespace frc2026::Constants {
 
     constexpr SimControllerType kSimControllerType = KEYBOARD;
 
-}
+} // namespace frc2026::constants

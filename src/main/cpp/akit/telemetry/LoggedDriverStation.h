@@ -7,4 +7,4 @@ namespace akit {
         static void SaveToLog(const LogTable& table);
         static void ReplayFromLog(const LogTable& table);
     };
-}
+} // namespace akit

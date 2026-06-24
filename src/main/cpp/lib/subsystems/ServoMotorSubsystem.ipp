@@ -399,7 +399,7 @@ frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::PositionSetpointUntilOnTarget
     std::function<pos_t()> unitSupplier, std::function<pos_t()> epsilonSupplier) {
     return PositionSetpointCommand(unitSupplier)
             .Until([this, unitSupplier, epsilonSupplier] {
-                return Util::EpsilonEquals(unitSupplier().value(), inputs.unitPosition, epsilonSupplier().value());
+                return util::EpsilonEquals(unitSupplier().value(), inputs.unitPosition, epsilonSupplier().value());
             });
 }
 
@@ -471,7 +471,7 @@ frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlo
     std::function<pos_t()> setpointSupplier, pos_t tolerance, int slot) {
     return MotionMagicSetpointCommand([setpointSupplier] { return setpointSupplier(); }, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(
+                return util::EpsilonEquals(
                     GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
@@ -492,7 +492,7 @@ frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlo
     int slot) {
     return MotionMagicSetpointCommand(setpointSupplier, configSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(
+                return util::EpsilonEquals(
                     GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
@@ -506,7 +506,7 @@ frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicSetpointCommandBlo
     int slot) {
     return MotionMagicSetpointCommand(setpointSupplier, configSupplier, feedforwardSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(
+                return util::EpsilonEquals(
                     GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
@@ -572,7 +572,7 @@ frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCo
     std::function<pos_t()> setpointSupplier, pos_t tolerance, int slot) {
     return MotionMagicTorqueCurrentFOCCommand([setpointSupplier] { return setpointSupplier(); }, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(
+                return util::EpsilonEquals(
                     GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
@@ -593,7 +593,7 @@ frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCo
     int slot) {
     return MotionMagicTorqueCurrentFOCCommand(setpointSupplier, configSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(
+                return util::EpsilonEquals(
                     GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }
@@ -607,7 +607,7 @@ frc2::CommandPtr ServoMotorSubsystem<pos_t, T, U>::MotionMagicTorqueCurrentFOCCo
     int slot) {
     return MotionMagicTorqueCurrentFOCCommand(setpointSupplier, configSupplier, feedforwardSupplier, slot)
             .Until([this, setpointSupplier, tolerance] {
-                return Util::EpsilonEquals(
+                return util::EpsilonEquals(
                     GetCurrentPosition().value(), setpointSupplier().value(), tolerance.value());
             });
 }

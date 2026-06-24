@@ -114,4 +114,4 @@ namespace akit {
 
         for (auto* receiver : SnapshotReceivers()) receiver->End();
     }
-}
+} // namespace akit

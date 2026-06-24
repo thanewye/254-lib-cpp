@@ -28,4 +28,4 @@ namespace akit {
 
         inline static std::unique_ptr<LoggedPowerDistribution> instance_;
     };
-}
+} // namespace akit

@@ -17,7 +17,7 @@ LoggedTrigger StateMachine::State::RegisterTrigger(StateCondition condition) {
         if (!machine->currentState.has_value() || machine->currentState.value() != name) {
             return false;
         }
-        double timeInState = (RobotTime::GetTimestamp() - machine->lastStageChangeTime).value();
+        double timeInState = (robot_time::GetTimestamp() - machine->lastStageChangeTime).value();
         return condition(timeInState);
     });
 }
@@ -49,7 +49,7 @@ void StateMachine::SetInitialState(const std::string& name) {
     if (states.contains(name)) {
         currentState = name;
         lastState = "";
-        lastStageChangeTime = RobotTime::GetTimestamp();
+        lastStageChangeTime = robot_time::GetTimestamp();
     } else {
         std::fprintf(stderr, "StateMachine %s: Attempted to set invalid initial state %s\n",
                      this->name.c_str(), name.c_str());
@@ -67,7 +67,7 @@ void StateMachine::Update() {
 
     auto it = states.find(currentState.value());
     if (it != states.end()) {
-        double timeInState = (RobotTime::GetTimestamp() - lastStageChangeTime).value();
+        double timeInState = (robot_time::GetTimestamp() - lastStageChangeTime).value();
         for (auto& transition : it->second.transitions) {
             if (transition.condition(timeInState)) {
                 SetState(transition.targetState);
@@ -76,7 +76,7 @@ void StateMachine::Update() {
         }
     }
 
-    double timestamp = RobotTime::GetTimestampSeconds();
+    double timestamp = robot_time::GetTimestampSeconds();
     akit::Logger::RecordOutput(currentStateLogKey, currentState.value_or(""));
     akit::Logger::RecordOutput(lastStateLogKey, lastState);
     akit::Logger::RecordOutput(timeInStateLogKey, timestamp - lastStageChangeTime.value());
@@ -86,6 +86,6 @@ void StateMachine::SetState(const std::string& newState) {
     if (newState != currentState.value_or("") && states.contains(newState)) {
         lastState = currentState.value_or("");
         currentState = newState;
-        lastStageChangeTime = RobotTime::GetTimestamp();
+        lastStageChangeTime = robot_time::GetTimestamp();
     }
 }

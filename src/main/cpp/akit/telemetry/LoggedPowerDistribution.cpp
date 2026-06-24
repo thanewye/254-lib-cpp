@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
-#include <cstring>
 
 namespace akit {
     LoggedPowerDistribution::LoggedPowerDistribution()
@@ -59,4 +57,4 @@ namespace akit {
         table.Put("Faults", bitfieldToInteger(powerDistribution_->GetFaults()));
         table.Put("StickyFaults", bitfieldToInteger(powerDistribution_->GetStickyFaults()));
     }
-}
+} // namespace akit

@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <frc/filesystem.h>
 
-namespace AutoUtil {
+namespace auto_util {
     namespace fs = std::filesystem;
     std::vector<std::string> GetAutoListNoExtension() {
         fs::path deployDir = frc::filesystem::GetDeployDirectory();
@@ -22,4 +22,4 @@ namespace AutoUtil {
         autoNames.erase(std::ranges::unique(autoNames).begin(), autoNames.end());
         return autoNames;
     }
-}
+} // namespace auto_util

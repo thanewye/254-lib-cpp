@@ -68,7 +68,7 @@ public:
         double output;
 
         if (absError > linearThreshold) {
-            output = MathHelpers::Signum(error.value()) * std::sqrt(2.0 * maxAcceleration.value() * absError.value());
+            output = math_helpers::Signum(error.value()) * std::sqrt(2.0 * maxAcceleration.value() * absError.value());
         } else {
             output = kP * error.value();
         }

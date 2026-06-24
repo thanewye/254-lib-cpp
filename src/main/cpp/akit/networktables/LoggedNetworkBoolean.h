@@ -27,4 +27,4 @@ namespace akit::networktables {
         bool defaultValue_ = false;
         bool value_ = false;
     };
-}
+} // namespace akit::networktables

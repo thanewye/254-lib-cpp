@@ -1,13 +1,10 @@
 #pragma once
 
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
 #include <thread>
 
 #include <frc/Errors.h>
 
-namespace OSUtil {
+namespace os_util {
     inline std::tm LocalTime(std::time_t t) {
         std::tm localTime{};
 #ifdef _WIN32
@@ -31,4 +28,4 @@ namespace OSUtil {
     inline void FsSyncAsync() {
         std::thread([] { FsSync(); }).detach();
     }
-} // namespace OSUtil
+} // namespace os_util

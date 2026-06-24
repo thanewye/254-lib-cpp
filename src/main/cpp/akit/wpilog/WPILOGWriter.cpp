@@ -166,7 +166,7 @@ namespace akit::wpilog {
                                value() > timestampUpdateDelay_ || frc::RobotBase::IsSimulation()) {
                         const auto now = std::chrono::system_clock::now();
                         const std::time_t t = std::chrono::system_clock::to_time_t(now);
-                        logDate_ = OSUtil::LocalTime(t);
+                        logDate_ = os_util::LocalTime(t);
                     }
                 } else {
                     dsAttachedTime_ = std::nullopt;
@@ -282,4 +282,4 @@ namespace akit::wpilog {
         lastStorage_.values = newMap;
         lastStorage_.timestamp = timestamp;
     }
-}
+} // namespace akit::wpilog

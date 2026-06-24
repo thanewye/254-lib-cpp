@@ -59,4 +59,4 @@ namespace akit::wpilog {
         void End() override;
         void PutTable(const LogTable& table) override;
     };
-}
+} // namespace akit::wpilog

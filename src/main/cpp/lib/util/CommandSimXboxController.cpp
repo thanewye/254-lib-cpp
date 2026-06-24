@@ -4,8 +4,8 @@
 
 CommandSimXboxController::CommandSimXboxController(int port)
     : CommandXboxController(port)
-    , hid(port, MappingForType(frc2026::Constants::kSimControllerType))
-    , mapping(&MappingForType(frc2026::Constants::kSimControllerType)) {}
+    , hid(port, MappingForType(frc2026::constants::kSimControllerType))
+    , mapping(&MappingForType(frc2026::constants::kSimControllerType)) {}
 
 const SimXboxController* CommandSimXboxController::GetHID() const { return &hid; }
 
@@ -73,11 +73,11 @@ double CommandSimXboxController::GetRightY() const {
     return GetHID()->GetRawAxis(mapping->GetAxis("RightY"));
 }
 
-const ControllerMapping& CommandSimXboxController::MappingForType(frc2026::Constants::SimControllerType type) {
+const ControllerMapping& CommandSimXboxController::MappingForType(frc2026::constants::SimControllerType type) {
     switch (type) {
-        case frc2026::Constants::DUAL_SENSE:
-            return ControllerMappings::DUALSENSE_MAPPING;
+        case frc2026::constants::DUAL_SENSE:
+            return controller_mappings::DUALSENSE_MAPPING;
         default:
-            return ControllerMappings::XBOX_MAPPING;
+            return controller_mappings::XBOX_MAPPING;
     }
 }

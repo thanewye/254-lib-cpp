@@ -10,4 +10,4 @@ namespace akit::networktables {
         if (!key.empty() && key.front() == '/') return std::string(key.substr(1));
         return std::string(key);
     }
-}
+} // namespace akit::networktables

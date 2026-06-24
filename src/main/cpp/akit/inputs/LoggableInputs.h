@@ -25,7 +25,7 @@ namespace akit {
                                   boost::pfr::get<Is>(defaults));
             }(), ...);
         }
-    }
+    } // namespace magic_log
 
     template<typename T>
     concept LoggableAggregate =
@@ -57,4 +57,4 @@ namespace akit {
         FromLog(defaultValue, subtable);
         return defaultValue;
     }
-}
+} // namespace akit

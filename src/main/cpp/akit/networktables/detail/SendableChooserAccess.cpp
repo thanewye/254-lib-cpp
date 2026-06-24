@@ -11,4 +11,4 @@ namespace akit::networktables::detail {
     }
 
     template const wpi::StringMap<int>& StolenChoices<int>(const frc::SendableChooser<int>&);
-}
+} // namespace akit::networktables::detail

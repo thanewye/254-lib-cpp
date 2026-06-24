@@ -17,4 +17,4 @@ class LoggedNetworkInput {
 
         LoggedNetworkInput() = default;
     };
-}
+} // namespace akit::networktables

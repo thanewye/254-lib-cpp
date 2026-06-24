@@ -3,7 +3,7 @@
 
 #include "lib/subsystems/CanCoderIOHardware.h"
 #include "lib/util/CANStatusLogger.h"
-#include "lib/util/CTREUtil.h"
+#include "lib/util/CtreUtil.h"
 #include "lib/util/StatusSignalManager.h"
 
 CanCoderIOHardware::CanCoderIOHardware(CanCoderConfig config)
@@ -11,7 +11,7 @@ CanCoderIOHardware::CanCoderIOHardware(CanCoderConfig config)
     , config(config)
     , positionSignal(canCoder.GetAbsolutePosition())
     , velocitySignal(canCoder.GetVelocity()) {
-    CTREUtil::ApplyConfiguration(canCoder, config.config);
+    ctre_util::ApplyConfiguration(canCoder, config.config);
 
     signals[0] = &positionSignal;
     signals[1] = &velocitySignal;
