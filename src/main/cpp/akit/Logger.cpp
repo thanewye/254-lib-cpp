@@ -10,6 +10,8 @@
 
 #include <frc/RobotController.h>
 
+#include "akit/AlertLogger.h"
+#include "akit/ConsoleSource.h"
 #include "akit/telemetry/LoggedDriverStation.h"
 #include "akit/telemetry/LoggedPowerDistribution.h"
 #include "akit/LoggedRobot.h"
@@ -38,12 +40,18 @@ namespace akit {
             }
         }
 
+        if (console_ == nullptr) {
+            if (frc::RobotBase::IsReal()) console_ = std::make_unique<ConsoleSource::RoboRIO>();
+            else console_ = std::make_unique<ConsoleSource::Simulator>();
+        }
+
         running_ = true;
         frc::RobotController::SetTimeSource([]() -> uint64_t {
             return static_cast<uint64_t>(GetTimestamp().value() * 1'000'000.0);
         });
         lastTimestamp_ = static_cast<int64_t>(frc::Timer::GetFPGATimestamp().value() * 1'000'000.0);
-        Clear();
+        currentStorage_.Clear();
+        currentStorage_.timestamp = 0;
         LogTable meta = LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayMetadata" : "RealMetadata");
         for (const auto& [k, v] : metadata_) meta.Put(k, v);
         if (IsReplayMode()) replaySource_->Start();
@@ -119,12 +127,15 @@ namespace akit {
             LoggedSystemStats::SaveToLog(root.GetSubtable("SystemStats"));
             RecordOutput("Logger/DriverStationMS", (frc::RobotController::GetFPGATime() - dsStart) / 1000.0);
         }
+        const uint64_t alertStart = frc::RobotController::GetFPGATime();
+        AlertLogger::Periodic();
         const uint64_t radioStart = frc::RobotController::GetFPGATime();
         if (!HasReplaySource()) {
             RadioLogger::Periodic(root.GetSubtable("RadioStatus"));
         }
         const uint64_t consoleStart = frc::RobotController::GetFPGATime();
-        std::string consoleData(extraConsoleData);
+        std::string consoleData = console_ != nullptr ? console_->GetNewData() : "";
+        consoleData.append(extraConsoleData);
         if (!consoleData.empty()) {
             const size_t lastNonWhitespace = consoleData.find_last_not_of(" \t\r\n");
             if (lastNonWhitespace == std::string::npos) {
@@ -136,6 +147,7 @@ namespace akit {
         }
         const uint64_t consoleEnd = frc::RobotController::GetFPGATime();
 
+        RecordOutput("Logger/AlertLogMS", (radioStart - alertStart) / 1000.0);
         RecordOutput("Logger/RadioLogMS", (consoleStart - radioStart) / 1000.0);
         RecordOutput("Logger/ConsoleMS", (consoleEnd - consoleStart) / 1000.0);
 
@@ -252,6 +264,11 @@ namespace akit {
         dashboardInputs_.erase(
             std::remove(dashboardInputs_.begin(), dashboardInputs_.end(), dashboardInput),
             dashboardInputs_.end());
+    }
+
+    void Logger::SetConsoleSource(std::unique_ptr<ConsoleSource> console) {
+        if (running_) return;
+        console_ = std::move(console);
     }
 
     bool Logger::HasReplaySource() {

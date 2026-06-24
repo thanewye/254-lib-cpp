@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <functional>
+#include <memory>
 #include <span>
 #include <string>
 #include <string_view>
@@ -25,6 +26,7 @@
 #include "akit/log/LogStorage.h"
 #include "akit/inputs/LoggableInputs.h"
 #include "akit/log/ReceiverThread.h"
+#include "akit/ConsoleSource.h"
 
 // forward declaration reduces compile time slightly
 namespace akit::networktables {
@@ -49,6 +51,7 @@ namespace akit {
         static void Clear();
         static void RegisterDashboardInput(networktables::LoggedNetworkInput* dashboardInput);
         static void UnregisterDashboardInput(networktables::LoggedNetworkInput* dashboardInput);
+        static void SetConsoleSource(std::unique_ptr<ConsoleSource> console);
 
         static void RecordMetadata(const std::string& key, std::string_view value);
 
@@ -232,6 +235,7 @@ namespace akit {
         inline static std::unordered_map<std::string, std::string> metadata_{};
         inline static LogReplaySource* replaySource_ = nullptr;
         inline static std::vector<networktables::LoggedNetworkInput*> dashboardInputs_{};
+        inline static std::unique_ptr<ConsoleSource> console_ = nullptr;
         inline static bool running_ = false;
         inline static int cycles_ = 0;
         inline static int64_t lastTimestamp_ = 0;
