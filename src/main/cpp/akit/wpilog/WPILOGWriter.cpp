@@ -93,14 +93,14 @@ namespace akit::wpilog {
         std::cout << "[AdvantageKit] Logging to \"" << logPath << "\"\n";
 
         std::error_code ec;
-        log_ = std::make_unique<wpi::log::DataLogWriter>(logPath, ec, WPILOGConstants::extraHeader);
+        log_ = std::make_unique<wpi::log::DataLogWriter>(logPath, ec, wpilogconstants::extraHeader);
         if (ec) {
             FRC_ReportError(frc::err::Error, "[AdvantageKit] Failed to open output log file.");
             return;
         }
         isOpen_ = true;
         timestampID_ = log_->Start(
-            timestampKey, GetWPILOGType(LoggableType::kInteger), WPILOGConstants::entryMetadata, 0);
+            timestampKey, GetWPILOGType(LoggableType::kInteger), wpilogconstants::entryMetadata, 0);
         lastStorage_ = LogStorage();
 
         // reset data
@@ -151,8 +151,8 @@ namespace akit::wpilog {
         if (!isOpen_) return;
         const int64_t timestamp = table.GetTimestamp();
         const auto getMetadata = [](const std::optional<std::string>& unit) {
-            if (!unit.has_value()) return std::string(WPILOGConstants::entryMetadata);
-            std::string metadata = WPILOGConstants::entryMetadataUnits;
+            if (!unit.has_value()) return std::string(wpilogconstants::entryMetadata);
+            std::string metadata = wpilogconstants::entryMetadataUnits;
             metadata.replace(metadata.find("$UNITSTR"), 8, *unit);
             return metadata;
         };
