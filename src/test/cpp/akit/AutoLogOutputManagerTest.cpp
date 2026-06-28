@@ -2,23 +2,19 @@
 #include <string_view>
 
 #include <frc/geometry/Rotation2d.h>
+#include <gtest/gtest.h>
 #include <units/length.h>
 #include <wpi/struct/Struct.h>
 
-#include "gtest/gtest.h"
-#include "akit/autolog/AutoLogOutputManager.h"
-#include "akit/autolog/AutoLogOutput.h"
 #include "akit/LoggedRobot.h"
 #include "akit/Logger.h"
+#include "akit/autolog/AutoLogOutput.h"
+#include "akit/autolog/AutoLogOutputManager.h"
 
-enum class TestStructuredMode : uint8_t {
-    kIdle = 0,
-    kMoving = 1
-};
+enum class TestStructuredMode : uint8_t { kIdle = 0, kMoving = 1 };
 
 namespace wpi {
-    template<>
-    struct Struct<TestStructuredMode> {
+    template<> struct Struct<TestStructuredMode> {
         static constexpr std::string_view GetTypeName() { return "TestStructuredMode"; }
         static constexpr size_t GetSize() { return 1; }
         static constexpr std::string_view GetSchema() { return "uint8 value"; }
@@ -35,13 +31,11 @@ namespace wpi {
     };
 
     static_assert(StructSerializable<TestStructuredMode>);
-}
+} // namespace wpi
 
 class GlobalScopeAutoLog {
 public:
-    GlobalScopeAutoLog() {
-        velocity = 5.5;
-    }
+    GlobalScopeAutoLog() { velocity = 5.5; }
 
     AUTOLOG_OUTPUT(double, velocity);
 };
@@ -63,28 +57,22 @@ namespace {
     namespace nested::deeper {
         class NamespacedAutoLog {
         public:
-            NamespacedAutoLog() {
-                velocity = 3.5;
-            }
+            NamespacedAutoLog() { velocity = 3.5; }
 
             AUTOLOG_OUTPUT(double, velocity);
         }; // namespace nested::deeper
-    }
+    } // namespace nested::deeper
 
     class UnitAutoLog {
     public:
-        UnitAutoLog() {
-            distance = 4.25;
-        }
+        UnitAutoLog() { distance = 4.25; }
 
         AUTOLOG_OUTPUT(double, distance, akit::DefaultKey, units::meter_t);
     };
 
     class StrongUnitAutoLog {
     public:
-        StrongUnitAutoLog() {
-            distance = 0.3048_m;
-        }
+        StrongUnitAutoLog() { distance = 0.3048_m; }
 
         AUTOLOG_OUTPUT(units::meter_t, distance);
     };
@@ -108,13 +96,9 @@ namespace {
     public:
         SupplierAutoLog() = default;
 
-        void SetRawDistance(const double value) {
-            rawDistance_ = value;
-        }
+        void SetRawDistance(const double value) { rawDistance_ = value; }
 
-        void SetMode(const TestStructuredMode mode) {
-            mode_ = mode;
-        }
+        void SetMode(const TestStructuredMode mode) { mode_ = mode; }
 
     private:
         double rawDistance_ = 0.0;
@@ -128,9 +112,7 @@ namespace {
 
     class ForceSerializableAutoLog {
     public:
-        ForceSerializableAutoLog() {
-            mode = TestStructuredMode::kMoving;
-        }
+        ForceSerializableAutoLog() { mode = TestStructuredMode::kMoving; }
 
         AUTOLOG_OUTPUT(TestStructuredMode, mode, "Superstructure/Mode", akit::NoUnitTag, akit::ForceSerializable);
     };
@@ -268,42 +250,40 @@ namespace {
     TEST(AutoLogOutputManagerTest, DestroyedObjectsUnregisterTheirCallbacks) {
         EXPECT_EXIT(
             {
-            Logger::Clear();
-            {
-            nested::deeper::NamespacedAutoLog first;
-            (void)first;
-            }
-            nested::deeper::NamespacedAutoLog second;
-            (void)second;
-            std::exit(0);
+                Logger::Clear();
+                {
+                    nested::deeper::NamespacedAutoLog first;
+                    (void)first;
+                }
+                nested::deeper::NamespacedAutoLog second;
+                (void)second;
+                std::exit(0);
             },
-            testing::ExitedWithCode(0),
-            "");
+            testing::ExitedWithCode(0), "");
     }
 
     TEST(AutoLogOutputManagerTest, LoggerClearResetsManagerStateForReRegistration) {
         EXPECT_EXIT(
             {
-            Logger::Clear();
-            nested::deeper::NamespacedAutoLog first;
-            (void)first;
-            Logger::Clear();
-            nested::deeper::NamespacedAutoLog second;
-            (void)second;
-            std::exit(0);
+                Logger::Clear();
+                nested::deeper::NamespacedAutoLog first;
+                (void)first;
+                Logger::Clear();
+                nested::deeper::NamespacedAutoLog second;
+                (void)second;
+                std::exit(0);
             },
-            testing::ExitedWithCode(0),
-            "");
+            testing::ExitedWithCode(0), "");
     }
 
     TEST(AutoLogOutputManagerTest, DuplicateKeysFailFastAtRegistration) {
         EXPECT_DEATH(
             {
-            Logger::Clear();
-            DuplicateKeyAutoLog first;
-            DuplicateKeyAutoLog second;
-            (void)first;
-            (void)second;
+                Logger::Clear();
+                DuplicateKeyAutoLog first;
+                DuplicateKeyAutoLog second;
+                (void)first;
+                (void)second;
             },
             "Duplicate autolog output key");
     }
@@ -322,4 +302,4 @@ namespace {
         Logger::End();
         Logger::Clear();
     }
-}
+} // namespace

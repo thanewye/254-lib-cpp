@@ -1,5 +1,6 @@
 #include "akit/AlertLogger.h"
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -29,8 +30,8 @@ namespace akit {
             return subscribers;
         }
 
-        void EnsureSubscriber(SubscriberMap& subscribers, const std::shared_ptr<nt::NetworkTable>& smartDashboard,
-                              const std::string& group, const std::string& suffix) {
+        void EnsureSubscriber(SubscriberMap& subscribers, const std::shared_ptr<nt::NetworkTable>& smartDashboard, const std::string& group,
+                              const std::string& suffix) {
             if (subscribers.contains(group)) return;
             static const std::vector<std::string> emptyValue;
             subscribers.emplace(group, smartDashboard->GetStringArrayTopic(group + "/" + suffix).Subscribe(emptyValue));

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+
 #include <ctre/phoenix6/CANBus.hpp>
 #include <frc/smartdashboard/SmartDashboard.h>
 
@@ -12,8 +13,7 @@ public:
     void LogStatus() {
         auto status = bus.GetStatus();
         // logger here once it's supported
-        frc::SmartDashboard::PutString("CANBusStatus/" + static_cast<std::string>(bus.GetName()),
-                                       status.Status.GetName());
+        frc::SmartDashboard::PutString("CANBusStatus/" + static_cast<std::string>(bus.GetName()), status.Status.GetName());
     }
 
 private:

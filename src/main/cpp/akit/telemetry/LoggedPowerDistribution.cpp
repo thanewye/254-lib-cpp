@@ -5,14 +5,13 @@
 
 namespace akit {
     LoggedPowerDistribution::LoggedPowerDistribution()
-        : moduleID_(frc::PowerDistribution::kDefaultModule),
-          powerDistribution_(std::make_unique<frc::PowerDistribution>()) {}
+        : moduleID_(frc::PowerDistribution::kDefaultModule)
+        , powerDistribution_(std::make_unique<frc::PowerDistribution>()) {}
 
-    LoggedPowerDistribution::LoggedPowerDistribution(const int moduleID,
-                                                     const frc::PowerDistribution::ModuleType moduleType)
-        : moduleID_(moduleID),
-          moduleType_(moduleType),
-          powerDistribution_(std::make_unique<frc::PowerDistribution>(moduleID, moduleType)) {}
+    LoggedPowerDistribution::LoggedPowerDistribution(const int moduleID, const frc::PowerDistribution::ModuleType moduleType)
+        : moduleID_(moduleID)
+        , moduleType_(moduleType)
+        , powerDistribution_(std::make_unique<frc::PowerDistribution>(moduleID, moduleType)) {}
 
     LoggedPowerDistribution* LoggedPowerDistribution::GetInstance() {
         if (!instance_) {
@@ -21,8 +20,7 @@ namespace akit {
         return instance_.get();
     }
 
-    LoggedPowerDistribution* LoggedPowerDistribution::GetInstance(
-        const int moduleID, const frc::PowerDistribution::ModuleType moduleType) {
+    LoggedPowerDistribution* LoggedPowerDistribution::GetInstance(const int moduleID, const frc::PowerDistribution::ModuleType moduleType) {
         if (!instance_ || instance_->moduleID_ != moduleID || instance_->moduleType_ != moduleType) {
             instance_ = std::unique_ptr<LoggedPowerDistribution>(new LoggedPowerDistribution(moduleID, moduleType));
         }
@@ -39,9 +37,7 @@ namespace akit {
 
         std::array<double, 24> channelCurrents{};
         const auto allCurrents = powerDistribution_->GetAllCurrents();
-        std::copy_n(allCurrents.begin(),
-                    std::min(channelCurrents.size(), allCurrents.size()),
-                    channelCurrents.begin());
+        std::copy_n(allCurrents.begin(), std::min(channelCurrents.size(), allCurrents.size()), channelCurrents.begin());
         table.Put("ChannelCurrent", std::span<const double>(channelCurrents));
 
         table.Put("TotalCurrent", powerDistribution_->GetTotalCurrent());

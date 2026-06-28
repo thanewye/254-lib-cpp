@@ -1,11 +1,11 @@
 #include "akit/autolog/AutoLogOutputManager.h"
 
+#include <functional>
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <string>
-#include <functional>
 
 namespace akit {
     namespace {

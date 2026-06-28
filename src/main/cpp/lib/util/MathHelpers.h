@@ -31,54 +31,37 @@ namespace math_helpers {
         return frc::Transform2d{translation, kRotation2dZero};
     }
 
-    template<typename T>
-    [[nodiscard]] inline T Signum(T value) {
+    template<typename T> [[nodiscard]] inline T Signum(T value) {
         if (value > T{0}) return T{1};
         if (value < T{0}) return T{-1};
         return T{0};
     }
 
-    [[nodiscard]] inline bool TranslationWithin(
-        const frc::Translation2d& query,
-        const frc::Translation2d& cornerA,
-        const frc::Translation2d& cornerB) {
+    [[nodiscard]] inline bool TranslationWithin(const frc::Translation2d& query, const frc::Translation2d& cornerA, const frc::Translation2d& cornerB) {
         const double minX = std::min(cornerA.X().value(), cornerB.X().value());
         const double maxX = std::max(cornerA.X().value(), cornerB.X().value());
         const double minY = std::min(cornerA.Y().value(), cornerB.Y().value());
         const double maxY = std::max(cornerA.Y().value(), cornerB.Y().value());
-        return query.X().value() >= minX && query.X().value() <= maxX &&
-               query.Y().value() >= minY && query.Y().value() <= maxY;
+        return query.X().value() >= minX && query.X().value() <= maxX && query.Y().value() >= minY && query.Y().value() <= maxY;
     }
 
-    [[nodiscard]] inline bool PoseWithin(
-        const frc::Pose2d& query,
-        const frc::Pose2d& cornerA,
-        const frc::Pose2d& cornerB) {
+    [[nodiscard]] inline bool PoseWithin(const frc::Pose2d& query, const frc::Pose2d& cornerA, const frc::Pose2d& cornerB) {
         return TranslationWithin(query.Translation(), cornerA.Translation(), cornerB.Translation());
     }
 
-    [[nodiscard]] inline double ReverseInterpolate(
-        const frc::Translation2d& query,
-        const frc::Translation2d& start,
-        const frc::Translation2d& end) {
+    [[nodiscard]] inline double ReverseInterpolate(const frc::Translation2d& query, const frc::Translation2d& start, const frc::Translation2d& end) {
         const frc::Translation2d segment = end - start;
         const frc::Translation2d queryToStart = query - start;
 
-        const double segmentLengthSqr = segment.X().value() * segment.X().value() +
-                                        segment.Y().value() * segment.Y().value();
+        const double segmentLengthSqr = segment.X().value() * segment.X().value() + segment.Y().value() * segment.Y().value();
         if (segmentLengthSqr == 0.0) {
             return 0.0;
         }
 
-        return (queryToStart.X().value() * segment.X().value() +
-                queryToStart.Y().value() * segment.Y().value()) /
-               segmentLengthSqr;
+        return (queryToStart.X().value() * segment.X().value() + queryToStart.Y().value() * segment.Y().value()) / segmentLengthSqr;
     }
 
-    [[nodiscard]] inline double DistanceToLineSegment(
-        const frc::Translation2d& query,
-        const frc::Translation2d& start,
-        const frc::Translation2d& end) {
+    [[nodiscard]] inline double DistanceToLineSegment(const frc::Translation2d& query, const frc::Translation2d& start, const frc::Translation2d& end) {
         const double t = ReverseInterpolate(query, start, end);
         if (t < 0.0) {
             return query.Distance(start).value();
@@ -92,10 +75,7 @@ namespace math_helpers {
         return query.Distance(closestPoint).value();
     }
 
-    [[nodiscard]] inline double PerpendicularDistanceToLine(
-        const frc::Translation2d& query,
-        const frc::Translation2d& start,
-        const frc::Translation2d& end) {
+    [[nodiscard]] inline double PerpendicularDistanceToLine(const frc::Translation2d& query, const frc::Translation2d& start, const frc::Translation2d& end) {
         const double t = ReverseInterpolate(query, start, end);
         const frc::Translation2d segment = end - start;
         const frc::Translation2d closestPoint = start + segment * t;

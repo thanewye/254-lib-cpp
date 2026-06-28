@@ -7,8 +7,8 @@
 namespace akit::networktables {
     LoggedNetworkNumber::LoggedNetworkNumber(const std::string_view key)
         : key_(key)
-          , entry_(nt::NetworkTableInstance::GetDefault().GetDoubleTopic(key).GetEntry(0.0))
-          , value_(defaultValue_) {
+        , entry_(nt::NetworkTableInstance::GetDefault().GetDoubleTopic(key).GetEntry(0.0))
+        , value_(defaultValue_) {
         Logger::RegisterDashboardInput(this);
     }
 

@@ -5,8 +5,7 @@
 #include "lib/drivers/CANDeviceId.h"
 #include "lib/subsystems/ServoMotorSubsystemConfig.h"
 
-template<typename pos_t>
-struct ServoMotorSubsystemWithFollowersConfig : ServoMotorSubsystemConfig<pos_t> {
+template<typename pos_t> struct ServoMotorSubsystemWithFollowersConfig : ServoMotorSubsystemConfig<pos_t> {
     struct FollowerConfig {
         ServoMotorSubsystemConfig<pos_t> config;
         bool inverted = false;

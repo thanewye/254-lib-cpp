@@ -19,8 +19,7 @@ namespace akit::networktables::detail {
      * @param chooser The chooser to read options from.
      * @return The chooser's options map.
      */
-    template<typename V>
-    const wpi::StringMap<V>& StolenChoices(const frc::SendableChooser<V>& chooser);
+    template<typename V> const wpi::StringMap<V>& StolenChoices(const frc::SendableChooser<V>& chooser);
 
     /**
      * Returns a specified chooser's default option key

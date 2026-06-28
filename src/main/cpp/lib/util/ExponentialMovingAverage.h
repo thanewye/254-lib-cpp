@@ -3,7 +3,8 @@
 
 class ExponentialMovingAverage {
 public:
-    explicit ExponentialMovingAverage(double alpha) : alpha(alpha) {}
+    explicit ExponentialMovingAverage(double alpha)
+        : alpha(alpha) {}
 
     double Calculate(double value) {
         if (!oldValue.has_value()) {
@@ -15,9 +16,7 @@ public:
         return newValue;
     }
 
-    void Reset() {
-        oldValue = std::nullopt;
-    }
+    void Reset() { oldValue = std::nullopt; }
 
 private:
     double alpha;

@@ -3,6 +3,7 @@
 #include <concepts>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <span>
 #include <string>
 #include <string_view>
@@ -10,23 +11,21 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <mutex>
 
-#include <magic_enum/magic_enum.hpp>
-
-#include <units/base.h>
-#include <units/time.h>
 #include <frc/Errors.h>
 #include <frc/util/Color.h>
 #include <frc/util/Color8Bit.h>
+#include <magic_enum/magic_enum.hpp>
+#include <units/base.h>
+#include <units/time.h>
 #include <wpi/struct/Struct.h>
 
+#include "akit/ConsoleSource.h"
+#include "akit/inputs/LoggableInputs.h"
 #include "akit/log/LogDataReceiver.h"
 #include "akit/log/LogReplaySource.h"
 #include "akit/log/LogStorage.h"
-#include "akit/inputs/LoggableInputs.h"
 #include "akit/log/ReceiverThread.h"
-#include "akit/ConsoleSource.h"
 
 // forward declaration reduces compile time slightly
 namespace akit::networktables {
@@ -42,8 +41,7 @@ namespace akit {
         static void PeriodicBeforeUser();
         static void PeriodicAfterUser();
         static void PeriodicAfterUser(int64_t userCodeUs, int64_t periodicBeforeUs);
-        static void PeriodicAfterUser(int64_t userCodeUs, int64_t periodicBeforeUs,
-                                      std::string_view extraConsoleData);
+        static void PeriodicAfterUser(int64_t userCodeUs, int64_t periodicBeforeUs, std::string_view extraConsoleData);
 
         static void SetReplaySource(LogReplaySource* source);
         static bool HasReplaySource();
@@ -55,63 +53,52 @@ namespace akit {
 
         static void RecordMetadata(const std::string& key, std::string_view value);
 
-        template<LoggableAggregate T>
-        static void ProcessInputs(std::string_view key, T& inputs) {
+        template<LoggableAggregate T> static void ProcessInputs(std::string_view key, T& inputs) {
             if (!running_) return;
             LogTable currentTable = LogTable(currentStorage_).GetSubtable(key);
-            if (IsReplayMode()) FromLog(inputs, currentTable);
+            if (HasReplaySource()) FromLog(inputs, currentTable);
             else ToLog(inputs, currentTable);
         }
 
         static void ProcessInputs(std::string_view key, LoggableInputs& inputs) {
             if (!running_) return;
             LogTable currentTable = LogTable(currentStorage_).GetSubtable(key);
-            if (IsReplayMode()) inputs.FromLog(currentTable);
+            if (HasReplaySource()) inputs.FromLog(currentTable);
             else inputs.ToLog(currentTable);
         }
 
         static void RecordOutput(const std::string& key, LogValue value);
         static void RecordOutput(const std::string& key, bool value);
-        template<typename Supplier>
-            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, bool>
+        template<typename Supplier> requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, bool>
         static void RecordOutput(const std::string& key, Supplier&& value) {
             RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
         }
 
         static void RecordOutput(const std::string& key, int value) { RecordOutput(key, static_cast<int64_t>(value)); }
-        template<typename Supplier>
-            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, int>
+        template<typename Supplier> requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, int>
         static void RecordOutput(const std::string& key, Supplier&& value) {
             RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
         }
 
         static void RecordOutput(const std::string& key, int64_t value);
-        template<typename Supplier>
-            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, int64_t>
+        template<typename Supplier> requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, int64_t>
         static void RecordOutput(const std::string& key, Supplier&& value) {
             RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
         }
 
         static void RecordOutput(const std::string& key, float value);
 
-        static void RecordOutput(const std::string& key, float value, std::string_view unit) {
-            RecordOutput(key, LogValue{value, "", std::string(unit)});
-        }
+        static void RecordOutput(const std::string& key, float value, std::string_view unit) { RecordOutput(key, LogValue{value, "", std::string(unit)}); }
 
         static void RecordOutput(const std::string& key, double value);
-        template<typename Supplier>
-            requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, double>
+        template<typename Supplier> requires std::invocable<Supplier> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Supplier>>, double>
         static void RecordOutput(const std::string& key, Supplier&& value) {
             RecordOutput(key, std::invoke(std::forward<Supplier>(value)));
         }
 
-        static void RecordOutput(const std::string& key, double value, std::string_view unit) {
-            RecordOutput(key, LogValue{value, "", std::string(unit)});
-        }
+        static void RecordOutput(const std::string& key, double value, std::string_view unit) { RecordOutput(key, LogValue{value, "", std::string(unit)}); }
 
-        static void RecordOutput(const std::string& key, const char* value) {
-            RecordOutput(key, std::string_view(value));
-        }
+        static void RecordOutput(const std::string& key, const char* value) { RecordOutput(key, std::string_view(value)); }
 
         static void RecordOutput(const std::string& key, std::string_view value);
 
@@ -125,97 +112,68 @@ namespace akit {
         static void RecordOutput(const std::string& key, std::span<const double> value);
         static void RecordOutput(const std::string& key, std::span<const std::string> value);
 
-        template<typename T>
-        static void ProcessDashboardInput(std::string_view tableKey, std::string_view valueKey, T& value, T defaultValue) {
+        template<typename T> static void ProcessDashboardInput(std::string_view tableKey, std::string_view valueKey, T& value, T defaultValue) {
             if (!running_) return;
             LogTable table = LogTable(currentStorage_).GetSubtable(tableKey);
-            if (IsReplayMode()) value = table.Get(valueKey, std::move(defaultValue));
+            if (HasReplaySource()) value = table.Get(valueKey, std::move(defaultValue));
             else table.Put(std::string(valueKey), value);
         }
 
-        static void RecordOutput(const std::string& key, std::span<const std::vector<uint8_t>> value) {
-            RecordOutput2D<uint8_t>(key, value);
-        }
+        static void RecordOutput(const std::string& key, std::span<const std::vector<uint8_t>> value) { RecordOutput2D<uint8_t>(key, value); }
 
-        static void RecordOutput(const std::string& key, std::span<const std::vector<int>> value) {
-            RecordOutput2D<int>(key, value);
-        }
+        static void RecordOutput(const std::string& key, std::span<const std::vector<int>> value) { RecordOutput2D<int>(key, value); }
 
-        static void RecordOutput(const std::string& key, std::span<const std::vector<int64_t>> value) {
-            RecordOutput2D<int64_t>(key, value);
-        }
+        static void RecordOutput(const std::string& key, std::span<const std::vector<int64_t>> value) { RecordOutput2D<int64_t>(key, value); }
 
-        static void RecordOutput(const std::string& key, std::span<const std::vector<float>> value) {
-            RecordOutput2D<float>(key, value);
-        }
+        static void RecordOutput(const std::string& key, std::span<const std::vector<float>> value) { RecordOutput2D<float>(key, value); }
 
-        static void RecordOutput(const std::string& key, std::span<const std::vector<double>> value) {
-            RecordOutput2D<double>(key, value);
-        }
+        static void RecordOutput(const std::string& key, std::span<const std::vector<double>> value) { RecordOutput2D<double>(key, value); }
 
-        static void RecordOutput(const std::string& key, std::span<const std::vector<std::string>> value) {
-            RecordOutput2D<std::string>(key, value);
-        }
+        static void RecordOutput(const std::string& key, std::span<const std::vector<std::string>> value) { RecordOutput2D<std::string>(key, value); }
 
-        template<typename E>
-            requires std::is_enum_v<E>
+        template<typename E> requires std::is_enum_v<E>
         static void RecordOutput(const std::string& key, E value) {
             RecordOutput(key, std::string_view(magic_enum::enum_name(value)));
         }
 
-        template<typename E>
-            requires std::is_enum_v<E>
+        template<typename E> requires std::is_enum_v<E>
         static void RecordOutput(const std::string& key, std::span<const E> values) {
             if (!running_) return;
-            LogTable(currentStorage_).GetSubtable(
-                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+            LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
         }
 
-        template<typename E>
-            requires std::is_enum_v<E>
+        template<typename E> requires std::is_enum_v<E>
         static void RecordOutput(const std::string& key, std::span<const std::vector<E>> values) {
             RecordOutput2D<E>(key, values);
         }
 
-        template<typename U>
-        static void RecordOutput(const std::string& key, units::unit_t<U> value) {
-            RecordOutput(key, value.value(), value.name());
-        }
+        template<typename U> static void RecordOutput(const std::string& key, units::unit_t<U> value) { RecordOutput(key, value.value(), value.name()); }
 
-        static void RecordOutput(const std::string& key, frc::Color value) {
-            RecordOutput(key, std::string_view{value.HexString()});
-        }
+        static void RecordOutput(const std::string& key, frc::Color value) { RecordOutput(key, std::string_view{value.HexString()}); }
 
-        static void RecordOutput(const std::string& key, frc::Color8Bit value) {
-            RecordOutput(key, std::string_view{value.HexString()});
-        }
+        static void RecordOutput(const std::string& key, frc::Color8Bit value) { RecordOutput(key, std::string_view{value.HexString()}); }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutput(const std::string& key, const T& value) {
+        template<wpi::StructSerializable T> static void RecordOutput(const std::string& key, const T& value) {
             if (!running_) return;
-            LogTable(currentStorage_).GetSubtable(
-                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, value);
+            LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs").Put(key, value);
         }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutputStruct(const std::string& key, const T& value) {
+        template<wpi::StructSerializable T> static void RecordOutputStruct(const std::string& key, const T& value) {
             if (!running_) return;
             AddStructSchema<T>();
             std::vector<uint8_t> buffer(wpi::Struct<T>::GetSize());
             wpi::PackStruct(std::span{buffer}, value);
-            LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(
-                key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>())});
+            LogTable(currentStorage_)
+                .GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs")
+                .Put(key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>())});
         }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutput(const std::string& key, const std::vector<T>& values) {
+        template<wpi::StructSerializable T> static void RecordOutput(const std::string& key, const std::vector<T>& values) {
             if (!running_) return;
-            LogTable(currentStorage_).GetSubtable(
-                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+            LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
         }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutputStruct(const std::string& key, const std::vector<T>& values) {
+        template<wpi::StructSerializable T> static void RecordOutputStruct(const std::string& key, const std::vector<T>& values) {
             if (!running_) return;
             AddStructSchema<T>();
             const size_t elementSize = wpi::Struct<T>::GetSize();
@@ -223,19 +181,17 @@ namespace akit {
             for (size_t i = 0; i < values.size(); i++) {
                 wpi::PackStruct(std::span{buffer}.subspan(i * elementSize, elementSize), values[i]);
             }
-            LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(
-                key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>()) + "[]"});
+            LogTable(currentStorage_)
+                .GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs")
+                .Put(key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>()) + "[]"});
         }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutput(const std::string& key, std::span<const std::vector<T>> values) {
+        template<wpi::StructSerializable T> static void RecordOutput(const std::string& key, std::span<const std::vector<T>> values) {
             if (!running_) return;
-            LogTable(currentStorage_).GetSubtable(
-                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+            LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
         }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutputStruct(const std::string& key, std::span<const std::vector<T>> values) {
+        template<wpi::StructSerializable T> static void RecordOutputStruct(const std::string& key, std::span<const std::vector<T>> values) {
             if (!running_) return;
             RecordOutput(key + "/length", static_cast<int64_t>(values.size()));
             for (size_t i = 0; i < values.size(); i++) {
@@ -243,15 +199,12 @@ namespace akit {
             }
         }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutput(const std::string& key, std::span<const T> values) {
+        template<wpi::StructSerializable T> static void RecordOutput(const std::string& key, std::span<const T> values) {
             if (!running_) return;
-            LogTable(currentStorage_).GetSubtable(
-                IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
+            LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs").Put(key, values);
         }
 
-        template<wpi::StructSerializable T>
-        static void RecordOutputStruct(const std::string& key, std::span<const T> values) {
+        template<wpi::StructSerializable T> static void RecordOutputStruct(const std::string& key, std::span<const T> values) {
             if (!running_) return;
             AddStructSchema<T>();
             const size_t elementSize = wpi::Struct<T>::GetSize();
@@ -259,15 +212,14 @@ namespace akit {
             for (size_t i = 0; i < values.size(); i++) {
                 wpi::PackStruct(std::span{buffer}.subspan(i * elementSize, elementSize), values[i]);
             }
-            LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(
-                key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>()) + "[]"});
+            LogTable(currentStorage_)
+                .GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs")
+                .Put(key, LogValue{std::move(buffer), std::string(wpi::GetStructTypeString<T>()) + "[]"});
         }
 
-        template<typename func>
-        static void RunEveryN(int period, func&& fn) {
+        template<typename func> static void RunEveryN(int period, func&& fn) {
             if (period < 1) {
-                FRC_ReportError(frc::err::Error,
-                                "[AdvantageKit] RunEveryN period must be >= 1 (got {})", period);
+                FRC_ReportError(frc::err::Error, "[AdvantageKit] RunEveryN period must be >= 1 (got {})", period);
                 return;
             }
             if (cycles_ % period == 0) std::forward<func>(fn)();
@@ -294,8 +246,7 @@ namespace akit {
         inline static std::mutex mutex_{};
         inline static ReceiverThread receiverThread_{};
 
-        template<wpi::StructSerializable T>
-        static void AddStructSchema() {
+        template<wpi::StructSerializable T> static void AddStructSchema() {
             wpi::ForEachStructSchema<T>([](std::string_view typeStr, std::string_view schema) {
                 std::string schemaKey = "/.schema/";
                 schemaKey += typeStr;
@@ -305,10 +256,7 @@ namespace akit {
             });
         }
 
-        static bool IsReplayMode() { return replaySource_ != nullptr; }
-
-        template<typename T>
-        static void RecordOutput2D(const std::string& key, std::span<const std::vector<T>> value) {
+        template<typename T> static void RecordOutput2D(const std::string& key, std::span<const std::vector<T>> value) {
             RecordOutput(key + "/length", static_cast<int64_t>(value.size()));
             for (size_t i = 0; i < value.size(); i++) {
                 RecordOutput(key + "/" + std::to_string(i), std::span<const T>(value[i]));

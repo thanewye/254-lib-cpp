@@ -1,5 +1,6 @@
 #include "akit/ConsoleSource.h"
 
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -22,8 +23,7 @@ namespace akit {
         return ch;
     }
 
-    std::streamsize ConsoleSource::Simulator::TeeStreambuf::xsputn(const char* data,
-                                                                    const std::streamsize count) {
+    std::streamsize ConsoleSource::Simulator::TeeStreambuf::xsputn(const char* data, const std::streamsize count) {
         const auto firstCount = first_->sputn(data, count);
         const auto secondCount = second_->sputn(data, count);
         return std::min(firstCount, secondCount);
@@ -96,8 +96,7 @@ namespace akit {
     void ConsoleSource::RoboRIO::Run() {
         std::ifstream reader(GetFilePath());
         if (!reader.is_open()) {
-            FRC_ReportError(frc::err::Error, "[AdvantageKit] {}", "Failed to open console file \"" + GetFilePath()
-                               + "\", disabling console capture.");
+            FRC_ReportError(frc::err::Error, "[AdvantageKit] {}", "Failed to open console file \"" + GetFilePath() + "\", disabling console capture.");
             return;
         }
 
@@ -109,8 +108,7 @@ namespace akit {
             }
 
             if (!reader.eof() && reader.fail()) {
-                FRC_ReportError(frc::err::Error, "[AdvantageKit] {}", "Failed to open console file \"" + GetFilePath()
-                               + "\", disabling console capture.");
+                FRC_ReportError(frc::err::Error, "[AdvantageKit] {}", "Failed to open console file \"" + GetFilePath() + "\", disabling console capture.");
                 return;
             }
             reader.clear();

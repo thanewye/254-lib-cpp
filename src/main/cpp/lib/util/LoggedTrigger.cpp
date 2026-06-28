@@ -10,7 +10,8 @@
 #include "lib/commands/ChezySequenceCommandGroup.h"
 #include "lib/time/RobotTime.h"
 
-LoggedTrigger::LoggedTrigger() : frc2::Trigger() {}
+LoggedTrigger::LoggedTrigger()
+    : frc2::Trigger() {}
 
 LoggedTrigger::LoggedTrigger(std::function<bool()> condition)
     : frc2::Trigger(std::move(condition)) {}
@@ -29,20 +30,15 @@ LoggedTrigger LoggedTrigger::Wrap(frc2::Trigger trigger) {
 frc2::CommandPtr LoggedTrigger::WrapCommand(frc2::CommandPtr&& command, const std::source_location& loc) {
     std::string cmdName = command.get()->GetName();
     frc2::Command::InterruptionBehavior interruptBehavior = command.get()->GetInterruptionBehavior();
-    std::string key = std::string("LoggedTriggers/") + loc.file_name() + "_" +
-                      std::to_string(loc.line()) + "/" + cmdName;
+    std::string key = std::string("LoggedTriggers/") + loc.file_name() + "_" + std::to_string(loc.line()) + "/" + cmdName;
 
-    frc2::CommandPtr logCmd = frc2::InstantCommand([key] {
-        akit::Logger::RecordOutput(key, robot_time::GetTimestampSeconds());
-    }).IgnoringDisable(true);
+    frc2::CommandPtr logCmd = frc2::InstantCommand([key] { akit::Logger::RecordOutput(key, robot_time::GetTimestampSeconds()); }).IgnoringDisable(true);
 
     std::vector<frc2::CommandPtr> cmds;
     cmds.push_back(std::move(logCmd));
     cmds.push_back(std::move(command));
 
-    return frc2::CommandPtr(std::make_unique<ChezySequenceCommandGroup>(std::move(cmds)))
-            .WithName(cmdName)
-            .WithInterruptBehavior(interruptBehavior);
+    return frc2::CommandPtr(std::make_unique<ChezySequenceCommandGroup>(std::move(cmds))).WithName(cmdName).WithInterruptBehavior(interruptBehavior);
 }
 
 LoggedTrigger LoggedTrigger::OnTrue(frc2::CommandPtr&& command, std::source_location loc) {

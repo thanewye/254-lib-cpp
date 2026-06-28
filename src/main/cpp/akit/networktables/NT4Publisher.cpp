@@ -1,7 +1,7 @@
+#include "akit/networktables/NT4Publisher.h"
+
 #include <networktables/NetworkTableInstance.h>
 #include <wpi/json.h>
-
-#include "akit/networktables/NT4Publisher.h"
 
 namespace akit::networktables {
     namespace {
@@ -13,9 +13,7 @@ namespace akit::networktables {
 
     NT4Publisher::NT4Publisher() {
         akitTable_ = nt::NetworkTableInstance::GetDefault().GetTable("/AdvantageKit");
-        timestampPublisher_ = akitTable_->GetIntegerTopic(timestampKey.substr(1)).Publish(nt::PubSubOptions{
-            .sendAll = true
-        });
+        timestampPublisher_ = akitTable_->GetIntegerTopic(timestampKey.substr(1)).Publish(nt::PubSubOptions{.sendAll = true});
     }
 
     void NT4Publisher::PutTable(const LogTable& table) {
@@ -42,35 +40,24 @@ namespace akit::networktables {
             std::visit(
                 [&]<typename T_>(const T_& typedValue) {
                     using T = std::decay_t<T_>;
-                    if constexpr (std::is_same_v<T, bool>)
-                        publisher.SetBoolean(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, int64_t>)
-                        publisher.SetInteger(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, float>)
-                        publisher.SetFloat(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, double>)
-                        publisher.SetDouble(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, std::string>)
-                        publisher.SetString(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, std::vector<uint8_t>>)
-                        publisher.SetRaw(typedValue, timestamp);
+                    if constexpr (std::is_same_v<T, bool>) publisher.SetBoolean(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, int64_t>) publisher.SetInteger(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, float>) publisher.SetFloat(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, double>) publisher.SetDouble(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, std::string>) publisher.SetString(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, std::vector<uint8_t>>) publisher.SetRaw(typedValue, timestamp);
                     else if constexpr (std::is_same_v<T, std::vector<bool>>) {
                         std::vector<int> wpilibArray;
                         wpilibArray.reserve(typedValue.size());
                         for (const auto value : typedValue)
                             wpilibArray.push_back(value);
                         publisher.SetBooleanArray(wpilibArray, timestamp);
-                    }
-                    else if constexpr (std::is_same_v<T, std::vector<int64_t>>)
-                        publisher.SetIntegerArray(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, std::vector<float>>)
-                        publisher.SetFloatArray(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, std::vector<double>>)
-                        publisher.SetDoubleArray(typedValue, timestamp);
-                    else if constexpr (std::is_same_v<T, std::vector<std::string>>)
-                        publisher.SetStringArray(typedValue, timestamp);
-                }, value.value
-            );
+                    } else if constexpr (std::is_same_v<T, std::vector<int64_t>>) publisher.SetIntegerArray(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, std::vector<float>>) publisher.SetFloatArray(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, std::vector<double>>) publisher.SetDoubleArray(typedValue, timestamp);
+                    else if constexpr (std::is_same_v<T, std::vector<std::string>>) publisher.SetStringArray(typedValue, timestamp);
+                },
+                value.value);
         }
         lastStorage_.values = values;
         lastStorage_.timestamp = timestamp;
@@ -90,10 +77,7 @@ namespace akit::networktables {
             auto unit = value.unitStr;
 
             // construct publisher within the emplace (black magic)
-            auto [createdPublisher, inserted] = publishers_.emplace(
-                topicKey,
-                topic.GenericPublish(GetNT4Type(value), nt::PubSubOptions{.sendAll = true})
-            );
+            auto [createdPublisher, inserted] = publishers_.emplace(topicKey, topic.GenericPublish(GetNT4Type(value), nt::PubSubOptions{.sendAll = true}));
 
             if (unit.has_value() && !unit->empty()) {
                 topic.SetProperty("unit", "\"" + unit.value() + "\"");

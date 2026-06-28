@@ -1,8 +1,8 @@
 #pragma once
 
-#include <frc2/command/button/CommandXboxController.h>
-#include <frc2/command/button/CommandGenericHID.h>
 #include <frc/XboxController.h>
+#include <frc2/command/button/CommandGenericHID.h>
+#include <frc2/command/button/CommandXboxController.h>
 
 #include "SimXboxController.h"
 #include "frc2026/Constants.h"

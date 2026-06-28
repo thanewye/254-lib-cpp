@@ -9,15 +9,13 @@
 #include <frc/simulation/DCMotorSim.h>
 
 #include "SimCanCoderIO.h"
-#include "lib/subsystems/TalonFXIO.h"
 #include "lib/subsystems/ServoMotorSubsystemWithCanCoderConfig.h"
+#include "lib/subsystems/TalonFXIO.h"
 
-template<typename pos_t>
-class SimTalonFXIO : public TalonFXIO<pos_t> {
+template<typename pos_t> class SimTalonFXIO : public TalonFXIO<pos_t> {
 public:
     explicit SimTalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config);
-    SimTalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config,
-                 frc::sim::DCMotorSim sim);
+    SimTalonFXIO(const ServoMotorSubsystemConfig<pos_t>& config, frc::sim::DCMotorSim sim);
     ~SimTalonFXIO() override = default;
 
     void ReadInputs(MotorInputs& inputs) override;
@@ -26,8 +24,7 @@ public:
     void OverridePosition(std::optional<double> radians);
     void SetInvertVoltage(bool invertVoltage);
     double GetIntendedRPS() const;
-    std::function<SimCanCoderIO::SimCanCoderState()> GetSupplierForCancoder(
-        const ServoMotorSubsystemWithCanCoderConfig<pos_t>& config);
+    std::function<SimCanCoderIO::SimCanCoderState()> GetSupplierForCancoder(const ServoMotorSubsystemWithCanCoderConfig<pos_t>& config);
 
 protected:
     double GetSimRatio() const;

@@ -29,15 +29,9 @@ class CANStatusLogger {
     public:
         ctre::phoenix6::StatusSignal<units::voltage::volt_t> supplyVoltage;
 
-        DeviceStatusInfo(const std::string& name,
-                         ctre::phoenix6::hardware::TalonFX* talon,
-                         const int deviceID,
-                         const std::string& bus);
+        DeviceStatusInfo(const std::string& name, ctre::phoenix6::hardware::TalonFX* talon, const int deviceID, const std::string& bus);
 
-        DeviceStatusInfo(const std::string& name,
-                         ctre::phoenix6::hardware::CANcoder* cancoder,
-                         const int deviceID,
-                         const std::string& bus);
+        DeviceStatusInfo(const std::string& name, ctre::phoenix6::hardware::CANcoder* cancoder, const int deviceID, const std::string& bus);
     };
 
     std::vector<DeviceStatusInfo> devices;
@@ -48,11 +42,9 @@ public:
         return instance;
     }
 
-    void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, int deviceID,
-                         const ctre::phoenix6::CANBus bus);
+    void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, int deviceID, const ctre::phoenix6::CANBus bus);
     void RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, CANDeviceId deviceID);
-    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID,
-                          const ctre::phoenix6::CANBus bus);
+    void RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, const ctre::phoenix6::CANBus bus);
     void InitializeSignalArray();
     void UpdateCanStatus();
 };

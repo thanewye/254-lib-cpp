@@ -16,13 +16,7 @@ public:
     void SetPositionSetpoint(double units) override {}
     void SetMotionMagicSetpoint(double units, int slot) override {}
 
-    void SetMotionMagicSetpoint(
-        double units,
-        double velocity,
-        double acceleration,
-        double jerk,
-        int slot,
-        double feedforward) override {}
+    void SetMotionMagicSetpoint(double units, double velocity, double acceleration, double jerk, int slot, double feedforward) override {}
 
     void SetNeutralMode(ctre::phoenix6::signals::NeutralModeValue mode) override {}
 
@@ -53,13 +47,7 @@ public:
     void SetPositionTorqueCurrentFOC(double units, double feedforward) override {}
     void SetMotionMagicTorqueCurrentFOC(double units, int slot) override {}
 
-    void SetMotionMagicTorqueCurrentFOC(
-        double units,
-        double velocity,
-        double acceleration,
-        double jerk,
-        int slot,
-        double feedforward) override {}
+    void SetMotionMagicTorqueCurrentFOC(double units, double velocity, double acceleration, double jerk, int slot, double feedforward) override {}
 
     void SetMotionMagicConfig(const ctre::phoenix6::configs::MotionMagicConfigs& config) override {}
     void SetVoltageConfig(const ctre::phoenix6::configs::VoltageConfigs& config) override {}

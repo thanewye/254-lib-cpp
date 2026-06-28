@@ -1,8 +1,7 @@
 #include "akit/networktables/detail/SendableChooserAccess.h"
 
 namespace akit::networktables::detail {
-    template<typename V>
-    const wpi::StringMap<V>& StolenChoices(const frc::SendableChooser<V>& chooser) {
+    template<typename V> const wpi::StringMap<V>& StolenChoices(const frc::SendableChooser<V>& chooser) {
         return chooser.m_choices;
     }
 

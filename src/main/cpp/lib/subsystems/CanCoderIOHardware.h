@@ -1,7 +1,8 @@
 #pragma once
 
-#include "ctre/phoenix6/CANcoder.hpp"
-#include "ctre/phoenix6/StatusSignal.hpp"
+#include <ctre/phoenix6/CANcoder.hpp>
+#include <ctre/phoenix6/StatusSignal.hpp>
+
 #include "lib/subsystems/CanCoderConfig.h"
 #include "lib/subsystems/CanCoderIO.h"
 

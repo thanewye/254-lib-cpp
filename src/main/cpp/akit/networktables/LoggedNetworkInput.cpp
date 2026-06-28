@@ -1,4 +1,5 @@
 #include "akit/networktables/LoggedNetworkInput.h"
+
 #include "akit/Logger.h"
 
 namespace akit::networktables {

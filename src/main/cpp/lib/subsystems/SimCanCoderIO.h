@@ -13,13 +13,11 @@ public:
         double velocityRotations = std::numeric_limits<double>::quiet_NaN();
     };
 
-    SimCanCoderIO(
-        const CanCoderConfig &config,
-        std::function<SimCanCoderState()> stateSupplier);
+    SimCanCoderIO(const CanCoderConfig& config, std::function<SimCanCoderState()> stateSupplier);
 
-    void ReadInputs(CanCoderInputs &inputs) override;
+    void ReadInputs(CanCoderInputs& inputs) override;
 
 private:
-    ctre::phoenix6::sim::CANcoderSimState &m_simState;
+    ctre::phoenix6::sim::CANcoderSimState& m_simState;
     std::function<SimCanCoderState()> m_stateSupplier;
 };

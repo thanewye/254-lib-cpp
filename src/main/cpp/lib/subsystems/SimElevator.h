@@ -4,16 +4,15 @@
 #include <vector>
 
 #include <ctre/phoenix6/sim/TalonFXSimState.hpp>
-#include <frc/system/plant/DCMotor.h>
 #include <frc/Notifier.h>
 #include <frc/simulation/ElevatorSim.h>
+#include <frc/system/plant/DCMotor.h>
 #include <units/mass.h>
 
-#include "lib/subsystems/TalonFXIO.h"
 #include "lib/subsystems/ServoMotorSubsystemWithFollowersConfig.h"
+#include "lib/subsystems/TalonFXIO.h"
 
-template<typename pos_t>
-class SimElevator {
+template<typename pos_t> class SimElevator {
 public:
     struct SimElevatorConfig {
         double gearing = 1.0;
@@ -24,10 +23,8 @@ public:
         double startingHeightMeters = 0.0;
     };
 
-    SimElevator(const ServoMotorSubsystemConfig<pos_t>& config,
-                const SimElevatorConfig& simConfig);
-    SimElevator(const ServoMotorSubsystemWithFollowersConfig<pos_t>& config,
-                const SimElevatorConfig& simConfig);
+    SimElevator(const ServoMotorSubsystemConfig<pos_t>& config, const SimElevatorConfig& simConfig);
+    SimElevator(const ServoMotorSubsystemWithFollowersConfig<pos_t>& config, const SimElevatorConfig& simConfig);
 
     TalonFXIO<pos_t>* GetLeadIO();
     std::vector<TalonFXIO<pos_t>*> GetFollowerIO() const;

@@ -13,11 +13,7 @@
 namespace akit::wpilog {
     class WPILOGWriter : public LogDataReceiver {
     public:
-        enum AdvantageScopeOpenBehavior {
-            ALWAYS,
-            AUTO,
-            NEVER
-        };
+        enum AdvantageScopeOpenBehavior { ALWAYS, AUTO, NEVER };
 
     private:
         const double timestampUpdateDelay_ = 5.0;

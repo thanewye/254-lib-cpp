@@ -4,47 +4,13 @@
 #include <string_view>
 
 namespace akit {
-    enum class LoggableType {
-        kRaw = 0,
-        kBoolean,
-        kInteger,
-        kFloat,
-        kDouble,
-        kString,
-        kBooleanArray,
-        kIntegerArray,
-        kFloatArray,
-        kDoubleArray,
-        kStringArray
-    };
+    enum class LoggableType { kRaw = 0, kBoolean, kInteger, kFloat, kDouble, kString, kBooleanArray, kIntegerArray, kFloatArray, kDoubleArray, kStringArray };
 
-    inline constexpr std::array<std::string_view, 11> wpilogTypes = {
-        "raw",
-        "boolean",
-        "int64",
-        "float",
-        "double",
-        "string",
-        "boolean[]",
-        "int64[]",
-        "float[]",
-        "double[]",
-        "string[]"
-    };
+    inline constexpr std::array<std::string_view, 11> wpilogTypes = {"raw",       "boolean", "int64",   "float",    "double",  "string",
+                                                                     "boolean[]", "int64[]", "float[]", "double[]", "string[]"};
 
-    inline constexpr std::array<std::string_view, 11> nt4Types = {
-        "raw",
-        "boolean",
-        "int",
-        "float",
-        "double",
-        "string",
-        "boolean[]",
-        "int[]",
-        "float[]",
-        "double[]",
-        "string[]"
-    };
+    inline constexpr std::array<std::string_view, 11> nt4Types = {"raw",       "boolean", "int",     "float",    "double",  "string",
+                                                                  "boolean[]", "int[]",   "float[]", "double[]", "string[]"};
 
     inline std::string_view GetWPILOGType(const LoggableType& type) {
         return wpilogTypes[static_cast<int>(type)];

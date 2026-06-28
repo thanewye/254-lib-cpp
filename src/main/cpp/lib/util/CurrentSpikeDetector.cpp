@@ -4,8 +4,8 @@
 
 CurrentSpikeDetector::CurrentSpikeDetector(double thresholdAmps, double durationSeconds)
     : currentThresholdAmps(static_cast<units::ampere_t>(thresholdAmps))
-      , timeThresholdSeconds(static_cast<units::second_t>(durationSeconds))
-      , currentOverThresholdTimer(frc::Timer()) {}
+    , timeThresholdSeconds(static_cast<units::second_t>(durationSeconds))
+    , currentOverThresholdTimer(frc::Timer()) {}
 
 bool CurrentSpikeDetector::Update(units::ampere_t currentAmps) {
     if (currentAmps > currentThresholdAmps) {

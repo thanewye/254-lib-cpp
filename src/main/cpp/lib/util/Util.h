@@ -17,8 +17,7 @@ namespace util {
             return 0.0;
         }
 
-        double scaledValue =
-                (value + (value < 0.0 ? deadband : -deadband)) / (1.0 - deadband);
+        double scaledValue = (value + (value < 0.0 ? deadband : -deadband)) / (1.0 - deadband);
         return std::abs(value) > deadband ? scaledValue : 0.0;
     }
 
@@ -35,14 +34,9 @@ namespace util {
         return (a - epsilon <= b) && (a + epsilon >= b);
     }
 
-    inline frc::Pose2d FlipPoseForAlliance(const frc::Pose2d &pose) {
-        return frc::Pose2d{
-            field_constants::kFieldLength - pose.X(),
-            pose.Y(),
-            pose.Rotation()
-        };
+    inline frc::Pose2d FlipPoseForAlliance(const frc::Pose2d& pose) {
+        return frc::Pose2d{field_constants::kFieldLength - pose.X(), pose.Y(), pose.Rotation()};
     }
 
-    template<typename T>
-    std::function<T()> Memoize(std::function<T()> fn);
+    template<typename T> std::function<T()> Memoize(std::function<T()> fn);
 } // namespace util

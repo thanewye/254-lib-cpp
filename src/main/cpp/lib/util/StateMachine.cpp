@@ -6,7 +6,8 @@
 #include "lib/time/RobotTime.h"
 
 StateMachine::State::State(std::string name, StateMachine* machine)
-    : name(std::move(name)), machine(machine) {}
+    : name(std::move(name))
+    , machine(machine) {}
 
 void StateMachine::State::AddTransition(StateCondition condition, std::string targetState) {
     transitions.push_back({std::move(condition), std::move(targetState)});
@@ -31,10 +32,10 @@ LoggedTrigger StateMachine::State::RegisterTrigger() {
 }
 
 StateMachine::StateMachine(std::string name)
-    : name(name),
-      currentStateLogKey("StateMachines/" + name + "/CurrentState"),
-      lastStateLogKey("StateMachines/" + name + "/LastState"),
-      timeInStateLogKey("StateMachines/" + name + "/TimeInState") {}
+    : name(name)
+    , currentStateLogKey("StateMachines/" + name + "/CurrentState")
+    , lastStateLogKey("StateMachines/" + name + "/LastState")
+    , timeInStateLogKey("StateMachines/" + name + "/TimeInState") {}
 
 StateMachine::State& StateMachine::AddState(const std::string& name) {
     auto it = states.find(name);
@@ -51,8 +52,7 @@ void StateMachine::SetInitialState(const std::string& name) {
         lastState = "";
         lastStageChangeTime = robot_time::GetTimestamp();
     } else {
-        std::fprintf(stderr, "StateMachine %s: Attempted to set invalid initial state %s\n",
-                     this->name.c_str(), name.c_str());
+        std::fprintf(stderr, "StateMachine %s: Attempted to set invalid initial state %s\n", this->name.c_str(), name.c_str());
     }
 }
 

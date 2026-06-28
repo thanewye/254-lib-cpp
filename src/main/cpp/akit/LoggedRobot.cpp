@@ -14,14 +14,13 @@
 namespace akit {
     LoggedRobot::LoggedRobot(double period)
         : IterativeRobotBase(units::second_t{period})
-          , periodUs_(static_cast<uint64_t>(period * 1'000'000)) {
+        , periodUs_(static_cast<uint64_t>(period * 1'000'000)) {
         baseConstructed_ = true;
         int32_t status = 0;
         notifier_ = HAL_InitializeNotifier(&status);
         HAL_SetNotifierName(notifier_, "LoggedRobot", &status);
         HAL_Report(HALUsageReporting::kResourceType_Framework, HALUsageReporting::kFramework_AdvantageKit);
-        HAL_Report(HALUsageReporting::kResourceType_LoggingFramework,
-                   HALUsageReporting::kLoggingFramework_AdvantageKit);
+        HAL_Report(HALUsageReporting::kResourceType_LoggingFramework, HALUsageReporting::kLoggingFramework_AdvantageKit);
     }
 
     LoggedRobot::~LoggedRobot() {
@@ -66,9 +65,7 @@ namespace akit {
                 LoopFunc();
                 uint64_t userEnd = frc::RobotController::GetFPGATime();
 
-                Logger::PeriodicAfterUser(
-                    static_cast<int64_t>(userEnd - userStart),
-                    static_cast<int64_t>(userStart - beforeStart));
+                Logger::PeriodicAfterUser(static_cast<int64_t>(userEnd - userStart), static_cast<int64_t>(userStart - beforeStart));
             }
         } catch (const std::exception& e) {
             Logger::PeriodicAfterUser(0, 0, std::string{e.what()} + "\n" + wpi::GetStackTrace(0));

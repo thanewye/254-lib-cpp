@@ -1,8 +1,10 @@
-#include "akit/Logger.h"
-#include "ctre/phoenix6/StatusSignal.hpp"
-#include "frc/Errors.h"
-#include "frc/Timer.h"
 #include "lib/util/StatusSignalManager.h"
+
+#include <ctre/phoenix6/StatusSignal.hpp>
+#include <frc/Errors.h>
+#include <frc/Timer.h>
+
+#include "akit/Logger.h"
 
 void StatusSignalManager::Register(ctre::phoenix6::BaseStatusSignal* signal) {
     if (signal == nullptr) return;
@@ -24,9 +26,7 @@ void StatusSignalManager::RefreshAll() {
     if (status != lastStatus) {
         lastStatus = status;
         if (status != ctre::phoenix::StatusCode::OK) {
-            FRC_ReportError(frc::err::Error,
-                            "StatusSignalManager: Failed to refresh signals: {}",
-                            status.GetName());
+            FRC_ReportError(frc::err::Error, "StatusSignalManager: Failed to refresh signals: {}", status.GetName());
         } else {
             FRC_ReportWarning("StatusSignalManager: Signal refresh recovered: {}", status.GetName());
         }

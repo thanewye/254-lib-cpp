@@ -6,15 +6,15 @@
 #include <frc2/command/CommandPtr.h>
 
 class ChezyRepeatCommand : public frc2::Command {
- public:
-  explicit ChezyRepeatCommand(frc2::CommandPtr command);
+public:
+    explicit ChezyRepeatCommand(frc2::CommandPtr command);
 
-  void Initialize() override;
-  void Execute() override;
-  void End(bool interrupted) override;
-  bool IsFinished() override;
-  bool RunsWhenDisabled() const override;
+    void Initialize() override;
+    void Execute() override;
+    void End(bool interrupted) override;
+    bool IsFinished() override;
+    bool RunsWhenDisabled() const override;
 
- private:
-  std::unique_ptr<Command> m_command;
+private:
+    std::unique_ptr<Command> m_command;
 };

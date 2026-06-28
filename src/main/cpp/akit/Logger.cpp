@@ -1,23 +1,22 @@
+#include "akit/Logger.h"
+
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <span>
 #include <utility>
 
-#include <frc/Timer.h>
-
-#include "akit/Logger.h"
-
 #include <frc/RobotBase.h>
 #include <frc/RobotController.h>
+#include <frc/Timer.h>
 
 #include "akit/AlertLogger.h"
 #include "akit/ConsoleSource.h"
+#include "akit/LoggedRobot.h"
 #include "akit/autolog/AutoLogOutputManager.h"
+#include "akit/networktables/LoggedNetworkInput.h"
 #include "akit/telemetry/LoggedDriverStation.h"
 #include "akit/telemetry/LoggedPowerDistribution.h"
-#include "akit/LoggedRobot.h"
-#include "akit/networktables/LoggedNetworkInput.h"
 #include "akit/telemetry/LoggedSystemStats.h"
 #include "akit/telemetry/RadioLogger.h"
 
@@ -26,18 +25,19 @@ namespace akit {
         if (running_) return;
 
         if (!LoggedRobot::IsBaseConstructed()) {
-            FRC_ReportError(
-                frc::err::Error,
-                "The main robot class must inherit from LoggedRobot when using AdvantageKit. For more details, check the AdvantageKit installation documentation: https://docs.advantagekit.org/getting-started/installation\n\n*** EXITING DUE TO INVALID ADVANTAGEKIT INSTALLATION, SEE ABOVE. ***");
+            FRC_ReportError(frc::err::Error, "The main robot class must inherit from LoggedRobot when using AdvantageKit. For more details, check the "
+                                             "AdvantageKit installation documentation: https://docs.advantagekit.org/getting-started/installation\n\n*** "
+                                             "EXITING DUE TO INVALID ADVANTAGEKIT INSTALLATION, SEE ABOVE. ***");
             return;
         }
 
-        if (IsReplayMode()) {
+        if (HasReplaySource()) {
             const char* halSimExtensions = std::getenv("HALSIM_EXTENSIONS");
             if (halSimExtensions != nullptr && halSimExtensions[0] != '\0') {
-                FRC_ReportError(
-                    frc::err::Error,
-                    "[AdvantageKit] All HAL simulation extensions must be disabled when running AdvantageKit replay, including the simulation GUI and DriverStation connection. Check the configuration in \"build.gradle\" and ensure that all checkboxes are disabled in the VSCode simulation popup.\n\n*** EXITING DUE TO INVALID SIMULATION CONFIGURATION, SEE ABOVE. ***");
+                FRC_ReportError(frc::err::Error,
+                                "[AdvantageKit] All HAL simulation extensions must be disabled when running AdvantageKit replay, including the simulation GUI "
+                                "and DriverStation connection. Check the configuration in \"build.gradle\" and ensure that all checkboxes are disabled in the "
+                                "VSCode simulation popup.\n\n*** EXITING DUE TO INVALID SIMULATION CONFIGURATION, SEE ABOVE. ***");
                 return;
             }
         }
@@ -48,15 +48,14 @@ namespace akit {
         }
 
         running_ = true;
-        frc::RobotController::SetTimeSource([]() -> uint64_t {
-            return static_cast<uint64_t>(GetTimestamp().value() * 1'000'000.0);
-        });
+        frc::RobotController::SetTimeSource([]() -> uint64_t { return static_cast<uint64_t>(GetTimestamp().value() * 1'000'000.0); });
         lastTimestamp_ = static_cast<int64_t>(frc::Timer::GetFPGATimestamp().value() * 1'000'000.0);
         currentStorage_.Clear();
         currentStorage_.timestamp = 0;
-        LogTable meta = LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayMetadata" : "RealMetadata");
-        for (const auto& [k, v] : metadata_) meta.Put(k, v);
-        if (IsReplayMode()) replaySource_->Start();
+        LogTable meta = LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayMetadata" : "RealMetadata");
+        for (const auto& [k, v] : metadata_)
+            meta.Put(k, v);
+        if (HasReplaySource()) replaySource_->Start();
         receiverThread_.Start();
         PeriodicBeforeUser();
     }
@@ -64,11 +63,9 @@ namespace akit {
     void Logger::End() {
         if (!running_) return;
         running_ = false;
-        frc::RobotController::SetTimeSource([]() -> uint64_t {
-            return frc::RobotController::GetFPGATime();
-        });
+        frc::RobotController::SetTimeSource([]() -> uint64_t { return frc::RobotController::GetFPGATime(); });
         console_.reset();
-        if (IsReplayMode()) {
+        if (HasReplaySource()) {
             replaySource_->End();
         }
         receiverThread_.End();
@@ -82,7 +79,7 @@ namespace akit {
         const uint64_t entryUpdateStart = frc::RobotController::GetFPGATime();
         LogTable root(currentStorage_);
 
-        if (!IsReplayMode()) {
+        if (!HasReplaySource()) {
             currentStorage_.timestamp = static_cast<int64_t>(frc::Timer::GetFPGATimestamp().value() * 1'000'000.0);
         } else {
             if (!replaySource_->UpdateTable(root)) {
@@ -116,8 +113,7 @@ namespace akit {
         PeriodicAfterUser(userCodeUs, periodicBeforeUs, "");
     }
 
-    void Logger::PeriodicAfterUser(const int64_t userCodeUs, const int64_t periodicBeforeUs,
-                                   const std::string_view extraConsoleData) {
+    void Logger::PeriodicAfterUser(const int64_t userCodeUs, const int64_t periodicBeforeUs, const std::string_view extraConsoleData) {
         if (!running_) return;
         uint64_t afterStart = frc::RobotController::GetFPGATime();
 
@@ -172,15 +168,14 @@ namespace akit {
         LogStorage snapshot;
         LogTable::Clone(root, snapshot);
         if (!receiverThread_.Enqueue(std::move(snapshot))) {
-            FRC_ReportError(frc::err::Error,
-                            "[AdvantageKit] Capacity of receiver queue exceeded, data will NOT be logged.");
+            FRC_ReportError(frc::err::Error, "[AdvantageKit] Capacity of receiver queue exceeded, data will NOT be logged.");
         }
     }
 
     void Logger::RecordOutput(const std::string& key, LogValue value) {
         if (!running_) return;
 
-        LogTable outputs = LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs");
+        LogTable outputs = LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs");
         outputs.Put(key, std::move(value));
     }
 
@@ -218,7 +213,7 @@ namespace akit {
 
     void Logger::RecordOutput(const std::string& key, const std::span<const std::vector<bool>> value) {
         if (!running_) return;
-        LogTable(currentStorage_).GetSubtable(IsReplayMode() ? "ReplayOutputs" : "RealOutputs").Put(key, value);
+        LogTable(currentStorage_).GetSubtable(HasReplaySource() ? "ReplayOutputs" : "RealOutputs").Put(key, value);
     }
 
     void Logger::RecordOutput(const std::string& key, const std::span<const int> value) {
@@ -248,9 +243,8 @@ namespace akit {
 
     units::second_t Logger::GetTimestamp() {
         std::scoped_lock lock(mutex_);
-        auto time = !running_ || currentStorage_.Empty()
-                        ? units::microsecond_t{static_cast<double>(frc::RobotController::GetFPGATime())}
-                        : units::microsecond_t{static_cast<double>(currentStorage_.timestamp)};
+        auto time = !running_ || currentStorage_.Empty() ? units::microsecond_t{static_cast<double>(frc::RobotController::GetFPGATime())}
+                                                         : units::microsecond_t{static_cast<double>(currentStorage_.timestamp)};
         return time;
     }
 
@@ -267,9 +261,7 @@ namespace akit {
     }
 
     void Logger::UnregisterDashboardInput(networktables::LoggedNetworkInput* dashboardInput) {
-        dashboardInputs_.erase(
-            std::remove(dashboardInputs_.begin(), dashboardInputs_.end(), dashboardInput),
-            dashboardInputs_.end());
+        dashboardInputs_.erase(std::remove(dashboardInputs_.begin(), dashboardInputs_.end(), dashboardInput), dashboardInputs_.end());
     }
 
     void Logger::SetConsoleSource(std::unique_ptr<ConsoleSource> console) {
@@ -278,36 +270,36 @@ namespace akit {
     }
 
     bool Logger::HasReplaySource() {
-        return IsReplayMode();
+        return replaySource_ != nullptr;
     }
 
     void Logger::DumpCurrentStorage() {
         for (const auto& [key, lv] : currentStorage_.values) {
             std::cout << key << " = ";
-            std::visit([]<typename T0>(const T0& v) {
-                using T = std::decay_t<T0>;
-                if constexpr (std::is_same_v<T, std::vector<double>>
-                              || std::is_same_v<T, std::vector<float>>
-                              || std::is_same_v<T, std::vector<int64_t>>
-                              || std::is_same_v<T, std::vector<uint8_t>>) {
-                    std::cout << "[";
-                    for (size_t i = 0; i < v.size(); ++i)
-                        std::cout << v[i] << (i + 1 < v.size() ? ", " : "");
-                    std::cout << "]";
-                } else if constexpr (std::is_same_v<T, std::vector<bool>>) {
-                    std::cout << "[";
-                    for (size_t i = 0; i < v.size(); ++i)
-                        std::cout << (v[i] ? "true" : "false") << (i + 1 < v.size() ? ", " : "");
-                    std::cout << "]";
-                } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
-                    std::cout << "[";
-                    for (size_t i = 0; i < v.size(); ++i)
-                        std::cout << "\"" << v[i] << "\"" << (i + 1 < v.size() ? ", " : "");
-                    std::cout << "]";
-                } else {
-                    std::cout << v;
-                }
-            }, lv.value);
+            std::visit(
+                []<typename T0>(const T0& v) {
+                    using T = std::decay_t<T0>;
+                    if constexpr (std::is_same_v<T, std::vector<double>> || std::is_same_v<T, std::vector<float>> || std::is_same_v<T, std::vector<int64_t>> ||
+                                  std::is_same_v<T, std::vector<uint8_t>>) {
+                        std::cout << "[";
+                        for (size_t i = 0; i < v.size(); ++i)
+                            std::cout << v[i] << (i + 1 < v.size() ? ", " : "");
+                        std::cout << "]";
+                    } else if constexpr (std::is_same_v<T, std::vector<bool>>) {
+                        std::cout << "[";
+                        for (size_t i = 0; i < v.size(); ++i)
+                            std::cout << (v[i] ? "true" : "false") << (i + 1 < v.size() ? ", " : "");
+                        std::cout << "]";
+                    } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+                        std::cout << "[";
+                        for (size_t i = 0; i < v.size(); ++i)
+                            std::cout << "\"" << v[i] << "\"" << (i + 1 < v.size() ? ", " : "");
+                        std::cout << "]";
+                    } else {
+                        std::cout << v;
+                    }
+                },
+                lv.value);
             std::cout << "\n";
         }
     }

@@ -8,8 +8,7 @@
 
 #include "lib/drivers/CANDeviceId.h"
 
-template<typename pos_t>
-struct ServoMotorSubsystemConfig {
+template<typename pos_t> struct ServoMotorSubsystemConfig {
     enum class Motor { KrakenX60, KrakenX44, UNSPECIFIED };
 
     std::string name = "UNNAMED";

@@ -1,14 +1,13 @@
 #include "lib/util/CANStatusLogger.h"
 
+#include <exception>
+
 #include <frc/smartdashboard/SmartDashboard.h>
 
 #include "akit/Logger.h"
 
-CANStatusLogger::DeviceStatusInfo::DeviceStatusInfo(
-    const std::string& name,
-    ctre::phoenix6::hardware::TalonFX* talon,
-    const int deviceID,
-    const std::string& bus)
+CANStatusLogger::DeviceStatusInfo::DeviceStatusInfo(const std::string& name, ctre::phoenix6::hardware::TalonFX* talon, const int deviceID,
+                                                    const std::string& bus)
     : name(name)
     , talon(talon)
     , deviceID(deviceID)
@@ -19,11 +18,8 @@ CANStatusLogger::DeviceStatusInfo::DeviceStatusInfo(
     supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
 }
 
-CANStatusLogger::DeviceStatusInfo::DeviceStatusInfo(
-    const std::string& name,
-    ctre::phoenix6::hardware::CANcoder* cancoder,
-    const int deviceID,
-    const std::string& bus)
+CANStatusLogger::DeviceStatusInfo::DeviceStatusInfo(const std::string& name, ctre::phoenix6::hardware::CANcoder* cancoder, const int deviceID,
+                                                    const std::string& bus)
     : name(name)
     , cancoder(cancoder)
     , deviceID(deviceID)
@@ -34,22 +30,19 @@ CANStatusLogger::DeviceStatusInfo::DeviceStatusInfo(
     supplyVoltage.SetUpdateFrequencyForAll(100_Hz);
 }
 
-void CANStatusLogger::RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon,
-                                       int deviceID, const ctre::phoenix6::CANBus bus) {
+void CANStatusLogger::RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, int deviceID, const ctre::phoenix6::CANBus bus) {
     devices.emplace_back(name, talon, deviceID, std::string(bus.GetName()));
 }
 
-void CANStatusLogger::RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon,
-                                       CANDeviceId deviceID) {
+void CANStatusLogger::RegisterTalonFX(std::string name, ctre::phoenix6::hardware::TalonFX* talon, CANDeviceId deviceID) {
     devices.emplace_back(name, talon, deviceID.GetDeviceNumber(), std::string(deviceID.GetBus().GetName()));
 }
 
-void CANStatusLogger::RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder,
-                                        int deviceID, const ctre::phoenix6::CANBus bus) {
-    (void) name;
-    (void) cancoder;
-    (void) deviceID;
-    (void) bus;
+void CANStatusLogger::RegisterCANcoder(std::string name, ctre::phoenix6::hardware::CANcoder* cancoder, int deviceID, const ctre::phoenix6::CANBus bus) {
+    (void)name;
+    (void)cancoder;
+    (void)deviceID;
+    (void)bus;
 }
 
 void CANStatusLogger::InitializeSignalArray() {
@@ -68,7 +61,8 @@ void CANStatusLogger::UpdateCanStatus() {
     }
     try {
         ctre::phoenix6::BaseStatusSignal::RefreshAll(signals);
-    } catch (std::exception& e) {}
+    } catch (std::exception& e) {
+    }
 
     for (size_t i = 0; i < devices.size(); i++) {
         DeviceStatusInfo& device = devices[i];

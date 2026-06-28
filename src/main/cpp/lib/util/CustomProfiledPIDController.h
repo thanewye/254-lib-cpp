@@ -4,24 +4,19 @@
 #include <frc/trajectory/TrapezoidProfile.h>
 #include <units/math.h>
 
-template<class Distance>
-class CustomProfiledPIDController {
+template<class Distance> class CustomProfiledPIDController {
     using Distance_t = units::unit_t<Distance>;
-    using Velocity_t = units::unit_t<units::compound_unit<Distance, units::inverse<units::seconds> > >;
+    using Velocity_t = units::unit_t<units::compound_unit<Distance, units::inverse<units::seconds>>>;
     using Constraints = frc::TrapezoidProfile<Distance>::Constraints;
     using State = frc::TrapezoidProfile<Distance>::State;
 
 public:
-    CustomProfiledPIDController(double kP, double kI, double kD,
-                                Constraints constraints,
-                                double period = 0.02)
-        : m_controller(kP, kI, kD, units::second_t{period}),
-          m_constraints(constraints),
-          m_profile(constraints) {}
+    CustomProfiledPIDController(double kP, double kI, double kD, Constraints constraints, double period = 0.02)
+        : m_controller(kP, kI, kD, units::second_t{period})
+        , m_constraints(constraints)
+        , m_profile(constraints) {}
 
-    CustomProfiledPIDController(double kP, double kI, double kD, double kV,
-                                Constraints constraints,
-                                double period = 0.02)
+    CustomProfiledPIDController(double kP, double kI, double kD, double kV, Constraints constraints, double period = 0.02)
         : CustomProfiledPIDController(kP, kI, kD, constraints, period) {
         m_kV = kV;
     }
@@ -35,9 +30,7 @@ public:
 
     Constraints GetConstraints() const { return m_constraints; }
 
-    void SetGoal(Distance_t position, Velocity_t velocity = Velocity_t{0}) {
-        m_goal = State{position, velocity};
-    }
+    void SetGoal(Distance_t position, Velocity_t velocity = Velocity_t{0}) { m_goal = State{position, velocity}; }
 
     void SetGoal(State goal) { m_goal = goal; }
 
@@ -61,9 +54,7 @@ public:
         return Calculate(measurement);
     }
 
-    bool AtGoal(double positionTolerance) const {
-        return units::math::abs(m_goal.position - m_setpoint.position).value() < positionTolerance;
-    }
+    bool AtGoal(double positionTolerance) const { return units::math::abs(m_goal.position - m_setpoint.position).value() < positionTolerance; }
 
     frc::PIDController& GetPIDController() { return m_controller; }
 

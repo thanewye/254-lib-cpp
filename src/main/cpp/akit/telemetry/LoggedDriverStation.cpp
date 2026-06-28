@@ -81,27 +81,27 @@ namespace akit {
 
         const auto allianceStation = table.Get("AllianceStation", 0);
         switch (allianceStation) {
-            case HAL_AllianceStationID_kRed1:
-                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed1);
-                break;
-            case HAL_AllianceStationID_kRed2:
-                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed2);
-                break;
-            case HAL_AllianceStationID_kRed3:
-                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed3);
-                break;
-            case HAL_AllianceStationID_kBlue1:
-                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue1);
-                break;
-            case HAL_AllianceStationID_kBlue2:
-                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue2);
-                break;
-            case HAL_AllianceStationID_kBlue3:
-                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue3);
-                break;
-            default:
-                DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kUnknown);
-                break;
+        case HAL_AllianceStationID_kRed1:
+            DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed1);
+            break;
+        case HAL_AllianceStationID_kRed2:
+            DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed2);
+            break;
+        case HAL_AllianceStationID_kRed3:
+            DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kRed3);
+            break;
+        case HAL_AllianceStationID_kBlue1:
+            DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue1);
+            break;
+        case HAL_AllianceStationID_kBlue2:
+            DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue2);
+            break;
+        case HAL_AllianceStationID_kBlue3:
+            DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kBlue3);
+            break;
+        default:
+            DriverStationSim::SetAllianceStationId(HAL_AllianceStationID_kUnknown);
+            break;
         }
         DriverStationSim::SetEventName(table.Get("EventName", std::string{}));
         DriverStationSim::SetGameSpecificMessage(table.Get("GameSpecificMessage", std::string{}));
@@ -109,18 +109,18 @@ namespace akit {
         DriverStationSim::SetReplayNumber(table.Get("ReplayNumber", 0));
         const auto matchType = table.Get("MatchType", 0);
         switch (matchType) {
-            case 1:
-                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kPractice);
-                break;
-            case 2:
-                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kQualification);
-                break;
-            case 3:
-                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kElimination);
-                break;
-            default:
-                DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kNone);
-                break;
+        case 1:
+            DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kPractice);
+            break;
+        case 2:
+            DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kQualification);
+            break;
+        case 3:
+            DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kElimination);
+            break;
+        default:
+            DriverStationSim::SetMatchType(frc::DriverStation::MatchType::kNone);
+            break;
         }
         DriverStationSim::SetMatchTime(table.Get("MatchTime", -1.0));
 
@@ -140,8 +140,7 @@ namespace akit {
             DriverStationSim::SetJoystickType(id, joystickType);
             DriverStationSim::SetJoystickIsXbox(id, joystickTable.Get("Xbox", false));
             DriverStationSim::SetJoystickButtonCount(id, joystickTable.Get("ButtonCount", 0));
-            DriverStationSim::SetJoystickButtons(
-                id, static_cast<uint32_t>(joystickTable.Get("ButtonValues", static_cast<int64_t>(0))));
+            DriverStationSim::SetJoystickButtons(id, static_cast<uint32_t>(joystickTable.Get("ButtonValues", static_cast<int64_t>(0))));
 
             const auto povValues = joystickTable.Get("POVs", std::span<const int>{});
             const auto povCount = static_cast<int>(povValues.size());

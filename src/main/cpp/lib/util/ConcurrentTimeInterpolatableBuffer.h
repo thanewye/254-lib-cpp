@@ -15,8 +15,7 @@
  *
  * @tparam T Value type. Must support wpi::Lerp unless a custom interpolator is provided.
  */
-template<typename T>
-class ConcurrentTimeInterpolatableBuffer {
+template<typename T> class ConcurrentTimeInterpolatableBuffer {
 public:
     using Interpolator = std::function<T(const T&, const T&, double)>;
 
@@ -27,9 +26,7 @@ public:
 
     /** Creates a buffer using wpi::Lerp as the interpolation function. */
     [[nodiscard]] static ConcurrentTimeInterpolatableBuffer Create(units::second_t historySize) {
-        return ConcurrentTimeInterpolatableBuffer(
-            [](const T& a, const T& b, double t) { return wpi::Lerp(a, b, t); },
-            historySize);
+        return ConcurrentTimeInterpolatableBuffer([](const T& a, const T& b, double t) { return wpi::Lerp(a, b, t); }, historySize);
     }
 
     /** Adds a sample and evicts any entries older than historySize. */
@@ -95,7 +92,8 @@ public:
 
 private:
     ConcurrentTimeInterpolatableBuffer(Interpolator interp, units::second_t historySize)
-        : interpolator(std::move(interp)), historySize(historySize) {}
+        : interpolator(std::move(interp))
+        , historySize(historySize) {}
 
     void CleanUp(double time) {
         double cutoff = time - historySize.value();

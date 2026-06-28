@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -16,8 +17,7 @@ namespace akit::networktables {
         nt::IntegerPublisher timestampPublisher_;
         std::unordered_map<std::string, nt::GenericPublisher> publishers_;
         [[nodiscard]] std::string GetNT4Type(const LogValue& val) const;
-        nt::GenericPublisher& GetOrCreatePublisher(const std::string& key,
-                                                   const LogValue& value);
+        nt::GenericPublisher& GetOrCreatePublisher(const std::string& key, const LogValue& value);
         std::unordered_map<std::string, std::string> units_;
 
     public:

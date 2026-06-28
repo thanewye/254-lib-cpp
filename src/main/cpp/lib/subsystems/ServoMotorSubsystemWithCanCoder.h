@@ -14,8 +14,7 @@ concept IsCanCoderIO = std::derived_from<T, CanCoderIO>;
 template<typename pos_t, IsMotorInputs T, IsMotorIO U, IsCanCoderInputs V, IsCanCoderIO W>
 class ServoMotorSubsystemWithCanCoder : public ServoMotorSubsystem<pos_t, T, U> {
 public:
-    ServoMotorSubsystemWithCanCoder(const ServoMotorSubsystemWithCanCoderConfig<pos_t>& config,
-                                    T inputs, U* io, V cancoderInputs, W* cancoderIO);
+    ServoMotorSubsystemWithCanCoder(const ServoMotorSubsystemWithCanCoderConfig<pos_t>& config, T inputs, U* io, V cancoderInputs, W* cancoderIO);
 
     void Periodic() override;
 

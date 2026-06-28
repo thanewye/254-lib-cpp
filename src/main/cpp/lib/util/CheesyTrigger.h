@@ -2,9 +2,9 @@
 
 #include <functional>
 
-#include <frc2/command/button/Trigger.h>
 #include <frc/event/EventLoop.h>
 #include <frc2/command/CommandPtr.h>
+#include <frc2/command/button/Trigger.h>
 
 class CheesyTrigger : public frc2::Trigger {
 public:

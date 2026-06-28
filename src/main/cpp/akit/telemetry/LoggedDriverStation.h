@@ -1,4 +1,5 @@
 #pragma once
+
 #include "akit/log/LogTable.h"
 
 namespace akit {

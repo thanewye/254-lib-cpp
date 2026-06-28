@@ -40,9 +40,7 @@ void ChezySequenceCommandGroup::Execute() {
 }
 
 void ChezySequenceCommandGroup::End(bool interrupted) {
-    if (interrupted && !commands_.empty() &&
-        currentCommandIndex > -1 &&
-        currentCommandIndex < static_cast<int>(commands_.size())) {
+    if (interrupted && !commands_.empty() && currentCommandIndex > -1 && currentCommandIndex < static_cast<int>(commands_.size())) {
         commands_[currentCommandIndex]->End(true);
     }
     currentCommandIndex = -1;

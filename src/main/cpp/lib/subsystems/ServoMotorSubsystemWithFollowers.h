@@ -5,14 +5,12 @@
 #include "lib/subsystems/ServoMotorSubsystem.h"
 #include "lib/subsystems/ServoMotorSubsystemWithFollowersConfig.h"
 
-template<typename pos_t, IsMotorInputs T, IsMotorIO U>
-class ServoMotorSubsystemWithFollowers : public ServoMotorSubsystem<pos_t, T, U> {
+template<typename pos_t, IsMotorInputs T, IsMotorIO U> class ServoMotorSubsystemWithFollowers : public ServoMotorSubsystem<pos_t, T, U> {
 public:
     using vel_t = typename ServoMotorSubsystem<pos_t, T, U>::vel_t;
 
-    ServoMotorSubsystemWithFollowers(ServoMotorSubsystemWithFollowersConfig<pos_t>& config,
-                                     T leaderInputs, U* leaderIO,
-                                     std::vector<T> followerInputs, std::vector<U*> followerIOs);
+    ServoMotorSubsystemWithFollowers(ServoMotorSubsystemWithFollowersConfig<pos_t>& config, T leaderInputs, U* leaderIO, std::vector<T> followerInputs,
+                                     std::vector<U*> followerIOs);
 
     void Periodic() override;
 

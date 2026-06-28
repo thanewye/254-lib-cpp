@@ -3,8 +3,8 @@
 #include <array>
 #include <chrono>
 
-#include <hal/HAL.h>
 #include <frc/RobotController.h>
+#include <hal/HAL.h>
 #include <networktables/NetworkTableInstance.h>
 
 namespace akit {
@@ -56,9 +56,8 @@ namespace akit {
         stats.Put("CANBus/ReceiveErrorCount", static_cast<int64_t>(can.receiveErrorCount));
         stats.Put("CANBus/TransmitErrorCount", static_cast<int64_t>(can.transmitErrorCount));
 
-        stats.Put("EpochTimeMicros", static_cast<int64_t>(
-            std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count()));
+        stats.Put("EpochTimeMicros",
+                  static_cast<int64_t>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
 
         LogTable ntClients = stats.GetSubtable("NTClients");
         auto ntConnections = nt::NetworkTableInstance::GetDefault().GetConnections();

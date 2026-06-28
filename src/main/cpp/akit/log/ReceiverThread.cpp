@@ -1,6 +1,7 @@
 #include "akit/log/ReceiverThread.h"
 
 #include <algorithm>
+#include <exception>
 #include <utility>
 
 #include <frc/Errors.h>
@@ -104,7 +105,8 @@ namespace akit {
     }
 
     void ReceiverThread::Run(std::vector<LogDataReceiver*> initialReceivers) {
-        for (auto* receiver : initialReceivers) receiver->Start();
+        for (auto* receiver : initialReceivers)
+            receiver->Start();
 
         while (true) {
             std::optional<LogStorage> entry = WaitAndPop();
@@ -112,6 +114,7 @@ namespace akit {
             Dispatch(*entry);
         }
 
-        for (auto* receiver : SnapshotReceivers()) receiver->End();
+        for (auto* receiver : SnapshotReceivers())
+            receiver->End();
     }
 } // namespace akit

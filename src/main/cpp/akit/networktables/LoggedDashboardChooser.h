@@ -56,18 +56,13 @@ namespace akit::networktables {
             return option->second;
         }
 
-        void OnChange(std::function<void(V)> listener) {
-            listener_ = std::move(listener);
-        }
+        void OnChange(std::function<void(V)> listener) { listener_ = std::move(listener); }
 
-        [[nodiscard]] frc::SendableChooser<std::string>& GetSendableChooser() {
-            return sendableChooser_;
-        }
+        [[nodiscard]] frc::SendableChooser<std::string>& GetSendableChooser() { return sendableChooser_; }
 
         void Periodic() override {
             if (!Logger::HasReplaySource()) selectedValue_ = sendableChooser_.GetSelected();
-            Logger::ProcessDashboardInput(std::string(prefix) + "/SmartDashboard", key_, selectedValue_,
-                                          selectedValue_);
+            Logger::ProcessDashboardInput(std::string(prefix) + "/SmartDashboard", key_, selectedValue_, selectedValue_);
             if (previousValue_ != selectedValue_) {
                 if (listener_) listener_(Get());
                 previousValue_ = selectedValue_;

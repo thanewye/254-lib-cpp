@@ -1,9 +1,6 @@
 #pragma once
 
-
-
 #include <frc/IterativeRobotBase.h>
-
 
 namespace akit {
     class LoggedRobot : public frc::IterativeRobotBase {

@@ -9,18 +9,16 @@
 
 #include "lib/util/MathHelpers.h"
 
-template<typename PositionUnit>
-class SqrtProfiledController {
+template<typename PositionUnit> class SqrtProfiledController {
 public:
     using position_t = units::unit_t<PositionUnit>;
     using velocity_t = units::unit_t<units::compound_unit<PositionUnit, units::inverse<units::second>>>;
-    using acceleration_t = units::unit_t<units::compound_unit<PositionUnit, units::inverse<units::squared<
-        units::second>>>>;
+    using acceleration_t = units::unit_t<units::compound_unit<PositionUnit, units::inverse<units::squared<units::second>>>>;
 
     SqrtProfiledController(acceleration_t maxAcceleration, velocity_t maxVelocity, position_t linearThreshold)
         : maxAcceleration(units::math::abs(maxAcceleration))
-          , maxVelocity(units::math::abs(maxVelocity))
-          , linearThreshold(units::math::abs(linearThreshold)) {
+        , maxVelocity(units::math::abs(maxVelocity))
+        , linearThreshold(units::math::abs(linearThreshold)) {
         CalculateKp();
     }
 
@@ -36,21 +34,13 @@ public:
         this->maximumInput = maximumInput;
     }
 
-    void DisableContinuousInput() {
-        this->continuous = false;
-    }
+    void DisableContinuousInput() { this->continuous = false; }
 
-    void SetTolerance(position_t positionTolerance) {
-        this->positionTolerance = units::math::abs(positionTolerance);
-    }
+    void SetTolerance(position_t positionTolerance) { this->positionTolerance = units::math::abs(positionTolerance); }
 
-    void SetSetpoint(position_t setpoint) {
-        this->setpoint = setpoint;
-    }
+    void SetSetpoint(position_t setpoint) { this->setpoint = setpoint; }
 
-    [[nodiscard]] position_t GetSetpoint() const {
-        return this->setpoint;
-    }
+    [[nodiscard]] position_t GetSetpoint() const { return this->setpoint; }
 
     [[nodiscard]] bool AtSetpoint(position_t measurement) const {
         auto error = GetContinuousError(setpoint - measurement);

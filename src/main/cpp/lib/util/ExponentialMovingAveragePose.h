@@ -8,8 +8,8 @@ class ExponentialMovingAveragePose {
 public:
     explicit ExponentialMovingAveragePose(double alpha)
         : filterX(ExponentialMovingAverage(alpha))
-          , filterY(ExponentialMovingAverage(alpha))
-          , filterTheta(ExponentialMovingAverage(alpha)) {}
+        , filterY(ExponentialMovingAverage(alpha))
+        , filterTheta(ExponentialMovingAverage(alpha)) {}
 
     void reset() {
         filterX.Reset();

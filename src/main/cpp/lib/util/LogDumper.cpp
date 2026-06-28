@@ -5,6 +5,7 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_map>
 
 #include <wpi/DataLogReader.h>
@@ -140,11 +141,7 @@ namespace {
 } // namespace
 
 namespace log_dumper {
-    std::vector<Row> ReadRows(
-        const std::string& logPath,
-        const std::vector<std::string>& keys,
-        const int64_t startMicros,
-        const int64_t endMicros) {
+    std::vector<Row> ReadRows(const std::string& logPath, const std::vector<std::string>& keys, const int64_t startMicros, const int64_t endMicros) {
         auto buffer = wpi::MemoryBuffer::GetFile(logPath);
         if (!buffer) {
             throw std::runtime_error("Failed to open log file: " + logPath);
@@ -213,10 +210,7 @@ namespace log_dumper {
         return rows;
     }
 
-    void WriteCsv(
-        const std::vector<Row>& rows,
-        const std::vector<std::string>& keys,
-        std::ostream& output) {
+    void WriteCsv(const std::vector<Row>& rows, const std::vector<std::string>& keys, std::ostream& output) {
         output << "Timestamp(s)";
         for (const auto& key : keys) {
             output << ',' << EscapeCsv(key);
@@ -225,8 +219,7 @@ namespace log_dumper {
 
         for (const auto& row : rows) {
             std::ostringstream timestampStream;
-            timestampStream << std::fixed << std::setprecision(6)
-                    << static_cast<double>(row.timestampMicros) / 1'000'000.0;
+            timestampStream << std::fixed << std::setprecision(6) << static_cast<double>(row.timestampMicros) / 1'000'000.0;
             output << timestampStream.str();
 
             for (const auto& value : row.values) {

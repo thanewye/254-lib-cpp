@@ -4,7 +4,7 @@
 #include <string_view>
 
 namespace akit::networktables {
-class LoggedNetworkInput {
+    class LoggedNetworkInput {
     public:
         virtual ~LoggedNetworkInput();
 

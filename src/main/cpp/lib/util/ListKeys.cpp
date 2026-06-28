@@ -7,7 +7,7 @@
 #include <wpi/MemoryBuffer.h>
 
 namespace list_keys {
-    std::vector<std::string> Read(const std::string &logPath) {
+    std::vector<std::string> Read(const std::string& logPath) {
         auto buffer = wpi::MemoryBuffer::GetFile(logPath);
         if (!buffer) {
             throw std::runtime_error("Failed to open log file: " + logPath);
@@ -19,7 +19,7 @@ namespace list_keys {
         }
 
         std::set<std::string> orderedKeys;
-        for (const auto &record: reader) {
+        for (const auto& record : reader) {
             if (!record.IsStart()) {
                 continue;
             }
